@@ -24,13 +24,13 @@ Week 4  → Launch Prep & Go Live
 
 ### Day 1–2: Project Setup
 
-- [ ] Init Next.js 14 project dengan TypeScript (`npx create-next-app@latest`)
-- [ ] Setup Tailwind CSS + shadcn/ui
-- [ ] Konfigurasi ESLint + Prettier
-- [ ] Setup `.env.local` dengan semua environment variables
-- [ ] Push ke GitHub, setup repository
-- [ ] Deploy ke Vercel (empty project, pastikan CI/CD jalan)
-- [ ] Setup domain (jika sudah punya) atau gunakan `.vercel.app`
+- [x] Init Next.js 14 project dengan TypeScript (`npx create-next-app@latest`)
+- [x] Setup Tailwind CSS + shadcn/ui
+- [x] Konfigurasi ESLint + Prettier
+- [x] Setup `.env.local` dengan semua environment variables
+- [x] Push ke GitHub, setup repository
+- [x] Deploy ke Vercel (empty project, pastikan CI/CD jalan)
+- [x] Setup domain (jika sudah punya) atau gunakan `.vercel.app`
 
 ### Day 3: Supabase Setup
 
