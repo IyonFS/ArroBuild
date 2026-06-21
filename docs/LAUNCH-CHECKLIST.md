@@ -6,11 +6,11 @@
 
 - [ ] **Email provider** aktif (Authentication → Providers → Email)
 - [ ] **Google OAuth** aktif
-- [ ] **Site URL:** `https://domain-kamu.com`
+- [ ] **Site URL:** `https://arrobuild.vercel.app`
 - [ ] **Redirect URLs:**
   ```
-  https://domain-kamu.com/api/auth/callback
-  https://domain-kamu.com/auth/callback
+  https://arrobuild.vercel.app/api/auth/callback
+  https://arrobuild.vercel.app/auth/callback
   http://localhost:3000/api/auth/callback
   ```
 - [ ] SMTP dikonfigurasi (untuk konfirmasi email & reset password) — atau Confirm email OFF untuk testing
@@ -31,7 +31,7 @@ MIDTRANS_SERVER_KEY=Mid-server-...
 NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=Mid-client-...
 ```
 
-- [ ] Notification URL: `https://domain-kamu.com/api/payment/webhook`
+- [ ] Notification URL: `https://arrobuild.vercel.app/api/payment/webhook`
 - [ ] Uji alur: upgrade → Snap → tier berubah di dashboard
 - [ ] `npm run test:midtrans` sukses
 
@@ -45,7 +45,7 @@ SUPABASE_SERVICE_ROLE_KEY
 DATABASE_URL
 DIRECT_URL
 GEMINI_API_KEY
-NEXT_PUBLIC_APP_URL=https://domain-kamu.com
+NEXT_PUBLIC_APP_URL=https://arrobuild.vercel.app
 MIDTRANS_* (lihat atas)
 ```
 
