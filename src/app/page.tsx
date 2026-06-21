@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
+import Navbar from "@/components/marketing/Navbar";
+import Footer from "@/components/marketing/Footer";
+import PricingSection from "@/components/marketing/PricingSection";
+import { SparklesIcon } from "@/components/marketing/icons";
 
 /* ============================================================
    ArroBuild Landing Page
@@ -231,52 +235,6 @@ function ChevronDownIcon({ className = "" }: { className?: string }) {
   );
 }
 
-function SparklesIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z" />
-    </svg>
-  );
-}
-
-function GithubIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-    >
-      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-    </svg>
-  );
-}
-
-function TwitterIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-    >
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
-
 // ─── Intersection Observer Hook ──────────────────────────────
 
 function useInView(threshold = 0.15) {
@@ -286,6 +244,8 @@ function useInView(threshold = 0.15) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+
+    const fallback = setTimeout(() => setIsVisible(true), 400);
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -298,10 +258,59 @@ function useInView(threshold = 0.15) {
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(fallback);
+      observer.disconnect();
+    };
   }, [threshold]);
 
   return { ref, isVisible };
+}
+
+function FadeInCard({
+  index,
+  delayStep = 80,
+  className = "",
+  children,
+}: {
+  index: number;
+  delayStep?: number;
+  className?: string;
+  children: ReactNode;
+}) {
+  const { ref, isVisible } = useInView(0.1);
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-500 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+      } ${className}`}
+      style={{ transitionDelay: `${index * delayStep}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function FadeInStep({
+  index,
+  children,
+}: {
+  index: number;
+  children: ReactNode;
+}) {
+  const { ref, isVisible } = useInView(0.1);
+  return (
+    <div
+      ref={ref}
+      className={`text-center transition-all duration-600 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+      }`}
+      style={{ transitionDelay: `${index * 150}ms` }}
+    >
+      {children}
+    </div>
+  );
 }
 
 // ─── Animated Counter Hook ──────────────────────────────────
@@ -332,44 +341,52 @@ function useCounter(end: number, isVisible: boolean, duration = 2000) {
 
 const generatedFiles = [
   {
-    name: "context.md",
-    desc: "Master project file — source of truth for every AI agent session",
+    name: "prd.md",
+    desc: "Product Requirements — user stories, fitur, dan acceptance criteria",
     icon: FileTextIcon,
+    tier: "Free",
   },
   {
-    name: "prd.md",
-    desc: "Complete Product Requirements Document with user stories & metrics",
+    name: "context.md",
+    desc: "Master reference — source of truth untuk setiap sesi AI agent",
     icon: FileTextIcon,
+    tier: "Starter+",
+  },
+  {
+    name: "plan.md",
+    desc: "Development plan — task breakdown per fase dengan estimasi",
+    icon: MapIcon,
+    tier: "Starter+",
   },
   {
     name: "design-system.md",
-    desc: "Color palette, typography scale, spacing, component guidelines",
+    desc: "Warna, tipografi, spacing, dan component guidelines",
     icon: PaletteIcon,
-  },
-  {
-    name: "tech-stack.md",
-    desc: "Recommended stack with package recommendations & justifications",
-    icon: StackIcon,
-  },
-  {
-    name: "tasks.md",
-    desc: "Phase-by-phase task breakdown ready to be executed",
-    icon: ChecklistIcon,
-  },
-  {
-    name: "mvp-roadmap.md",
-    desc: "4-week actionable roadmap from setup to launch",
-    icon: MapIcon,
+    tier: "Starter+",
   },
   {
     name: "agents.md",
-    desc: "AI agent roles and responsibilities for your project",
+    desc: "Role AI agent — PM, Architect, UI, Code, Reviewer",
     icon: RobotIcon,
+    tier: "Starter+",
   },
   {
-    name: "cursor-rules.md",
-    desc: "Coding conventions for your AI agent — Cursor, Claude Code, Windsurf",
+    name: "production-hardening.md",
+    desc: "Security, monitoring, CI/CD, dan incident response",
     icon: ChecklistIcon,
+    tier: "Unlimited",
+  },
+  {
+    name: "scale-performance.md",
+    desc: "Strategi scaling dari single server ke multi-region",
+    icon: StackIcon,
+    tier: "Unlimited",
+  },
+  {
+    name: "growth-quality.md",
+    desc: "Go-to-market, acquisition channel, dan quality metrics",
+    icon: BulbIcon,
+    tier: "Unlimited",
   },
 ];
 
@@ -389,121 +406,39 @@ const howItWorks = [
   {
     step: "03",
     title: "Download your foundation",
-    desc: "Get a .zip with 5–11 structured .md files ready for your project root.",
+    desc: "Get a .zip with 1–8 structured .md files ready for your project root.",
     icon: DownloadIcon,
   },
 ];
 
 const faqs = [
   {
-    q: "What is ArroBuild?",
-    a: "ArroBuild is an AI-powered documentation generator that turns your product idea into structured project documentation — PRD, design system, tech stack, tasks, roadmap, and more. All before you write a single line of code.",
+    q: "Apa itu ArroBuild?",
+    a: "ArroBuild adalah generator dokumentasi AI yang mengubah ide produk kamu menjadi bundle file .md terstruktur — PRD, context, plan, design system, agents, dan lainnya. Semua sebelum kamu menulis baris kode pertama.",
   },
   {
-    q: "Who is this for?",
-    a: "Vibe coders, indie hackers, solo developers, and anyone who uses AI coding agents like Cursor, Claude Code, or Windsurf. If you skip planning and jump straight into coding, this is for you.",
+    q: "Untuk siapa ArroBuild?",
+    a: "Vibe coders, indie hackers, solo developer, dan siapa pun yang pakai AI coding agent seperti Cursor, Claude Code, atau Windsurf. Kalau kamu langsung coding tanpa planning, ini untuk kamu.",
   },
   {
-    q: "How long does generation take?",
-    a: "Under 2 minutes for the full bundle. Each file is generated sequentially with real-time progress, so you can see results as they come in.",
+    q: "Berapa lama proses generate?",
+    a: "PRD gratis selesai dalam ~30 detik. Bundle lengkap (5–8 file) biasanya under 2 menit. Kamu bisa lihat progress real-time saat setiap file di-generate.",
   },
   {
-    q: "What frameworks are supported?",
-    a: "We support Next.js, Laravel, Django, Rails, and FastAPI. Each preset customizes the generated documentation to match your framework's conventions and ecosystem.",
+    q: "Framework apa yang didukung?",
+    a: "Next.js, Laravel, Django, Rails, dan FastAPI. Setiap preset menyesuaikan dokumentasi dengan konvensi dan ecosystem framework pilihan kamu.",
   },
   {
-    q: "Is it free?",
-    a: "Yes! You get 1 free project with 5 core files. The Pro plan ($9/month) unlocks unlimited projects, 11+ files, and all design presets.",
+    q: "Apakah gratis?",
+    a: "Ya! Free tier: 1 project, 1 file PRD, tanpa login. Upgrade ke Starter (Rp 49K/bulan) untuk 5 file + semua model AI, atau Unlimited (Rp 199K/bulan) untuk 8 file termasuk production & growth guides.",
+  },
+  {
+    q: "Model AI apa yang tersedia?",
+    a: "Free: Gemini 2.5 Flash & DeepSeek V3. Paid: tambahan Gemini 2.5 Pro, GPT-4o, dan Claude Sonnet 4. Kamu bebas pilih model favorit sebelum generate.",
   },
 ];
 
 // ─── Components ──────────────────────────────────────────────
-
-function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  return (
-    <nav
-      id="navbar"
-      className={`fixed top-0 left-0 right-0 z-[200] transition-all duration-200 ${
-        scrolled
-          ? "glass py-3"
-          : "bg-transparent py-5"
-      }`}
-    >
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12 flex items-center justify-between">
-        {/* Logo */}
-        <a href="#" className="flex items-center gap-2.5 group" id="logo-link">
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: "var(--green-500)" }}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#052e16"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M5 12h14" />
-              <path d="M13 6l6 6-6 6" />
-            </svg>
-          </div>
-          <span
-            className="text-[17px] font-medium tracking-[-0.3px]"
-            style={{ color: "var(--text-primary)" }}
-          >
-            ArroBuild
-          </span>
-        </a>
-
-        {/* Nav Links */}
-        <div className="hidden md:flex items-center gap-8">
-          <a
-            href="#features"
-            className="text-[14px] transition-colors duration-150 hover:text-[var(--text-primary)]"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Features
-          </a>
-          <a
-            href="#how-it-works"
-            className="text-[14px] transition-colors duration-150 hover:text-[var(--text-primary)]"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            How it works
-          </a>
-          <a
-            href="#faq"
-            className="text-[14px] transition-colors duration-150 hover:text-[var(--text-primary)]"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            FAQ
-          </a>
-        </div>
-
-        {/* CTA */}
-        <a
-          href="#cta"
-          className="btn btn-primary btn-sm"
-          id="nav-cta"
-        >
-          <SparklesIcon />
-          Start generating
-        </a>
-      </div>
-    </nav>
-  );
-}
 
 function HeroSection() {
   const { ref, isVisible } = useInView(0.1);
@@ -541,7 +476,7 @@ function HeroSection() {
         style={{ backgroundColor: "var(--green-text)", animationDelay: "1.5s" }}
       />
 
-      <div className="relative z-10 max-w-[1280px] mx-auto px-6 md:px-12 text-center">
+      <div className="relative z-10 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12 text-center pt-20">
         <div
           className={`transition-all duration-700 ${
             isVisible
@@ -573,13 +508,13 @@ function HeroSection() {
             style={{ color: "var(--text-secondary)" }}
           >
             Turn your product idea into structured project documentation — PRD,
-            design system, tech stack, tasks & roadmap. All powered by AI.
+            context, plan, design system & agents. Powered by 5 AI models.
           </p>
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="#cta"
+              href="/generate"
               className="btn btn-primary btn-lg animate-pulse-glow group"
               id="hero-cta-primary"
             >
@@ -628,13 +563,13 @@ function TerminalPreview() {
     { text: "$ arrobuild generate --idea", color: "var(--text-tertiary)" },
     { text: '> "I want to build a study planner app for students..."', color: "var(--green-text)" },
     { text: "", color: "" },
-    { text: "⠋ Generating context.md ............ done ✓", color: "var(--green-text)" },
     { text: "⠋ Generating prd.md ................ done ✓", color: "var(--green-text)" },
+    { text: "⠋ Generating context.md ............ done ✓", color: "var(--green-text)" },
+    { text: "⠋ Generating plan.md ............... done ✓", color: "var(--green-text)" },
     { text: "⠋ Generating design-system.md ...... done ✓", color: "var(--green-text)" },
-    { text: "⠋ Generating tech-stack.md ......... done ✓", color: "var(--green-text)" },
-    { text: "⠋ Generating tasks.md .............. done ✓", color: "var(--green-text)" },
+    { text: "⠋ Generating agents.md ............. done ✓", color: "var(--green-text)" },
     { text: "", color: "" },
-    { text: "✓ 5 files generated in 47s", color: "#ffffff" },
+    { text: "✓ 5 files generated in 1m 12s", color: "#ffffff" },
     { text: "✓ Exported to arrobuild-studyplanner.zip", color: "var(--green-text)" },
   ];
 
@@ -671,7 +606,7 @@ function TerminalPreview() {
       </div>
 
       {/* Terminal Body */}
-      <div className="p-5 font-mono text-[13px] leading-6 min-h-[280px]">
+      <div className="p-4 sm:p-5 font-mono text-[12px] sm:text-[13px] leading-6 min-h-[240px] sm:min-h-[280px] overflow-x-auto">
         {lines.slice(0, visibleLines).map((line, i) => (
           <div
             key={i}
@@ -705,8 +640,8 @@ function ProblemSection() {
   ];
 
   return (
-    <section id="problem" className="py-24 relative">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+    <section id="problem" className="py-16 md:py-24 relative">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
         <div ref={ref} className="text-center mb-16">
           <span
             className={`text-label block mb-3 transition-all duration-500 ${
@@ -735,25 +670,13 @@ function ProblemSection() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {problems.map((p, i) => {
-            const { ref: cardRef, isVisible: cardVisible } = useInView(0.1);
-            return (
-              <div
-                key={i}
-                ref={cardRef}
-                className={`card card-interactive transition-all duration-500 ${
-                  cardVisible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-6"
-                }`}
-                style={{ transitionDelay: `${i * 80}ms` }}
-              >
-                <span className="text-2xl mb-3 block">{p.emoji}</span>
-                <h3 className="text-h3 mb-1">{p.title}</h3>
-                <p className="text-body">{p.desc}</p>
-              </div>
-            );
-          })}
+          {problems.map((p, i) => (
+            <FadeInCard key={p.title} index={i} className="card card-interactive">
+              <span className="text-2xl mb-3 block">{p.emoji}</span>
+              <h3 className="text-h3 mb-1">{p.title}</h3>
+              <p className="text-body">{p.desc}</p>
+            </FadeInCard>
+          ))}
         </div>
       </div>
     </section>
@@ -764,7 +687,7 @@ function FeaturesSection() {
   const { ref, isVisible } = useInView();
 
   return (
-    <section id="features" className="py-24 relative">
+    <section id="features" className="py-16 md:py-24 relative scroll-mt-24">
       {/* Subtle separator */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px"
@@ -774,7 +697,7 @@ function FeaturesSection() {
         }}
       />
 
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
         <div ref={ref} className="text-center mb-16">
           <span
             className={`text-label block mb-3 transition-all duration-500 ${
@@ -797,34 +720,40 @@ function FeaturesSection() {
               isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             }`}
           >
-            Every file is structured, framework-aware, and ready to paste into
-            your project root.
+            1 file gratis, hingga 8 file di tier Unlimited — semuanya
+            framework-aware dan siap paste ke root proyek.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {generatedFiles.map((file, i) => {
-            const { ref: cardRef, isVisible: cardVisible } = useInView(0.1);
             const Icon = file.icon;
             return (
-              <div
-                key={i}
-                ref={cardRef}
-                className={`card card-interactive group cursor-default transition-all duration-500 ${
-                  cardVisible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-6"
-                }`}
-                style={{ transitionDelay: `${i * 60}ms` }}
+              <FadeInCard
+                key={file.name}
+                index={i}
+                delayStep={60}
+                className="card card-interactive group cursor-default"
               >
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 transition-colors duration-150"
-                  style={{
-                    backgroundColor: "var(--bg-card)",
-                    border: "1px solid var(--bg-border)",
-                  }}
-                >
-                  <Icon className="w-5 h-5 text-[var(--green-text)] group-hover:scale-110 transition-transform" />
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-150"
+                    style={{
+                      backgroundColor: "var(--bg-card)",
+                      border: "1px solid var(--bg-border)",
+                    }}
+                  >
+                    <Icon className="w-5 h-5 text-[var(--green-text)] group-hover:scale-110 transition-transform" />
+                  </div>
+                  <span
+                    className="text-[10px] font-medium px-2 py-0.5 rounded-full border shrink-0"
+                    style={{
+                      color: "var(--text-tertiary)",
+                      borderColor: "var(--bg-border)",
+                    }}
+                  >
+                    {file.tier}
+                  </span>
                 </div>
                 <h3
                   className="font-mono text-[13px] font-medium mb-2"
@@ -833,7 +762,7 @@ function FeaturesSection() {
                   {file.name}
                 </h3>
                 <p className="text-body text-[13px]">{file.desc}</p>
-              </div>
+              </FadeInCard>
             );
           })}
         </div>
@@ -846,7 +775,7 @@ function HowItWorksSection() {
   const { ref, isVisible } = useInView();
 
   return (
-    <section id="how-it-works" className="py-24 relative">
+    <section id="how-it-works" className="py-16 md:py-24 relative scroll-mt-24">
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px"
         style={{
@@ -855,7 +784,7 @@ function HowItWorksSection() {
         }}
       />
 
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
         <div ref={ref} className="text-center mb-16">
           <span
             className={`text-label block mb-3 transition-all duration-500 ${
@@ -876,20 +805,9 @@ function HowItWorksSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
           {howItWorks.map((step, i) => {
-            const { ref: stepRef, isVisible: stepVisible } = useInView(0.1);
             const Icon = step.icon;
             return (
-              <div
-                key={i}
-                ref={stepRef}
-                className={`text-center transition-all duration-600 ${
-                  stepVisible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-8"
-                }`}
-                style={{ transitionDelay: `${i * 150}ms` }}
-              >
-                {/* Step number */}
+              <FadeInStep key={step.step} index={i}>
                 <div
                   className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 glow-green-sm"
                   style={{
@@ -907,7 +825,7 @@ function HowItWorksSection() {
                 </div>
                 <h3 className="text-h2 mb-2">{step.title}</h3>
                 <p className="text-body max-w-[260px] mx-auto">{step.desc}</p>
-              </div>
+              </FadeInStep>
             );
           })}
         </div>
@@ -918,9 +836,8 @@ function HowItWorksSection() {
 
 function StatsSection() {
   const { ref, isVisible } = useInView();
-  const filesCount = useCounter(10, isVisible);
-  const secondsCount = useCounter(120, isVisible);
-  const frameworksCount = useCounter(5, isVisible);
+  const filesCount = useCounter(8, isVisible);
+  const modelsCount = useCounter(5, isVisible);
 
   return (
     <section id="stats" className="py-20 relative">
@@ -932,12 +849,12 @@ function StatsSection() {
         }}
       />
 
-      <div ref={ref} className="max-w-[1280px] mx-auto px-6 md:px-12">
+      <div ref={ref} className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
           {[
-            { value: `${filesCount}+`, label: "Generated files per project" },
-            { value: `< ${secondsCount}s`, label: "Average generation time" },
-            { value: `${frameworksCount}`, label: "Framework presets" },
+            { value: `1–${filesCount}`, label: "File per project (by tier)" },
+            { value: `< 2 min`, label: "Bundle lengkap (5 file)" },
+            { value: `${modelsCount}`, label: "Model AI tersedia" },
           ].map((stat, i) => (
             <div
               key={i}
@@ -982,7 +899,7 @@ function PresetSection() {
   ];
 
   return (
-    <section id="presets" className="py-24 relative">
+    <section id="presets" className="py-16 md:py-24 relative scroll-mt-24">
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px"
         style={{
@@ -991,7 +908,7 @@ function PresetSection() {
         }}
       />
 
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
         <div ref={ref} className="text-center mb-12">
           <span
             className={`text-label block mb-3 transition-all duration-500 ${
@@ -1020,12 +937,12 @@ function PresetSection() {
         </div>
 
         {/* Tabs */}
-        <div className="flex justify-center gap-2 mb-8">
+        <div className="flex justify-start sm:justify-center gap-2 mb-8 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
           {presets.map((p, i) => (
             <button
               key={i}
               onClick={() => setActiveTab(i)}
-              className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 cursor-pointer shrink-0 ${
                 activeTab === i
                   ? "text-[var(--green-text)]"
                   : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
@@ -1074,7 +991,7 @@ function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="py-24 relative">
+    <section id="faq" className="py-16 md:py-24 relative scroll-mt-24">
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px"
         style={{
@@ -1083,7 +1000,7 @@ function FAQSection() {
         }}
       />
 
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
         <div ref={ref} className="text-center mb-16">
           <span
             className={`text-label block mb-3 transition-all duration-500 ${
@@ -1115,11 +1032,11 @@ function FAQSection() {
               >
                 <button
                   onClick={() => setOpenIndex(isOpen ? null : i)}
-                  className="w-full flex items-center justify-between text-left py-1 cursor-pointer"
+                  className="w-full flex items-center justify-between text-left py-1 cursor-pointer gap-4"
                   id={`faq-toggle-${i}`}
                 >
                   <span
-                    className="text-[15px] font-medium"
+                    className="text-[14px] sm:text-[15px] font-medium"
                     style={{ color: "var(--text-primary)" }}
                   >
                     {faq.q}
@@ -1132,7 +1049,7 @@ function FAQSection() {
                 </button>
                 <div
                   className={`overflow-hidden transition-all duration-200 ${
-                    isOpen ? "max-h-[300px] mt-3" : "max-h-0"
+                    isOpen ? "max-h-[400px] mt-3" : "max-h-0"
                   }`}
                 >
                   <p className="text-body leading-relaxed pb-1">{faq.a}</p>
@@ -1148,15 +1065,6 @@ function FAQSection() {
 
 function CTASection() {
   const { ref, isVisible } = useInView();
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setSubmitted(true);
-    }
-  };
 
   return (
     <section id="cta" className="py-24 relative">
@@ -1170,163 +1078,67 @@ function CTASection() {
 
       <div ref={ref} className="max-w-[1280px] mx-auto px-6 md:px-12">
         <div
-          className={`card card-featured max-w-2xl mx-auto text-center py-12 px-8 relative overflow-hidden transition-all duration-700 ${
+          className={`card card-featured max-w-2xl mx-auto text-center py-16 px-8 relative overflow-hidden transition-all duration-700 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
           {/* Background glow */}
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full opacity-10"
+            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-10"
             style={{
               background:
-                "radial-gradient(circle, rgba(34,197,94,0.4) 0%, transparent 70%)",
+                "radial-gradient(circle, rgba(34,197,94,0.5) 0%, transparent 70%)",
             }}
           />
 
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 mb-6">
-              <RocketIcon className="w-6 h-6 text-[var(--green-text)]" />
+              <span className="badge badge-success">
+                <RocketIcon className="w-3.5 h-3.5" />
+                Live & free to use
+              </span>
             </div>
 
             <h2
-              className="text-[clamp(1.5rem,3vw,2rem)] font-medium tracking-[-0.5px] mb-3"
+              className="text-[clamp(1.5rem,3vw,2.25rem)] font-medium tracking-[-0.5px] mb-4"
               style={{ color: "#ffffff" }}
             >
               Ready to build with a plan?
             </h2>
-            <p className="text-body-lg mb-8 max-w-md mx-auto">
-              Get notified when ArroBuild launches. Be among the first to
-              generate your project foundation.
+            <p className="text-body-lg mb-10 max-w-md mx-auto">
+              Generate PRD gratis sekarang, atau upgrade untuk bundle 5–8 file
+              dengan model AI premium.
             </p>
 
-            {!submitted ? (
-              <form
-                onSubmit={handleSubmit}
-                className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a
+                href="/generate"
+                className="btn btn-primary btn-lg animate-pulse-glow group w-full sm:w-auto"
+                id="cta-start-btn"
               >
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  id="cta-email-input"
-                  className="flex-1 px-4 py-3 rounded-lg text-[14px] transition-all duration-150 focus:ring-2"
-                  style={{
-                    backgroundColor: "var(--bg-base)",
-                    border: "1px solid var(--bg-border)",
-                    color: "var(--text-primary)",
-                    outline: "none",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "var(--green-500)";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(34,197,94,0.1)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "var(--bg-border)";
-                    e.target.style.boxShadow = "none";
-                  }}
-                />
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-lg whitespace-nowrap"
-                  id="cta-submit-btn"
-                >
-                  <SparklesIcon />
-                  Join waitlist
-                </button>
-              </form>
-            ) : (
-              <div className="animate-fade-in">
-                <div className="badge badge-success text-[14px] px-5 py-2">
-                  ✓ You&apos;re on the list!
-                </div>
-                <p
-                  className="mt-3 text-[13px]"
-                  style={{ color: "var(--text-tertiary)" }}
-                >
-                  We&apos;ll send you an email when ArroBuild is ready.
-                </p>
-              </div>
-            )}
+                <SparklesIcon />
+                Mulai generate gratis
+                <ArrowIcon className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </a>
+              <a
+                href="/login"
+                className="btn btn-secondary btn-lg w-full sm:w-auto"
+                id="cta-login-btn"
+              >
+                Masuk / Upgrade
+              </a>
+            </div>
+
+            <p
+              className="mt-6 text-[13px]"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              Free tier tanpa login · Pembayaran Midtrans segera hadir
+            </p>
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer
-      className="py-12 border-t"
-      style={{ borderColor: "var(--bg-border)" }}
-    >
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-7 h-7 rounded-md flex items-center justify-center"
-              style={{ backgroundColor: "var(--green-500)" }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#052e16"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M5 12h14" />
-                <path d="M13 6l6 6-6 6" />
-              </svg>
-            </div>
-            <span
-              className="text-[14px] font-medium"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              ArroBuild
-            </span>
-          </div>
-
-          {/* Links */}
-          <div className="flex items-center gap-6">
-            <a
-              href="https://twitter.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="transition-colors duration-150 hover:text-[var(--text-primary)]"
-              style={{ color: "var(--text-tertiary)" }}
-              aria-label="Follow us on X (Twitter)"
-            >
-              <TwitterIcon />
-            </a>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="transition-colors duration-150 hover:text-[var(--text-primary)]"
-              style={{ color: "var(--text-tertiary)" }}
-              aria-label="View on GitHub"
-            >
-              <GithubIcon />
-            </a>
-          </div>
-
-          {/* Copyright */}
-          <p
-            className="text-[12px]"
-            style={{ color: "var(--text-tertiary)" }}
-          >
-            © {new Date().getFullYear()} ArroBuild. All rights reserved.
-          </p>
-        </div>
-      </div>
-    </footer>
   );
 }
 
@@ -1342,6 +1154,7 @@ export default function LandingPage() {
       <HowItWorksSection />
       <StatsSection />
       <PresetSection />
+      <PricingSection />
       <FAQSection />
       <CTASection />
       <Footer />

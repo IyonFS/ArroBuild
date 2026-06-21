@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id // Supabase Auth user UUID
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscription Subscription?
+  projects     Project[]
+  payments     Payment[]
+
+  @@map("users")
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String             @unique
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier      SubscriptionTier   @default(FREE)
+  status    SubscriptionStatus @default(ACTIVE)
+  expiresAt DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Owner (optional — anonymous free tier allowed)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Input
+  idea           String @db.Text
+  clarifications Json // { platform, monetization, scope }
+  presets        Json // { framework, design, agentTool }
+
+  // User info (captured at download)
+  email      String?
+  emailOptIn Boolean @default(false)
+
+  // Status
+  status ProjectStatus @default(PENDING)
+
+  // Relations
+  files GeneratedFile[]
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model GeneratedFile {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // File info
+  fileKey  String // e.g. "context", "prd", "tech-stack"
+  fileName String // e.g. "context.md"
+  label    String // e.g. "Project Context"
+  content  String @db.Text
+
+  // Relations
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, fileKey])
+  @@map("generated_files")
+}
+
+enum SubscriptionTier {
+  FREE
+  STARTER
+  PRO
+  UNLIMITED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PENDING
+}
+
+enum ProjectStatus {
+  PENDING
+  GENERATING
+  DONE
+  FAILED
+}
+
+model Payment {
+  id        String             @id @default(cuid())
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  orderId   String             @unique
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier      SubscriptionTier
+  amount    Int
+  status    PaymentStatus      @default(PENDING)
+  snapToken String?
+
+  @@index([userId])
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+}

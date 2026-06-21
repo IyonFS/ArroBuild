@@ -29,19 +29,19 @@ User menginput deskripsi ide produk mereka → sistem menghasilkan paket 10+ fil
 
 | Layer | Teknologi |
 |---|---|
-| **Frontend** | Next.js 14 (App Router) |
-| **Styling** | Tailwind CSS |
+| **Frontend** | Next.js 15 (App Router) |
+| **Styling** | Tailwind CSS v4 |
 | **UI Components** | shadcn/ui |
 | **Backend** | Next.js API Routes / Route Handlers |
 | **Database** | PostgreSQL (via Supabase) |
-| **ORM** | Prisma |
-| **Auth** | Supabase Auth |
-| **AI / LLM** | Anthropic Claude API (claude-sonnet-4-6) |
-| **File Generation** | JSZip (client-side zip generation) |
-| **Email Capture** | Resend |
-| **Payment** | Stripe |
+| **ORM** | Prisma v7 |
+| **Auth** | Supabase Auth (planned) |
+| **AI / LLM** | Google Gemini API (gemini-2.5-flash free, gemini-2.5-pro paid) |
+| **File Generation** | JSZip (server-side zip) |
+| **Email Capture** | Resend (planned) |
+| **Payment** | Midtrans (Indonesia) + Stripe (international) |
 | **Deployment** | Vercel |
-| **Storage** | Supabase Storage (untuk project files) |
+| **Analytics** | Vercel Analytics |
 
 ---
 
@@ -121,15 +121,24 @@ Detail lengkap lihat: `user-flow.md`
 
 ## AI Generation Architecture
 
-Generation engine menggunakan Anthropic Claude API dengan pendekatan sequential generation:
+Generation engine menggunakan Google Gemini API dengan pendekatan sequential generation dan tier system:
 
-1. Setiap file di-generate dengan prompt terpisah yang menyertakan: idea user, jawaban clarification, preset yang dipilih, dan context dari file yang sudah di-generate sebelumnya
-2. `context.md` selalu di-generate pertama karena menjadi fondasi untuk semua file lain
-3. Streaming response digunakan untuk menampilkan progress real-time ke user
-4. Setiap generated file disimpan ke Supabase sebelum di-zip
+### Tier System
+| Tier | Model | File yang dihasilkan |
+|------|-------|---------------------|
+| Free | `gemini-2.5-flash` | PRD saja |
+| Paid | `gemini-2.5-pro` | PRD, Context, Plan, Design-System, Agents |
+| Unlimited | `gemini-2.5-pro` | Semua Paid + Production-Hardening, Scale-Performance, Growth-Quality |
 
-**Model:** `claude-sonnet-4-6`  
-**Max tokens per file:** 4000  
+### Token Optimization
+Menggunakan `summarizeForContext()` untuk mengirim ringkasan dokumen sebelumnya, bukan full content. Menghemat ~72% input tokens.
+
+**Alur generation:**
+1. Context → PRD (dengan context summary) → Plan → Design-System → Agents → [Advanced files]
+2. Streaming response untuk progress real-time
+3. Retry logic (3x) dengan exponential backoff dan markdown validation
+
+**Max tokens per file:** 4096 (free) / 8192 (paid)  
 **Temperature:** 0.7
 
 ---
@@ -192,8 +201,8 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-# Anthropic
-ANTHROPIC_API_KEY=
+# Google Gemini
+GEMINI_API_KEY=
 
 # Stripe
 STRIPE_SECRET_KEY=
@@ -211,11 +220,12 @@ NEXT_PUBLIC_APP_URL=
 
 ## Pricing Tiers
 
-| Tier | Harga | Projects | Files | Presets |
+| Tier | Harga | Projects | Files | Model AI |
 |---|---|---|---|---|
-| **Free** | $0 | 1 project | 5 file dasar | 1 preset per kategori |
-| **Pro** | $9/bulan | Unlimited | 11+ file | Semua presets + iterasi |
-| **Team** | $29/bulan | Unlimited | 11+ file | Pro + kolaborasi + template organisasi |
+| **Free** | Rp 0 | 1 project | PRD saja | Gemini Flash (gratis) |
+| **Starter** | Rp 49K/bulan | 10 projects | 5 file | Gemini Pro |
+| **Pro** | Rp 99K/bulan | Unlimited | 5 file + revisi | Gemini Pro |
+| **Unlimited** | Rp 199K/bulan | Unlimited | 8 file (semua) | Gemini Pro |
 
 ---
 

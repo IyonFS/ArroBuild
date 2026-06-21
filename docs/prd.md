@@ -1,8 +1,8 @@
 # ArroBuild — Product Requirements Document
 
-**Version:** 1.0  
-**Status:** Draft  
-**Last Updated:** 2025  
+**Version:** 2.0  
+**Status:** Active  
+**Last Updated:** 2026-06-20  
 **Tagline:** Generate everything before your first line of code.
 
 ---
@@ -107,23 +107,45 @@ ArroBuild bukan sekadar PRD generator. ArroBuild adalah **operating system untuk
 - Struktur folder: `/arrobuild-[project-name]/`
 - Penamaan file konsisten dan siap paste ke root proyek
 
-### 5.2 Generated File Bundle
+### 5.2 Generated File Bundle (v2 — Tier-Based)
+
+**Free Tier (1 file):**
 
 | File | Isi |
 |---|---|
-| `context.md` | Master file proyek — source of truth, selalu dibaca AI agent pertama |
 | `prd.md` | Product Requirements Document lengkap |
-| `design-system.md` | Color palette, typography, spacing, component guidelines |
-| `ui-rules.md` | Aturan UX: mobile-first, aksesibilitas, no horizontal scroll, dll |
-| `user-flow.md` | Alur pengguna dari landing page hingga core feature |
-| `database-schema.md` | Struktur database awal dengan tabel dan relasi |
-| `tech-stack.md` | Stack teknologi yang direkomendasikan + justifikasi |
-| `agents.md` | Daftar AI agent dan tanggung jawabnya per area |
-| `cursor-rules.md` | Aturan coding untuk AI agent (atau CLAUDE.md / .windsurfrules) |
-| `tasks.md` | Project breakdown per phase yang siap dieksekusi |
-| `mvp-roadmap.md` | Roadmap 4 minggu dari setup hingga launch |
 
-### 5.3 Premium Features
+**Paid Tier (5 files):**
+
+| File | Isi |
+|---|---|
+| `prd.md` | Product Requirements Document lengkap |
+| `context.md` | Master file proyek — source of truth, selalu dibaca AI agent pertama |
+| `plan.md` | Development plan, tech stack, tasks, roadmap, budget |
+| `design-system.md` | Color palette, typography, spacing, component guidelines |
+| `agents.md` | Daftar AI agent, coding rules, workflow per area |
+
+**Unlimited Tier (8 files — semua Paid + 3 advanced):**
+
+| File | Isi |
+|---|---|
+| `production-hardening.md` | Security, monitoring, CI/CD, incident response |
+| `scale-performance.md` | Scaling strategy, performance optimization, cost projection |
+| `growth-quality.md` | Go-to-market, acquisition, testing, analytics |
+
+### 5.3 Multi-Model AI (v2)
+
+User dapat memilih model AI favorit mereka saat generation:
+
+| Model | Provider | Tersedia di Tier |
+|-------|----------|-----------------|
+| Gemini 2.5 Flash | Google | Free, Paid, Unlimited |
+| DeepSeek V3 | DeepSeek | Free, Paid, Unlimited |
+| Gemini 2.5 Pro | Google | Paid, Unlimited |
+| GPT-4o | OpenAI | Paid, Unlimited |
+| Claude Sonnet 4 | Anthropic | Paid, Unlimited |
+
+### 5.4 Premium Features
 
 #### Framework-Aware Output
 - Dokumentasi menyesuaikan stack yang dipilih
@@ -152,49 +174,85 @@ ArroBuild bukan sekadar PRD generator. ArroBuild adalah **operating system untuk
 
 ## 6. MVP Scope
 
-### Included in MVP
+### Included in MVP v2
 
 - [x] Idea input form
 - [x] Clarification questions (3 pertanyaan)
 - [x] 3 preset selection (Framework, Design, Agent Tool)
-- [x] AI generation untuk 5 file inti: `context.md`, `prd.md`, `tech-stack.md`, `tasks.md`, `mvp-roadmap.md`
+- [x] Tier system (Free: 1 file / Paid: 5 files / Unlimited: 8 files)
+- [x] Multi-model AI: Gemini Flash, DeepSeek V3 (free), Gemini Pro, GPT-4o, Claude Sonnet 4 (paid)
 - [x] Markdown preview
 - [x] Download sebagai `.zip`
 - [x] 1 free project per user (tanpa login)
 - [x] Email capture sebelum download
+- [x] Token optimization (summarizeForContext, ~72% hemat)
+- [x] Retry logic + markdown validation
 
 ### Not in MVP
 
 - [ ] User authentication & dashboard
 - [ ] Project history & storage
 - [ ] Inline editing
-- [ ] Full 11-file bundle (Pro feature)
-- [ ] Payment integration
-- [ ] Framework-specific deep customization
+- [ ] Payment integration (Midtrans)
+- [ ] Chat/revision flow
 - [ ] Team collaboration
 
 ---
 
-## 7. Success Metrics
+## 7. Competitive Analysis
 
-### Launch Metrics (Week 1–4)
+### 7.1 ngodingpakeai.com
+
+Platform PRD generator Indonesia yang sudah ada dengan komunitas aktif.
+
+| Aspek | ngodingpakeai | ArroBuild |
+|-------|--------------|-----------|
+| Output | 1 PRD | 1–8 file bundle (tier-based) |
+| Model AI | GPT, Claude, DeepSeek | 5 model: Gemini Flash, DeepSeek V3, Gemini Pro, GPT-4o, Claude Sonnet 4 |
+| Pricing | Rp 75K–349K/bulan | Rp 0–199K/bulan |
+| Free Tier | Terbatas | PRD gratis + 2 model gratis |
+| Unique Value | Komunitas besar, AndalAI chat | Bundle lengkap, preset system, zip export |
+| Login Required | Ya | Tidak (free tier tanpa login) |
+
+### 7.2 Diferensiasi ArroBuild
+
+1. **Bundle lengkap** — bukan cuma PRD, tapi 8 file fondasi proyek
+2. **Multi-model pilihan user** — user bebas pilih model AI yang mereka suka
+3. **Preset system** — Framework × Design × Agent Tool untuk output yang kontekstual
+4. **Zero friction** — free tier tanpa login, langsung generate
+5. **Harga lebih kompetitif** — free tier dengan 2 model AI, paid mulai Rp 49K
+
+### 7.3 Pricing Tiers
+
+| Tier | Harga | Files | Model AI | Fitur |
+|------|-------|-------|----------|-------|
+| **Free** | Rp 0 | 1 (PRD) | 2 model gratis | 1 project, tanpa login |
+| **Starter** | Rp 49K/bulan | 5 | Semua 5 model | 10 projects/bulan |
+| **Pro** | Rp 99K/bulan | 5 | Semua 5 model | Unlimited projects, revisi chat |
+| **Unlimited** | Rp 199K/bulan | 8 | Semua 5 model | Semua Pro + 3 file advanced, selamanya |
+
+---
+
+## 8. Success Metrics
+
+### 8.1 Launch Metrics (Week 1–4)
 - **Activation rate:** % user yang selesai generate minimal 1 project → Target: >60%
 - **Completion rate:** % user yang download file setelah generate → Target: >70%
 - **Email capture rate:** % user yang input email sebelum download → Target: >40%
 
-### Growth Metrics (Month 1–3)
+### 8.2 Growth Metrics (Month 1–3)
 - **Weekly active users (WAU):** Target 500 WAU di bulan ke-3
 - **Virality:** Jumlah project yang di-share atau di-post di komunitas (Twitter/X, Discord indie hackers)
 - **Organic traffic:** Dari SEO keyword "vibe coding", "AI project planning", "cursor rules generator"
 
-### Revenue Metrics (Month 2+)
+### 8.3 Revenue Metrics (Month 2+)
 - **Free-to-Pro conversion:** Target 5–8% dari WAU
 - **MRR target Month 3:** $500 MRR
 - **Churn rate:** <10% per bulan
 
 ---
 
-## 8. User Stories
+## 9. User Stories
 
 ### Epic 1: First-Time Generation
 
@@ -232,7 +290,7 @@ So that Claude always has context about my project at the start of every session
 
 ---
 
-## 9. Constraints & Assumptions
+## 10. Constraints & Assumptions
 
 **Technical Constraints:**
 - Generation time harus <2 menit untuk full bundle
@@ -250,7 +308,7 @@ So that Claude always has context about my project at the start of every session
 
 ---
 
-## 10. Open Questions
+## 11. Open Questions
 
 1. Apakah perlu fitur "re-generate single file" tanpa regenerate seluruh bundle?
 2. Bagaimana handling untuk user yang tidak familiar dengan framework apapun?

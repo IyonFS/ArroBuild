@@ -32,7 +32,7 @@ Agent-agent ini berjalan di backend ArroBuild dan bertanggung jawab menghasilkan
 
 **Output:** Ordered list of generated files dengan status per file.
 
-**Model:** `claude-sonnet-4-6`
+**Model:** `gemini-2.5-pro`
 
 ---
 

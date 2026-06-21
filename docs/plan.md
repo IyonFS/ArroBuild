@@ -1,265 +1,249 @@
-# ArroBuild — MVP Plan
+# ArroBuild — MVP Plan (v2)
 
 **Timeline:** 4 minggu  
 **Target:** Produk live, bisa di-share ke komunitas, bisa capture email  
 **Builder:** 1 developer (solo)  
-**Stack:** Next.js 14 + Tailwind + shadcn/ui + Supabase + Anthropic API + Vercel
+**Stack:** Next.js 15 + Tailwind + shadcn/ui + Supabase + Multi-Model AI (Gemini, GPT, Claude, DeepSeek) + Vercel  
+**Target Market:** Indonesia (Bahasa Indonesia first, multi-model AI)
 
 ---
 
-## Overview Timeline
+## 🗓️ Progress Summary
+
+> Last updated: 2026-06-21
+
+| Phase | Status | Keterangan |
+|---|---|---|
+| Day 1–2: Project Setup | ✅ Done | Next.js, Tailwind, shadcn/ui, ESLint, Prettier, Vercel CI/CD |
+| Day 3: Supabase Setup | ✅ Done | Prisma v7 + pg adapter, migration `init` berhasil |
+| Day 4: Google Gemini API | ✅ Done | SDK, generator.ts, orchestrator.ts, prompt templates |
+| Day 5: Landing Page | ✅ Done | Landing page, dark theme live |
+| Day 6–8: Idea Input + Preset UI | ✅ Done | Halaman `/generate`, 5 step flow |
+| Day 9–10: AI Generation Engine | ✅ Done | SSE route, orchestrator, DB integration |
+| Day 11–12: Generation Progress UI | ✅ Done | SSE consumer, real-time streaming |
+| Week 3: Preview, Export, Email | ✅ Done | Zip export, email capture, toast |
+| Week 4: Launch Prep | ✅ Done | Analytics, SEO, OG Image |
+| **v2: Tier System** | ✅ Done | 3-tier (Free/Paid/Unlimited), multi-model AI |
+| **v2: Token Optimization** | ✅ Done | summarizeForContext(), ~37% token reduction |
+| **v2: Bug Fixes** | ✅ Done | Retry logic, markdown validation, stream wrapper fix |
+| **v2: New File Templates** | ✅ Done | 8 file templates total (PRD→Growth-Quality) |
+| **v2: Multi-Model AI** | ✅ Done | Gemini, GPT-4o, Claude Sonnet 4, DeepSeek V3 |
+| **v2: Auth + Payments** | ✅ Done | Google + email/password, Midtrans sandbox, dashboard |
+
+### ⏩ Next Steps
+
+1. **[DONE]** Halaman `/docs` — edukasi vibe coding per level
+2. **[DONE]** Midtrans sandbox — Snap + confirm + webhook
+3. **[DONE]** Auth — Google + email/password + reset password
+4. **[DONE]** Dashboard + polish UI app pages
+5. **[IN PROGRESS]** Deploy Vercel — lihat `docs/LAUNCH-CHECKLIST.md`
+6. **[TODO]** Cross-browser testing (Chrome, Firefox, Safari, mobile)
+7. **[TODO]** Soft launch ke komunitas
+
+---
+
+## Arsitektur AI Generation (v2)
+
+### Tier System
+
+| Tier | Model AI yang Tersedia | File yang Di-generate | Harga |
+|------|------------------------|----------------------|-------|
+| **Free** | Gemini 2.5 Flash, DeepSeek V3 | PRD saja | Rp 0 |
+| **Paid** | Semua Free + Gemini 2.5 Pro, GPT-4o, Claude Sonnet 4 | PRD, Context, Plan, Design-System, Agents | Rp 49K–99K/bulan |
+| **Unlimited** | Semua model (5 pilihan) | Semua Paid + Production-Hardening, Scale-Performance, Growth-Quality | Rp 199K/bulan (selamanya) |
+
+### Model AI yang Didukung
+
+| Model | Provider | Tier | Kelebihan |
+|-------|----------|------|-----------|
+| **Gemini 2.5 Flash** | Google | Free | Cepat, gratis, cocok untuk PRD sederhana |
+| **DeepSeek V3** | DeepSeek | Free | Open-source, kualitas tinggi, biaya rendah |
+| **Gemini 2.5 Pro** | Google | Paid | Output panjang berkualitas, reasoning kuat |
+| **GPT-4o** | OpenAI | Paid | Instruksi akurat, formatting rapi |
+| **Claude Sonnet 4** | Anthropic | Paid | Nuansa bahasa terbaik, detail mendalam |
+
+User bisa memilih model AI favorit mereka di halaman preset sebelum generation dimulai. Free tier terbatas pada model gratis, sementara Paid/Unlimited mendapat akses ke semua model premium.
+
+### Token Optimization Strategy
+
+**Masalah sebelumnya:** Setiap prompt mengirim full content file sebelumnya sebagai context → boros token (~20,000 input tokens per generation).
+
+**Solusi:** `summarizeForContext()` — fungsi yang mengekstrak heading + first sentence per section, menjaga context tetap relevan sambil menghemat ~60% token.
+
+| File | Input Tokens (Sebelum) | Input Tokens (Sesudah) | Penghematan |
+|------|----------------------|----------------------|-------------|
+| PRD | ~500 | ~500 | 0% |
+| Context | ~4,500 | ~1,200 | 73% |
+| Plan | ~5,000 | ~1,500 | 70% |
+| Design-System | ~5,500 | ~1,200 | 78% |
+| Agents | ~4,500 | ~1,100 | 76% |
+| **Total (Paid)** | **~20,000** | **~5,500** | **~72%** |
+
+### Generation Flow
 
 ```
-Week 1  → Foundation & Setup
-Week 2  → Core Generation Engine
-Week 3  → UI Polish & Export
-Week 4  → Launch Prep & Go Live
+User Input → Tier Check → User Picks AI Model → Sequential Generation:
+  
+  Free:      Model (Flash/DeepSeek) → PRD
+  Paid:      Model (5 pilihan) → Context → PRD → Plan → Design-System → Agents
+  Unlimited: Model (5 pilihan) → Context → PRD → Plan → Design → Agents → Prod → Scale → Growth
 ```
 
----
-
-## Week 1 — Foundation & Setup
-
-**Goal:** Semua infrastruktur siap, bisa akses semua service, halaman dasar sudah ada.
-
-### Day 1–2: Project Setup
-
-- [x] Init Next.js 14 project dengan TypeScript (`npx create-next-app@latest`)
-- [x] Setup Tailwind CSS + shadcn/ui
-- [x] Konfigurasi ESLint + Prettier
-- [x] Setup `.env.local` dengan semua environment variables
-- [x] Push ke GitHub, setup repository
-- [x] Deploy ke Vercel (empty project, pastikan CI/CD jalan)
-- [x] Setup domain (jika sudah punya) atau gunakan `.vercel.app`
-
-### Day 3: Supabase Setup
-
-- [ ] Buat Supabase project baru
-- [ ] Setup Prisma dengan PostgreSQL connection string dari Supabase
-- [ ] Buat schema awal:
-  ```prisma
-  model Project {
-    id          String   @id @default(cuid())
-    idea        String
-    presets     Json
-    status      String   @default("pending")
-    email       String?
-    files       GeneratedFile[]
-    createdAt   DateTime @default(now())
-  }
-
-  model GeneratedFile {
-    id        String   @id @default(cuid())
-    projectId String
-    fileName  String
-    content   String   @db.Text
-    project   Project  @relation(fields: [projectId], references: [id])
-  }
-  ```
-- [ ] Run `npx prisma migrate dev` — buat tabel
-- [ ] Test koneksi database
-
-### Day 4: Anthropic API Setup
-
-- [ ] Install Anthropic SDK (`npm install @anthropic-ai/sdk`)
-- [ ] Buat `/lib/ai/generator.ts` — utility function untuk call API
-- [ ] Test simple generation dengan hardcoded prompt
-- [ ] Verifikasi response streaming berjalan
-- [ ] Estimasi biaya per generation (kalkulasi token)
-
-### Day 5: Landing Page (Skeleton)
-
-- [ ] Buat layout utama dengan sidebar + main content area
-- [ ] Landing page dengan: hero section, problem/solution section, CTA button
-- [ ] Dark theme sesuai design-system.md diterapkan (warna, font, spacing)
-- [ ] Responsive untuk mobile
-- [ ] Deploy dan review di production
-
-**Deliverable Week 1:** Project jalan di production, database siap, API terhubung, landing page live.
+### Bug Fixes Applied
+- ✅ Retry logic dengan exponential backoff (1.5s → 3s → 6s)
+- ✅ Markdown validation (cek heading, min length 800 chars)
+- ✅ Auto-strip markdown code block wrapper dari output AI
+- ✅ Retry event dikirim ke UI agar chunks di-reset
+- ✅ Prompt optimization: XML-style instructions, kurangi redundansi
 
 ---
 
-## Week 2 — Core Generation Engine
+## Perhitungan Modal & Biaya
 
-**Goal:** User bisa input idea → sistem generate file → tampil di UI.
+### Biaya AI Per Generation
 
-### Day 6–7: Idea Input & Clarification Flow
+**Free Tier:**
 
-- [ ] Buat halaman `/generate`
-- [ ] Step 1: Textarea untuk idea input
-  - Validasi minimal 50 karakter
-  - Character counter
-  - Contoh placeholder text
-- [ ] Step 2: Clarification Questions component
-  - 3 pertanyaan: platform, monetization, scope
-  - Toggle/select button UI (bukan dropdown)
-  - Skip option per pertanyaan
-- [ ] State management antar steps (gunakan `useState` atau Zustand)
-- [ ] Progress indicator antar steps (dots / step pills)
+| Model | File | Input Tokens | Output Tokens | Cost |
+|-------|------|-------------|--------------|------|
+| Gemini 2.5 Flash | PRD | ~500 | ~3,000 | **$0.00** (free tier Google) |
+| DeepSeek V3 | PRD | ~500 | ~3,000 | **~$0.001** |
 
-### Day 8: Preset Selector
+**Paid Tier (5 files) — per model:**
 
-- [ ] Step 3: Preset Selection UI
-  - 3 kategori: Framework, Design, Agent Tool
-  - Card grid dengan icon per pilihan
-  - Visual active state (border green, checkmark)
-  - Default selection untuk masing-masing kategori
-- [ ] Store semua selection ke state
+| Model | Est. Cost per Generation | Pricing Ref |
+|-------|-------------------------|-------------|
+| Gemini 2.5 Pro | ~$0.024 | $1.25/1M in, $10/1M out |
+| GPT-4o | ~$0.035 | $2.50/1M in, $10/1M out |
+| Claude Sonnet 4 | ~$0.038 | $3/1M in, $15/1M out |
+| DeepSeek V3 | ~$0.005 | $0.27/1M in, $1.10/1M out |
 
-### Day 9–10: AI Generation Engine
+**Unlimited Tier (8 files) — per model:**
 
-- [ ] Buat `/app/api/generate/route.ts` — POST endpoint
-- [ ] Buat prompt templates untuk 5 file MVP:
-  - `lib/ai/prompts/context.ts`
-  - `lib/ai/prompts/prd.ts`
-  - `lib/ai/prompts/tech-stack.ts`
-  - `lib/ai/prompts/tasks.ts`
-  - `lib/ai/prompts/mvp-roadmap.ts`
-- [ ] Sequential generation: generate satu file, simpan, lanjut ke file berikutnya
-- [ ] Streaming progress ke client via Server-Sent Events (SSE)
-- [ ] Simpan setiap file ke database setelah selesai di-generate
-- [ ] Error handling: jika 1 file gagal, retry 1x sebelum skip
+| Model | Est. Cost per Generation |
+|-------|-------------------------|
+| Gemini 2.5 Pro | ~$0.036 |
+| GPT-4o | ~$0.053 |
+| Claude Sonnet 4 | ~$0.057 |
+| DeepSeek V3 | ~$0.008 |
 
-### Day 11–12: Generation Progress UI
+### Analisis Profitabilitas
 
-- [ ] Step 4: Generation Progress screen
-  - List 5 file dengan status (pending / generating / done)
-  - Animated spinner untuk file yang sedang di-generate
-  - Green checkmark untuk file yang selesai
-  - Real-time update via SSE
-- [ ] Setelah semua selesai, auto-redirect ke preview
+| Tier | Harga/bulan | Avg Cost/gen (worst case) | Generations break-even |
+|------|------------|--------------------------|------------------------|
+| Free | Rp 0 | ~$0.001 (DeepSeek) | N/A (lead gen) |
+| Starter | Rp 49K (~$3) | ~$0.038 (Claude) | ~79 generations |
+| Pro | Rp 99K (~$6) | ~$0.038 (Claude) | ~158 generations |
+| Unlimited | Rp 199K (~$12) | ~$0.057 (Claude) | ~211 generations |
 
-**Deliverable Week 2:** Full generation flow jalan end-to-end. User bisa input idea dan lihat 5 file di-generate.
+> **Margin tetap tinggi!** Worst case (user selalu pilih Claude Sonnet): Starter user generate 10 project/bulan = ~$0.38 biaya AI → profit margin 87%. Jika user pilih DeepSeek/Gemini, margin bisa 95%+.
 
----
+### Total Modal Operasional Bulanan
 
-## Week 3 — Preview, Export & Email Capture
+| Item | Free (dev) | 100 users | 1000 users |
+|------|-----------|-----------|------------|
+| AI API (Gemini/GPT/Claude/DeepSeek) | $0 | ~$5 | ~$50 |
+| Supabase (Free→Pro) | $0 | $0 | $25 |
+| Vercel (Hobby→Pro) | $0 | $0 | $20 |
+| Domain (arrobuild.com) | $1/bulan | $1 | $1 |
+| Midtrans (payment fee) | $0 | ~$5 | ~$50 |
+| **Total** | **~$1** | **~$11** | **~$146** |
 
-**Goal:** User bisa review hasil, download, dan sistem bisa capture email.
+### Revenue Projection
 
-### Day 13–14: Document Preview
-
-- [ ] Step 5: Preview screen
-  - Tab navigation per file (context, prd, tech-stack, tasks, roadmap)
-  - Markdown renderer (gunakan `react-markdown` + `remark-gfm`)
-  - Syntax highlighting untuk code blocks (`highlight.js` atau `shiki`)
-  - Scroll per file, fixed tabs di atas
-- [ ] Raw markdown toggle (lihat source)
-- [ ] Copy to clipboard button per file
-
-### Day 15: Email Capture
-
-- [ ] Modal email capture sebelum download
-  - Field email
-  - Checkbox: "Beritahu saya saat fitur baru tersedia"
-  - CTA: "Download gratis"
-- [ ] Simpan email ke database (field di tabel `Project`)
-- [ ] Kirim email konfirmasi via Resend:
-  - Subject: "ArroBuild — Foundation siap untuk [nama proyek]"
-  - Isi: link download (atau instruksi), tips cara menggunakan docs
-
-### Day 16: Zip Export
-
-- [ ] Install `jszip` (`npm install jszip`)
-- [ ] Buat `/app/api/export/route.ts`
-  - Ambil semua file dari database berdasarkan project ID
-  - Zip dengan struktur: `/arrobuild-[project-name]/`
-  - Response sebagai binary download
-- [ ] Client-side: trigger download setelah email submit
-- [ ] Test zip dapat dibuka dan file di dalamnya valid
-
-### Day 17–18: Polish & Edge Cases
-
-- [ ] Loading skeleton saat generation berjalan
-- [ ] Error state UI (jika API down, timeout, dll)
-- [ ] Toast notifications untuk success/error
-- [ ] Mobile responsiveness untuk semua steps
-- [ ] Test full flow dari awal sampai download di mobile
-
-**Deliverable Week 3:** Full flow selesai. User bisa generate → preview → input email → download zip.
+| Bulan | Users | Konversi 5% | MRR (avg Rp 75K) | Profit |
+|-------|-------|-------------|-------------------|--------|
+| 1 | 100 | 5 | Rp 375K | Rp 240K |
+| 3 | 500 | 25 | Rp 1.875M | Rp 1.6M |
+| 6 | 1,000 | 50 | Rp 3.75M | Rp 1.9M |
+| 12 | 3,000 | 150 | Rp 11.25M | Rp 9M |
 
 ---
 
-## Week 4 — Launch Prep & Go Live
+## Strategi Penjualan & Go-To-Market
 
-**Goal:** Produk siap di-share ke publik. Analytics terpasang. Feedback loop terbuka.
+### Pricing (Pasar Indonesia)
 
-### Day 19–20: Landing Page Final
+| Tier | Harga | Fitur |
+|------|-------|-------|
+| **Free** | Rp 0 | 1 project, PRD saja, 2 model gratis (Gemini Flash, DeepSeek V3) |
+| **Starter** | Rp 49K/bulan | 10 projects, 5 file, semua 5 model AI (termasuk GPT-4o, Claude Sonnet 4) |
+| **Pro** | Rp 99K/bulan | Unlimited projects, 5 file, semua model, revisi via chat, custom presets |
+| **Unlimited** | Rp 199K/bulan | Semua Pro + 3 file advanced, semua model, selamanya |
 
-- [ ] Hero section dengan tagline final: "Generate everything before your first line of code."
-- [ ] Demo / GIF atau screenshot hasil generation
-- [ ] Section: "What you get" — tampilkan semua 5 file dengan deskripsi singkat
-- [ ] Section: "How it works" — 3 langkah sederhana
-- [ ] Section: FAQ (5 pertanyaan umum)
-- [ ] Footer: link ke Twitter/X, email kontak
+### Payment Gateway
+- **Midtrans** — QRIS, GoPay, OVO, Dana, Transfer Bank (pasar Indonesia)
+- **Stripe** — kartu kredit international (fallback)
 
-### Day 21: Analytics & Tracking
+### Channel Distribusi
 
-- [ ] Pasang Vercel Analytics (sudah built-in, aktifkan di dashboard)
-- [ ] Custom events tracking:
-  - `idea_submitted` — saat user submit idea
-  - `generation_started` — saat generation dimulai
-  - `generation_completed` — saat semua file selesai
-  - `email_captured` — saat email disubmit
-  - `zip_downloaded` — saat zip berhasil didownload
-- [ ] Funnel analysis: berapa % yang dari input sampai download
+1. **Discord & Telegram** — Developer communities Indonesia
+2. **YouTube/TikTok** — Tutorial "Cara Vibe Coding dengan ArroBuild"
+3. **SEO** — Target keywords: "bikin PRD AI", "vibe coding Indonesia", "cursor rules generator", "AI project planning"
+4. **Partnership** — Kolaborasi dengan Raf Dev (ngodingpakeai), channel YouTube dev Indonesia
+5. **WhatsApp groups** — Developer lokal, bootcamp alumni
 
-### Day 22: SEO & Meta
+### Kompetitor: ngodingpakeai.com
 
-- [ ] Title + meta description yang jelas
-- [ ] Open Graph image (buat di Figma atau Canva) — 1200×630px
-- [ ] Twitter card meta
-- [ ] sitemap.xml (gunakan `next-sitemap`)
-- [ ] robots.txt
-- [ ] Daftarkan ke Google Search Console
+| Aspek | ngodingpakeai | ArroBuild |
+|-------|--------------|-----------|
+| Output | 1 PRD | 1–8 file bundle |
+| Model | Multi-model (GPT, Claude, DeepSeek) | **5 model**: Gemini Flash, DeepSeek V3, Gemini Pro, GPT-4o, Claude Sonnet 4 |
+| Pricing | Rp 75K–349K/bulan | Rp 0–199K/bulan |
+| Unique Value | Komunitas besar, AndalAI chat | Bundle lengkap, preset system, zip export, pilih model |
+| Payment | Midtrans | Midtrans + Stripe |
 
-### Day 23: Final Testing
+**Diferensiasi utama ArroBuild:**
+- Generate **bundle lengkap** (bukan cuma PRD)
+- **Multi-model AI** — user pilih model favorit (Gemini, GPT, Claude, DeepSeek)
+- **Preset system** (Framework × Design × Agent Tool)
+- **Zero friction** — no login untuk free tier
+- **Harga lebih kompetitif** — free tier yang berguna + 2 model gratis
 
-- [ ] Test full flow di Chrome, Firefox, Safari
-- [ ] Test di mobile (iOS Safari, Android Chrome)
-- [ ] Test dengan slow 3G connection (Chrome DevTools)
-- [ ] Test error scenarios: API timeout, invalid input, network error
-- [ ] Pastikan tidak ada console errors di production
+---
 
-### Day 24: Soft Launch
+## Halaman Docs / Edukasi
 
-- [ ] Post di komunitas:
-  - Indie Hackers
-  - Reddit r/SideProject
-  - Twitter/X dengan demo GIF atau screen recording
-  - WhatsApp/Telegram group developer lokal
-- [ ] Share ke 5–10 orang yang bisa memberikan feedback
-- [ ] Monitor Vercel logs dan Supabase dashboard
-- [ ] Siapkan form feedback (Tally atau Google Form sederhana)
+Halaman `/docs` akan berisi panduan vibe coding per level:
 
-### Day 25–28: Buffer & Iteration
+### Struktur Konten
 
-- [ ] Perbaiki bug yang ditemukan dari soft launch
-- [ ] Implementasi feedback kritis dari early users
-- [ ] Hard launch: Product Hunt submission (opsional, tergantung kesiapan)
-- [ ] Mulai pikirkan fitur Phase 2 berdasarkan feedback
+1. **Pemula (Free tier)** — "Apa itu Vibe Coding?"
+   - Apa itu AI coding agent
+   - Cara pakai Cursor / Claude Code dasar
+   - Kenapa PRD penting sebelum coding
+   - Tutorial: generate PRD pertama kamu
 
-**Deliverable Week 4:** Produk live dan sudah di-share ke komunitas. Ada setidaknya 10 orang yang sudah menggunakannya.
+2. **Intermediate (Starter/Pro)** — "Menjadi Vibe Coder Produktif"
+   - Setup project dengan dokumen fondasi lengkap
+   - Cara pakai context.md sebagai master reference
+   - Design system integration
+   - AI agent workflow: PM → Architect → UI → Code → Review
+
+3. **Advanced (Unlimited)** — "Production-Ready Vibe Coding"
+   - Production hardening checklist
+   - Scaling dari 0 ke 10K users
+   - Growth hacking untuk indie SaaS
+   - CI/CD dan monitoring setup
 
 ---
 
 ## Post-MVP Backlog (Phase 2)
 
-Fitur-fitur ini tidak masuk MVP tapi sudah diidentifikasi berdasarkan kebutuhan user:
-
 ### High Priority
-- [ ] User authentication (Supabase Auth)
+- [ ] User authentication (Google login via Supabase Auth)
+- [ ] Payment integration (Midtrans untuk Indonesia)
 - [ ] Project dashboard — history semua project
-- [ ] Full 11-file bundle (tambah: design-system, ui-rules, user-flow, database-schema, agents, cursor-rules)
-- [ ] Framework-specific deep customization
-- [ ] Agent tool-specific file format (CLAUDE.md, .windsurfrules, dll)
+- [ ] Halaman `/docs` — edukasi vibe coding per level
+- [ ] Chat/revision flow — revisi file yang sudah di-generate
+- [x] Multi-model support (GPT-4o, Claude Sonnet 4, DeepSeek V3 + Gemini)
 
 ### Medium Priority
-- [ ] Stripe integration — Pro plan $9/bulan
+- [ ] Re-generate single file tanpa regenerate semua
 - [ ] Inline markdown editing sebelum download
 - [ ] Project sharing (share link untuk preview docs)
 - [ ] Design preset dengan token yang lebih spesifik
-- [ ] Re-generate single file tanpa regenerate semua
+- [ ] Custom template library
 
 ### Low Priority
 - [ ] GitHub integration — push docs langsung ke repo
@@ -270,42 +254,32 @@ Fitur-fitur ini tidak masuk MVP tapi sudah diidentifikasi berdasarkan kebutuhan 
 
 ---
 
-## Definition of Done (MVP)
+## Definition of Done (MVP v2)
 
-MVP dianggap selesai dan siap launch ketika:
-
-- [ ] User bisa generate 5 file dari idea dalam <2 menit
-- [ ] Download zip berjalan tanpa error
-- [ ] Email capture berjalan dan email konfirmasi terkirim
-- [ ] Tidak ada blocking bug di Chrome, Firefox, Safari
-- [ ] Mobile-usable (bisa digunakan di smartphone meski bukan dioptimalkan)
-- [ ] Landing page menjelaskan produk dengan jelas kepada orang yang belum tahu
-- [ ] Analytics terpasang dan tracking key events
-- [ ] Setidaknya 1 non-developer bisa mengerti cara menggunakannya
+- [x] User bisa generate PRD gratis dari idea
+- [x] Tier system (Free/Paid/Unlimited) berfungsi
+- [x] Multi-model AI (Gemini, GPT-4o, Claude Sonnet 4, DeepSeek) sesuai tier
+- [x] File bundle sesuai tier (1/5/8 files)
+- [x] Download zip berjalan tanpa error
+- [x] Email capture berjalan
+- [x] Token optimization terpasang (summarizeForContext)
+- [x] Retry logic dan markdown validation berfungsi
+- [x] Landing page menjelaskan produk dengan jelas
+- [x] Analytics terpasang
+- [ ] Halaman docs/edukasi live
+- [ ] Payment gateway terpasang
+- [ ] User auth terpasang
+- [ ] Testing cross-browser selesai
 
 ---
 
-## Risk & Mitigation
+## Risk & Mitigation (Updated)
 
 | Risk | Probability | Impact | Mitigation |
 |---|---|---|---|
-| Anthropic API rate limit saat launch | Medium | High | Implement queue + retry logic. Set rate limit 10 generations/jam |
-| Generation terlalu lama (>3 menit) | Medium | High | Stream progress real-time, set timeout 2 menit per file, fallback ke shorter prompt |
-| AI output tidak konsisten / berkualitas rendah | High | High | A/B test prompt templates minggu 2. Iterasi prompt sebelum launch |
-| Biaya API melebihi ekspektasi | Low | Medium | Monitor cost per generation. Set usage limit di Anthropic dashboard |
-| Tidak ada traction setelah launch | Medium | Medium | Sudah ada plan distribusi ke komunitas. Fokus pada 1 channel dulu |
-
----
-
-## Budget Estimasi (Month 1)
-
-| Item | Estimasi Cost |
-|---|---|
-| Anthropic API (100 free generations) | ~$15–30 |
-| Supabase (Free tier) | $0 |
-| Vercel (Hobby plan) | $0 |
-| Domain (arrobuild.com) | ~$12/tahun |
-| Resend (Free tier: 3000 email/bulan) | $0 |
-| **Total Month 1** | **~$30–45** |
-
-Break-even point: 4–5 Pro subscribers ($9/bulan) sudah cover semua biaya operasional.
+| API rate limit saat launch | Medium | High | Queue + retry. Rate limit 10 gen/jam |
+| Generation terlalu lama (>3 min) | Medium | High | Stream progress, timeout 2 min/file, fallback shorter prompt |
+| AI output tidak konsisten | High | High | Markdown validation + auto-strip wrapper + retry 3x |
+| Biaya API melebihi ekspektasi | Low | Medium | Token optimization (72% hemat). Monitor di Google AI Studio |
+| Kompetisi ngodingpakeai | Medium | Medium | Diferensiasi: bundle, presets, zero-friction free tier |
+| Payment gateway issues (Midtrans) | Low | High | Fallback ke Stripe. Test thorough sebelum launch |
