@@ -97,7 +97,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-[200] transition-all duration-200 ${
+        className={`fixed top-0 left-0 right-0 z-[202] transition-all duration-200 ${
           scrolled || menuOpen ? "glass py-3" : "bg-transparent py-4 md:py-5"
         }`}
       >
@@ -159,7 +159,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
               </>
             )}
             {!hideGenerateCta && (
-              <Link href="/generate" className="btn btn-primary btn-sm">
+              <Link href="/generate" className="hidden sm:inline-flex btn btn-primary btn-sm">
                 Generate
               </Link>
             )}
