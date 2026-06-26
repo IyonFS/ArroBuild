@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       data: {
         orderId,
         userId: profile.id,
-        tier: tierIdToSubscriptionTier(tier.id as "starter" | "pro" | "unlimited"),
+        tier: tierIdToSubscriptionTier(tier.id as "pro" | "unlimited"),
         amount: tier.priceAmount,
         snapToken,
         status: "PENDING",

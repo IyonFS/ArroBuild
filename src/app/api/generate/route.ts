@@ -147,47 +147,16 @@ export async function POST(req: NextRequest) {
       send({ type: "project_created", projectId });
 
       try {
-        for await (const event of orchestrateGeneration(input)) {
+        // Pass projectId to orchestrator so it can handle DB writes internally
+        for await (const event of orchestrateGeneration(input, projectId)) {
           send(event);
-
-          // Persist each completed file to database
-          if (event.type === "file_done" && event.fileKey && event.content) {
-            const fileKey = event.fileKey as FileKey;
-            const fileDef = ALL_FILES[fileKey];
-            await prisma.generatedFile.create({
-              data: {
-                projectId,
-                fileKey,
-                fileName: fileDef?.fileName ?? `${fileKey}.md`,
-                label: fileDef?.label ?? fileKey,
-                content: event.content,
-              },
-            }).catch((err: unknown) => {
-              console.error(`Failed to save file ${fileKey}:`, err);
-              // Non-fatal — don't break the stream
-            });
-          }
-
-          // Mark project status when generation finishes
-          if (event.type === "all_done") {
-            const success = event.success !== false;
-            await prisma.project
-              .update({
-                where: { id: projectId },
-                data: { status: success ? "DONE" : "FAILED" },
-              })
-              .catch((err: unknown) =>
-                console.error("Failed to update project status:", err)
-              );
-            break;
-          }
         }
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Unexpected server error";
         send({ type: "error", error: message });
 
-        // Mark project as FAILED
+        // Backup plan if orchestrator totally crashes
         await prisma.project
           .update({
             where: { id: projectId },

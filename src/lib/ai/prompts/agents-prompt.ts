@@ -1,9 +1,16 @@
+/**
+ * agents-prompt.ts — Tier-aware agents.md prompt builder (v3)
+ *
+ * PRO:     Role definition, rules dasar, tool-specific format (cursor/claude).
+ * PRO_MAX: Architectural rules, quality standards, escalation rules, sangat spesifik.
+ */
+
 import {
   buildBaseContext,
-  summarizeForContext,
-  GenerationInput,
-  AgentToolPreset,
+  type GenerationInput,
+  type AgentToolPreset,
 } from "./shared";
+import type { V3Tier } from "../tier-enforcer";
 
 const AGENT_TOOL_FORMATS: Record<AgentToolPreset, { fileName: string; format: string }> = {
   cursor: {
@@ -32,56 +39,73 @@ const AGENT_TOOL_FORMATS: Record<AgentToolPreset, { fileName: string; format: st
   },
 };
 
+const DEPTH_INSTRUCTIONS: Record<V3Tier, string> = {
+  FREE: ``, // Tidak tersedia untuk FREE
+  PRO: `
+Buat agents.md dengan:
+- AI Agent Role Definition: persona dan tanggung jawab agent
+- Project-specific coding rules (naming convention, file structure)
+- Tech stack rules: hal yang HARUS dan TIDAK BOLEH dilakukan spesifik untuk framework terpilih
+- Response format preferences`,
+
+  PRO_MAX: `
+Buat agents.md yang sangat detail dan production-grade:
+- Agent Persona: role, expertise level, communication style
+- Architectural Rules: pattern yang dipakai, anti-patterns yang dihindari
+- Code Quality Standards: formatting, naming, documentation
+- Framework-Specific Rules:
+  - File structure conventions
+  - State management approach
+  - Error handling patterns
+  - Performance optimization rules
+  - Security rules (SQL injection, XSS, CSRF prevention)
+- Git & Version Control conventions
+- Testing requirements per layer
+- Review checklist yang agent jalankan sebelum submit code
+- Escalation rules: kapan agent harus bertanya sebelum lanjut
+
+Dokumen ini harus bisa di-paste langsung sebagai system prompt dan membuat AI agent langsung memahami konteks penuh project.`,
+};
+
 export function buildAgentsPrompt(
   input: GenerationInput,
-  contextMd: string,
-  prdMd: string
+  tier: V3Tier = "PRO",
+  accumulatedContext = ""
 ): string {
   const base = buildBaseContext(input);
-  const toolConfig = AGENT_TOOL_FORMATS[input.presets.agentTool];
-  const contextSummary = summarizeForContext(contextMd, 400);
-  const prdSummary = summarizeForContext(prdMd, 300);
+  const toolConfig = AGENT_TOOL_FORMATS[input.presets.agentTool] || AGENT_TOOL_FORMATS.custom;
+  const contextBlock = accumulatedContext
+    ? `\n<accumulated_context>\n${accumulatedContext}\n</accumulated_context>\n`
+    : "";
 
-  return `You are a senior developer who is an expert at configuring AI coding agents for maximum productivity.
+  const aiToolInstructions: Record<string, string> = {
+    cursor: `Format output agar optimal untuk file .cursorrules di Cursor IDE. Gunakan format rules yang Cursor kenali (system prompt style).`,
+    "claude-code": `Format output agar optimal untuk file CLAUDE.md. Ikuti struktur yang Claude Code gunakan: project overview, then specific instructions.`,
+    windsurf: `Format output agar optimal untuk .windsurfrules di Windsurf IDE.`,
+    default: `Format sebagai universal system prompt yang bisa dipakai di tools apapun.`,
+  };
 
-Generate an **agents.md** file that defines AI agent roles and coding rules, optimized for the "${input.presets.agentTool}" tool.
+  const toolInstruction =
+    aiToolInstructions[input.presets.agentTool] || aiToolInstructions.default;
+
+  const instruction = tier === "PRO_MAX" ? DEPTH_INSTRUCTIONS.PRO_MAX : DEPTH_INSTRUCTIONS.PRO;
+
+  return `You are a principal engineer specializing in AI-assisted development.
+
+Generate an **agents.md** file — this is the AI coding agent's "instruction manual" for this project.
 
 ${base}
 
 Target Tool: ${input.presets.agentTool} (output format: ${toolConfig.format})
-
-<previous_docs>
-${contextSummary}
----
-${prdSummary}
-</previous_docs>
-
+${contextBlock}
 ---
 
-Generate with these sections:
+${instruction}
+${toolInstruction}
 
-## Part 1: AI Agent Roles
-1. **Product Manager Agent** — validates scope, manages PRD, writes user stories. Include trigger and prompt starter.
-2. **Architect Agent** — technical decisions, API design, DB schema. Include trigger and prompt starter.
-3. **UI/UX Agent** — component creation, design consistency. Include trigger and prompt starter.
-4. **Code Reviewer Agent** — reviews AI-generated code. Include trigger and prompt starter.
-5. **QA Agent** — test cases, validation. Include trigger and prompt starter.
-6. **Documentation Agent** — keeps docs updated. Include trigger and prompt starter.
-
-## Part 2: Coding Rules for ${input.presets.agentTool}
-7. **General Rules** — naming conventions, file structure, import ordering
-8. **Framework-Specific Rules** — rules specific to ${input.presets.framework}
-9. **Error Handling** — patterns for error handling in this stack
-10. **Security Rules** — env vars, input validation, auth patterns
-11. **Performance Rules** — lazy loading, caching, optimization patterns
-
-## Part 3: Workflow
-12. **Agent Workflow** — recommended order of agent usage in a sprint
-13. **Context Loading Protocol** — which files to load in which order
-
-Rules:
-- Output only valid Markdown.
-- Prompt starters must be copy-pasteable.
-- Rules must be specific to the chosen framework and tool.
-- Include code examples where helpful.`;
+=== OUTPUT RULES ===
+- Output ONLY raw markdown. No code block wrapping.
+- Start directly with: # AI Agent Instructions — [product name]
+- Be extremely specific — avoid generic advice.
+- Every rule must be actionable.`;
 }

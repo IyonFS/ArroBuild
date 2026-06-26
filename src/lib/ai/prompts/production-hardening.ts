@@ -1,79 +1,72 @@
-import { buildBaseContext, summarizeForContext, GenerationInput } from "./shared";
+/**
+ * production-hardening.ts — Tier-aware production-hardening.md prompt builder (v3)
+ *
+ * PRO_MAX only: Security, Monitoring, DB Hardening, CI/CD, Incident Response.
+ */
+
+import { buildBaseContext, type GenerationInput } from "./shared";
+import type { V3Tier } from "../tier-enforcer";
 
 export function buildProductionHardeningPrompt(
   input: GenerationInput,
-  contextMd: string,
-  prdMd: string,
-  planMd: string
+  tier: V3Tier = "PRO_MAX", // eslint-disable-line @typescript-eslint/no-unused-vars
+  accumulatedContext = ""
 ): string {
   const base = buildBaseContext(input);
-  const contextSummary = summarizeForContext(contextMd, 300);
-  const prdSummary = summarizeForContext(prdMd, 200);
-  const planSummary = summarizeForContext(planMd, 300);
+  const contextBlock = accumulatedContext
+    ? `\n<accumulated_context>\n${accumulatedContext}\n</accumulated_context>\n`
+    : "";
 
-  return `You are a senior DevOps/SRE engineer preparing a product for production deployment.
+  return `You are a senior DevOps/SRE engineer and security architect preparing a product for production deployment.
 
 Generate a **production-hardening.md** — a comprehensive guide to make this product production-ready.
 
 ${base}
-
-<previous_docs>
-${contextSummary}
----
-${prdSummary}
----
-${planSummary}
-</previous_docs>
-
+${contextBlock}
 ---
 
-Generate with these sections:
+Create a comprehensive production hardening guide covering:
 
-1. **Pre-Launch Security Checklist**
-   - Input validation (all endpoints)
-   - Authentication & authorization hardening
-   - CORS, CSP, rate limiting configuration
-   - Environment variable security
-   - SQL injection / XSS prevention
-   - API key rotation strategy
+**1. Pre-Launch Security Checklist**
+- Input validation (all endpoints)
+- Authentication & authorization hardening (specific to ${input.presets.framework})
+- CORS, CSP, rate limiting configuration
+- Environment variable management
+- Secrets handling (never commit, use vault)
+- OWASP Top 10 checklist for this specific tech stack
 
-2. **Error Handling & Monitoring**
-   - Global error boundary (frontend)
-   - API error response standardization
-   - Sentry / error tracking setup
-   - Logging strategy (structured logs)
-   - Health check endpoints
+**2. Error Handling & Monitoring**
+- Global error boundary (frontend)
+- API error response standardization
+- Sentry / error tracking setup
+- Logging strategy (what to log, what NOT to log, structured logs)
+- Health check endpoints
+- Alerting thresholds
 
-3. **Database Hardening**
-   - Connection pooling configuration
-   - Backup strategy (automated daily)
-   - Migration safety checklist
-   - Index optimization for common queries
-   - Row-level security (if using Supabase)
+**3. Database Hardening**
+- Connection pooling configuration
+- Backup strategy (automated daily)
+- Migration safety checklist
+- Index optimization for common queries
+- Row-level security (if applicable)
 
-4. **Performance Baseline**
-   - Lighthouse audit targets (>90 all categories)
-   - Core Web Vitals targets
-   - API response time targets (<200ms p95)
-   - Bundle size budget
-   - Image optimization
+**4. CI/CD Pipeline & Infrastructure**
+- Pipeline stages: lint → test → build → deploy
+- Branch strategy recommendation
+- Automated security scanning in pipeline
+- Rollback strategy
+- Deployment platform recommendation for this stack
+- Environment separation (dev/staging/prod)
 
-5. **CI/CD Pipeline**
-   - Build & deploy workflow
-   - Preview deployments for PRs
-   - Environment promotion (staging → production)
-   - Automated testing in pipeline
-   - Rollback strategy
+**5. Incident Response**
+- On-call procedures
+- Severity classification
+- Post-mortem template
 
-6. **Incident Response**
-   - On-call procedures
-   - Severity classification
-   - Communication templates
-   - Post-mortem template
-
-Rules:
-- Output only valid Markdown.
-- Provide specific commands and configuration snippets.
+=== OUTPUT RULES ===
+- Output ONLY raw markdown. No code block wrapping.
+- Start directly with: # Production Hardening Guide — [product name]
+- Include actual commands and configuration snippets where relevant.
 - Include checkboxes for actionable items.
 - Prioritize by impact — most critical first.`;
 }

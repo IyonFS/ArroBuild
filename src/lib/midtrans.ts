@@ -174,8 +174,6 @@ export function tierIdToSubscriptionTier(
   tierId: Exclude<PricingTierId, "free">
 ): "STARTER" | "PRO" | "UNLIMITED" {
   switch (tierId) {
-    case "starter":
-      return "STARTER";
     case "pro":
       return "PRO";
     case "unlimited":

@@ -1,9 +1,16 @@
+/**
+ * design-system.ts — Tier-aware design-system.md prompt builder (v3)
+ *
+ * PRO:     Design system document dengan color palette, typography, spacing, dan component patterns dasar.
+ * PRO_MAX: Sangat lengkap dengan dark/light mode tokens, accessibility requirements, dan tailwind config extension.
+ */
+
 import {
   buildBaseContext,
-  summarizeForContext,
-  GenerationInput,
-  DesignPreset,
+  type GenerationInput,
+  type DesignPreset,
 } from "./shared";
+import type { V3Tier } from "../tier-enforcer";
 
 const DESIGN_PRESET_TRAITS: Record<DesignPreset, string> = {
   "neo-brutalist":
@@ -32,15 +39,49 @@ const DESIGN_PRESET_TRAITS: Record<DesignPreset, string> = {
     "AI will choose the best design style based on product context. Let the output be creative and appropriate for the product type.",
 };
 
+const DEPTH_INSTRUCTIONS: Record<V3Tier, string> = {
+  FREE: ``, // Tidak tersedia untuk FREE
+  PRO: `
+Buat design system document dengan:
+- Color palette (primary, secondary, neutral, semantic)
+  Sertakan hex values yang konsisten dengan gaya desain.
+- Typography: font family, size scale, weight guide
+- Spacing system (base unit)
+- Component patterns: Button, Card, Input, Badge, Navigation
+  Format sebagai CSS custom properties yang siap dipakai
+- Responsive breakpoints`,
+
+  PRO_MAX: `
+Buat design system document yang sangat lengkap:
+- Color system dengan dark/light mode tokens
+  Semua sebagai CSS custom properties (--color-primary, dll)
+- Typography scale lengkap dengan line-height dan letter-spacing
+- Spacing & layout system (grid, container, breakpoints)
+- Component library dengan spesifikasi lengkap:
+  Button (semua variants + states), Card (semua variants),
+  Input/Form (dengan validation states), Badge/Tag, Navigation,
+  Modal/Dialog, Toast/Alert, Loading states
+- Animation & transition tokens
+- Icon system recommendation
+- Accessibility requirements (contrast ratio, focus states)
+- Implementation-ready: semua token dalam format CSS variables yang langsung bisa dipakai.
+- Tailwind config extension (jika menggunakan Tailwind CSS)
+
+Dokumen ini harus bisa digunakan AI agent sebagai referensi langsung saat membuat komponen baru.`,
+};
+
 export function buildDesignSystemPrompt(
   input: GenerationInput,
-  contextMd: string,
-  prdMd: string
+  tier: V3Tier = "PRO",
+  accumulatedContext = ""
 ): string {
   const base = buildBaseContext(input);
   const designTraits = DESIGN_PRESET_TRAITS[input.presets.design];
-  const contextSummary = summarizeForContext(contextMd, 400);
-  const prdSummary = summarizeForContext(prdMd, 300);
+  const contextBlock = accumulatedContext
+    ? `\n<accumulated_context>\n${accumulatedContext}\n</accumulated_context>\n`
+    : "";
+
+  const instruction = tier === "PRO_MAX" ? DEPTH_INSTRUCTIONS.PRO_MAX : DEPTH_INSTRUCTIONS.PRO;
 
   return `You are a senior UI/UX designer creating a comprehensive design system for a new product.
 
@@ -49,46 +90,14 @@ Generate a **design-system.md** file based on the "${input.presets.design}" desi
 ${base}
 
 Design Inspiration Traits: ${designTraits}
-
-<previous_docs>
-${contextSummary}
----
-${prdSummary}
-</previous_docs>
-
+${contextBlock}
 ---
 
-Generate with these sections:
+${instruction}
 
-1. **Brand Identity** — logo concept, brand voice, tone
-2. **Color System**
-   - Foundation Colors (background, surface, card, border) as table: Token | Hex | Usage
-   - Primary/Brand Colors as table
-   - Text Colors as table
-   - Semantic Colors (success, info, warning, danger) as table
-   - Usage Rules
-3. **Typography**
-   - Font family (CSS declaration)
-   - Type Scale as table: Role | Size | Weight | Color | Line Height
-   - Typography Rules
-4. **Spacing System** — 4px grid, table: Token | Value | Usage
-5. **Border Radius** — table: Token | Value | Usage
-6. **Component Guidelines**
-   - Button (primary, secondary, ghost, danger states + CSS values)
-   - Input & Textarea
-   - Card (default, elevated, interactive, featured)
-   - Badge / Status Pill
-   - Navigation
-   - Progress Indicator
-7. **Iconography** — icon library, sizing, color rules
-8. **Animation & Transition** — duration table, easing, philosophy
-9. **Layout & Grid** — page layout, sidebar, card grid, z-index scale
-10. **Dark Mode / Theme Notes**
-11. **Accessibility** — contrast, focus ring, keyboard nav, ARIA
-
-Rules:
-- Output only valid Markdown.
-- Provide actual hex color codes, not generic descriptions.
-- CSS values must be production-ready.
-- Match the ${input.presets.design} style as closely as possible.`;
+=== OUTPUT RULES ===
+- Output ONLY raw markdown. No code block wrapping.
+- Start directly with: # Design System — [product name]
+- All colors must be hex values, not generic color names.
+- CSS custom properties must follow --color-[name] convention.`;
 }

@@ -1,91 +1,74 @@
-import { buildBaseContext, summarizeForContext, GenerationInput } from "./shared";
+/**
+ * growth-quality.ts — Tier-aware growth-quality.md prompt builder (v3)
+ *
+ * PRO_MAX only: Growth Strategy, Monetization, QA, Analytics.
+ */
+
+import { buildBaseContext, type GenerationInput } from "./shared";
+import type { V3Tier } from "../tier-enforcer";
 
 export function buildGrowthQualityPrompt(
   input: GenerationInput,
-  contextMd: string,
-  prdMd: string
+  tier: V3Tier = "PRO_MAX", // eslint-disable-line @typescript-eslint/no-unused-vars
+  accumulatedContext = ""
 ): string {
   const base = buildBaseContext(input);
-  const contextSummary = summarizeForContext(contextMd, 300);
-  const prdSummary = summarizeForContext(prdMd, 300);
+  const contextBlock = accumulatedContext
+    ? `\n<accumulated_context>\n${accumulatedContext}\n</accumulated_context>\n`
+    : "";
 
   return `You are a growth strategist and quality assurance expert for indie SaaS products.
 
 Generate a **growth-quality.md** — a comprehensive growth strategy and quality assurance plan.
 
 ${base}
-
-<previous_docs>
-${contextSummary}
----
-${prdSummary}
-</previous_docs>
-
+${contextBlock}
 ---
 
-Generate with these sections:
+Create a comprehensive guide divided into two parts:
 
 ## Part 1: Growth Strategy
 
-1. **Go-To-Market Plan**
-   - Launch timeline (pre-launch, launch day, post-launch)
-   - Channel strategy (which platforms, in what order)
-   - Content marketing plan (topics, format, frequency)
-   - Community building approach
+**1. Go-To-Market Plan**
+- Launch timeline (pre-launch, launch day, post-launch)
+- Channel strategy (which platforms, in what order)
+- Community building approach (Discord, Twitter, etc.)
 
-2. **User Acquisition**
-   - Organic channels (SEO keywords, content, social)
-   - Paid channels (budget, targeting, expected CAC)
-   - Partnership & collaboration opportunities
-   - Referral/viral mechanics
+**2. User Acquisition**
+- Organic channels (SEO keywords specific to niche, content strategy)
+- Paid channels (if any)
+- Referral/viral mechanics baked into the product
 
-3. **Activation & Onboarding**
-   - First-time user experience optimization
-   - "Aha moment" definition
-   - Onboarding flow with conversion targets
-   - Email drip campaign sequence
+**3. Activation & Retention**
+- First-time user experience optimization
+- "Aha moment" definition
+- Onboarding flow
+- Re-engagement triggers (emails, notifications)
 
-4. **Retention & Engagement**
-   - Feature usage tracking plan
-   - Re-engagement triggers
-   - Feedback loop (NPS, in-app surveys)
-   - Community engagement plan
-
-5. **Monetization Strategy**
-   - Pricing psychology & positioning
-   - Free-to-paid conversion funnel
-   - Upsell opportunities
-   - Revenue projections (Month 1, 3, 6, 12)
+**4. Monetization Strategy**
+- Pricing psychology & positioning
+- Free-to-paid conversion funnel optimization
+- Upsell opportunities
 
 ## Part 2: Quality Assurance
 
-6. **Testing Strategy**
-   - Unit test coverage targets
-   - Integration test plan
-   - E2E test scenarios (critical paths)
-   - Manual QA checklist
+**5. Testing Strategy**
+- Unit test coverage targets
+- Integration test plan
+- E2E test scenarios (critical paths)
 
-7. **Code Quality**
-   - Linting & formatting standards
-   - Code review checklist
-   - Technical debt management
-   - Documentation standards
+**6. User Experience QA**
+- Browser compatibility matrix
+- Mobile responsiveness checklist
+- Accessibility audit checklist (WCAG 2.1 AA)
 
-8. **User Experience QA**
-   - Browser compatibility matrix
-   - Mobile responsiveness checklist
-   - Accessibility audit (WCAG 2.1 AA)
-   - Performance budget enforcement
+**7. Analytics & Experimentation**
+- Key metrics dashboard design (what to track on day 1)
+- Data-driven decision process (how to analyze the tracked data)
 
-9. **Analytics & Experimentation**
-   - Key metrics dashboard design
-   - A/B testing framework
-   - Feature flag strategy
-   - Data-driven decision process
-
-Rules:
-- Output only valid Markdown.
+=== OUTPUT RULES ===
+- Output ONLY raw markdown. No code block wrapping.
+- Start directly with: # Growth & Quality Plan — [product name]
 - Include specific, actionable items — not vague advice.
-- Revenue projections should include assumptions.
-- SEO keywords should be specific to the product niche.`;
+- SEO keywords should be highly specific to the product niche.`;
 }

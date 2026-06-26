@@ -73,13 +73,20 @@ export default function GeneratePage() {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [generatedFiles, setGeneratedFiles] = useState<GeneratedFiles>({});
 
+  // Limits
+  const [projectCount, setProjectCount] = useState<number>(0);
+  const [projectLimit, setProjectLimit] = useState<number | null>(null);
+
   useEffect(() => {
     // Fetch user tier and models
     fetch("/api/user/me")
       .then((res) => res.json())
-      .then((data: { tier?: UserTier }) => {
+      .then((data: { tier?: UserTier; projectCount?: number; projectLimit?: number | null }) => {
         const userTier = data.tier ?? "free";
         setTier(userTier);
+        setProjectCount(data.projectCount ?? 0);
+        setProjectLimit(data.projectLimit ?? null);
+        
         const models = getModelsForTier(userTier);
         if (!models.some((m) => m.id === selectedModelId)) {
           setSelectedModelId(models[0]?.id ?? "gemini-2.5-flash");
@@ -450,6 +457,7 @@ export default function GeneratePage() {
               presets={presets}
               selectedDocs={selectedDocs}
               selectedModelId={selectedModelId}
+              limitReached={projectLimit !== null && projectCount >= projectLimit}
               onEdit={(s) => setStep(s)}
               onGenerate={() => setStep("generating")}
             />

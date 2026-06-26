@@ -10,6 +10,7 @@ interface Props {
   presets: Presets;
   selectedDocs: FileKey[];
   selectedModelId: string;
+  limitReached?: boolean;
   onEdit: (step: "product-type" | "context" | "stack" | "docs") => void;
   onGenerate: () => void;
 }
@@ -118,6 +119,7 @@ export default function ConfirmScreen({
   presets,
   selectedDocs,
   selectedModelId,
+  limitReached,
   onEdit,
   onGenerate,
 }: Props) {
@@ -323,22 +325,55 @@ export default function ConfirmScreen({
         </button>
       </div>
 
-      {/* Tip */}
-      <div
-        className="flex items-start gap-2 px-4 py-3 rounded-xl mb-6"
-        style={{
-          background: "rgba(59,130,246,0.06)",
-          border: "0.5px solid rgba(59,130,246,0.2)",
-        }}
-      >
-        <span style={{ color: "#3B82F6", fontSize: 13, marginTop: 1 }}>ⓘ</span>
-        <p
-          className="font-mono text-xs"
-          style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}
+      {/* Tip / Warning */}
+      {limitReached ? (
+        <div
+          className="flex flex-col gap-2 px-4 py-3 rounded-xl mb-6"
+          style={{
+            background: "rgba(239, 68, 68, 0.06)",
+            border: "0.5px solid rgba(239, 68, 68, 0.2)",
+          }}
         >
-          Pastikan deskripsi proyekmu sudah lengkap untuk hasil yang lebih relevan dan spesifik.
-        </p>
-      </div>
+          <div className="flex items-start gap-2">
+            <span style={{ color: "#EF4444", fontSize: 13, marginTop: 1 }}>⚠</span>
+            <p
+              className="font-mono text-xs font-bold"
+              style={{ color: "#EF4444", lineHeight: 1.6 }}
+            >
+              Limit paket gratis telah habis
+            </p>
+          </div>
+          <p
+            className="font-mono text-[11px]"
+            style={{ color: "var(--color-text-secondary)", marginLeft: 22 }}
+          >
+            Kamu sudah mencapai batas pembuatan proyek. Silakan upgrade ke paket berbayar untuk terus menggunakan AI.
+          </p>
+          <a
+            href="/dashboard?upgrade=true"
+            className="font-mono text-[11px] underline mt-1"
+            style={{ color: "var(--color-lime)", marginLeft: 22 }}
+          >
+            Lihat paket & upgrade →
+          </a>
+        </div>
+      ) : (
+        <div
+          className="flex items-start gap-2 px-4 py-3 rounded-xl mb-6"
+          style={{
+            background: "rgba(59,130,246,0.06)",
+            border: "0.5px solid rgba(59,130,246,0.2)",
+          }}
+        >
+          <span style={{ color: "#3B82F6", fontSize: 13, marginTop: 1 }}>ⓘ</span>
+          <p
+            className="font-mono text-xs"
+            style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}
+          >
+            Pastikan deskripsi proyekmu sudah lengkap untuk hasil yang lebih relevan dan spesifik.
+          </p>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3">
@@ -355,10 +390,13 @@ export default function ConfirmScreen({
         </button>
         <button
           onClick={onGenerate}
+          disabled={limitReached}
           className="flex-1 py-3 rounded-xl font-mono font-bold text-sm transition-all flex items-center justify-center gap-2"
           style={{
-            background: "var(--color-lime)",
-            color: "#0A0A0A",
+            background: limitReached ? "var(--color-bg-elevated)" : "var(--color-lime)",
+            color: limitReached ? "var(--color-text-tertiary)" : "#0A0A0A",
+            cursor: limitReached ? "not-allowed" : "pointer",
+            border: limitReached ? "0.5px solid var(--color-border-default)" : "none",
           }}
         >
           <span>✦</span>

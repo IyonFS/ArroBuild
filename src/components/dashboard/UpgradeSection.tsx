@@ -158,7 +158,7 @@ export default function UpgradeSection({
       <div className="app-panel px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <p className="text-[14px] font-medium text-white">
-            Paket {currentTier === "unlimited" ? "Unlimited" : "Starter / Pro"} aktif
+            Paket {currentTier === "unlimited" ? "Pro Max" : "Pro"} aktif
           </p>
           <p className="text-[13px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
             Semua model AI dan bundle file tersedia.
