@@ -45,9 +45,9 @@ function ToggleGroup<T extends string>({
               style={
                 active
                   ? {
-                      borderColor: "var(--green-500)",
-                      background: "var(--green-900)",
-                      color: "var(--green-text)",
+                      borderColor: "var(--color-lime)",
+                      background: "rgba(204,255,0,0.08)",
+                      color: "var(--color-lime)",
                     }
                   : {}
               }
@@ -113,7 +113,7 @@ export default function ClarificationStep({
         />
         <div
           className="my-6"
-          style={{ height: "1px", background: "var(--bg-border)" }}
+          style={{ height: "0.5px", background: "var(--color-border-default)" }}
         />
         <ToggleGroup
           label="Monetization"
@@ -124,7 +124,7 @@ export default function ClarificationStep({
         />
         <div
           className="my-6"
-          style={{ height: "1px", background: "var(--bg-border)" }}
+          style={{ height: "0.5px", background: "var(--color-border-default)" }}
         />
         <ToggleGroup
           label="Scope"

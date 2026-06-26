@@ -14,6 +14,8 @@ interface ProjectSummary {
   idea: string;
   status: string;
   createdAt: string;
+  clarifications?: any;
+  presets?: any;
   _count: { files: number };
 }
 
@@ -161,6 +163,9 @@ function DashboardContent() {
               Generate baru
             </Link>
           )}
+          <Link href="/learn" className="btn btn-secondary btn-sm hidden sm:inline-flex">
+            Learn Hub
+          </Link>
           <button type="button" onClick={handleSignOut} className="btn btn-ghost btn-sm">
             Keluar
           </button>
@@ -184,7 +189,7 @@ function DashboardContent() {
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${usagePercent}%`,
-                background: usagePercent >= 100 ? "var(--danger-text)" : "var(--green-500)",
+                background: usagePercent >= 100 ? "var(--danger-text)" : "var(--color-lime)",
               }}
             />
           </div>
@@ -220,12 +225,31 @@ function DashboardContent() {
                 label: project.status,
                 className: "badge-info",
               };
+
+              let productType = "app";
+              let displayIdea = project.idea;
+
+              try {
+                if (project.idea.startsWith("{")) {
+                  const parsed = JSON.parse(project.idea);
+                  productType = parsed.type || "app";
+                  displayIdea = parsed.data?.description || project.idea;
+                }
+              } catch (e) {
+                // Ignore parse errors, fallback to raw idea
+              }
+
               return (
                 <div key={project.id} className="app-row flex-col sm:flex-row sm:items-center">
                   <div className="flex-1 min-w-0 w-full">
-                    <p className="text-[14px] text-white leading-snug line-clamp-2 mb-1.5">
-                      {project.idea}
-                    </p>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="badge badge-info text-[10px] uppercase">
+                        {productType}
+                      </span>
+                      <p className="text-[14px] text-white leading-snug truncate">
+                        {displayIdea}
+                      </p>
+                    </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
                       <span className={`badge ${status.className} text-[10px]`}>
                         {status.label}
@@ -240,14 +264,28 @@ function DashboardContent() {
                       </span>
                     </div>
                   </div>
-                  {project.status === "DONE" && project._count.files > 0 && (
-                    <a
-                      href={`/api/export?projectId=${project.id}`}
-                      className="btn btn-secondary btn-sm shrink-0 w-full sm:w-auto mt-2 sm:mt-0"
+                  <div className="flex items-center gap-2 mt-3 sm:mt-0 w-full sm:w-auto shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Pass to generate via sessionStorage
+                        sessionStorage.setItem("arrobuild_fork_idea", project.idea);
+                        sessionStorage.setItem("arrobuild_fork_presets", JSON.stringify(project.presets));
+                        router.push("/generate");
+                      }}
+                      className="btn btn-ghost btn-sm flex-1 sm:flex-none"
                     >
-                      Download
-                    </a>
-                  )}
+                      Fork
+                    </button>
+                    {project.status === "DONE" && project._count.files > 0 && (
+                      <a
+                        href={`/api/export?projectId=${project.id}`}
+                        className="btn btn-secondary btn-sm flex-1 sm:flex-none"
+                      >
+                        Download
+                      </a>
+                    )}
+                  </div>
                 </div>
               );
             })}

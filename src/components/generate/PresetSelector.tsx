@@ -31,8 +31,8 @@ function PresetCard({ id, emoji, label, description, active, onClick }: PresetCa
       style={
         active
           ? {
-              borderColor: "var(--green-500)",
-              background: "var(--bg-card)",
+              borderColor: "var(--color-lime)",
+              background: "var(--color-bg-elevated)",
             }
           : {}
       }
@@ -40,12 +40,12 @@ function PresetCard({ id, emoji, label, description, active, onClick }: PresetCa
       {active && (
         <div
           className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center"
-          style={{ background: "var(--green-500)" }}
+          style={{ background: "var(--color-primary-500)" }}
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
             <path
               d="M2 6l3 3 5-5"
-              stroke="#052e16"
+              stroke="var(--color-bg-950)"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -175,14 +175,14 @@ export default function PresetSelector({
               className="card card-interactive text-left w-full relative"
               style={
                 selectedModelId === m.id
-                  ? { borderColor: "var(--green-500)", background: "var(--bg-card)" }
+                  ? { borderColor: "var(--color-lime)", background: "var(--color-bg-elevated)" }
                   : {}
               }
             >
               {selectedModelId === m.id && (
                 <div
                   className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center"
-                  style={{ background: "var(--green-500)" }}
+                  style={{ background: "var(--color-lime)" }}
                 >
                   <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                     <path d="M2 6l3 3 5-5" stroke="#052e16" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

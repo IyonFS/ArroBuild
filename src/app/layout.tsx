@@ -1,40 +1,50 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Geist } from "next/font/google";
+import { JetBrains_Mono, Unbounded } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/react";
 import { ToastProvider } from "@/components/ui/Toast";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const unbounded = Unbounded({
+  variable: "--font-unbounded",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["300", "400", "600", "700", "800", "900"],
+});
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "ArroBuild | Generate everything before your first line of code",
+  title: "ArroBuild — Satu tempat untuk belajar, planning, dan build dengan AI agent",
   description:
-    "Ubah ide produk jadi fondasi lengkap: PRD, context, plan, design system & agents. Gratis, tanpa login. 5 model AI.",
+    "Ekosistem developer untuk vibe coders: belajar agent engineering gratis, generate dokumentasi proyek, dan export ke Cursor, Claude Code, Windsurf. 5 model AI.",
   keywords: [
+    "vibe coding",
+    "AI agent",
     "PRD generator",
-    "indie hacker tools",
-    "AI documentation",
-    "project foundation",
+    "developer tools",
+    "agent engineering",
+    "cursor rules",
+    "claude md",
+    "indie hacker",
   ],
   openGraph: {
-    title: "ArroBuild — Generate everything before your first line of code",
+    title: "ArroBuild — Belajar, planning, dan build dengan AI agent",
     description:
-      "Generate 1–8 file dokumentasi terstruktur dari ide produk kamu. Siap untuk Cursor, Claude Code, dan AI coding agent lainnya.",
+      "Learn Hub gratis + doc generator + export ke tools favorit kamu. Satu ekosistem untuk developer yang build dengan AI.",
     type: "website",
     siteName: "ArroBuild",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ArroBuild — Generate everything before your first line of code",
+    title: "ArroBuild — Belajar, planning, dan build dengan AI agent",
     description:
-      "Generate 1–8 file dokumentasi terstruktur dari ide produk kamu. Siap untuk Cursor, Claude Code, dan AI coding agent lainnya.",
+      "Learn Hub gratis + doc generator + export ke tools favorit kamu.",
   },
   robots: {
     index: true,
@@ -50,8 +60,11 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      data-scroll-behavior="smooth"
-      className={cn("h-full", "antialiased", jetbrainsMono.variable, "font-sans", geist.variable)}
+      className={cn(
+        "h-full antialiased",
+        unbounded.variable,
+        jetbrainsMono.variable
+      )}
     >
       <body className="min-h-full flex flex-col">
         <ToastProvider>

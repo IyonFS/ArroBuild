@@ -179,7 +179,7 @@ export default function UpgradeSection({
         className="w-full flex items-center justify-between gap-4 text-left group"
       >
         <div>
-          <h2 className="text-[15px] font-medium text-white group-hover:text-[var(--green-text)] transition-colors">
+          <h2 className="text-[15px] font-medium text-white group-hover:text-[var(--color-lime)] transition-colors">
             Upgrade paket
           </h2>
           <p className="text-[13px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
@@ -235,13 +235,13 @@ export default function UpgradeSection({
                 <div
                   key={tier.id}
                   className={`app-panel p-4 flex flex-col ${
-                    highlighted ? "ring-1 ring-[var(--green-muted)]" : ""
+                    highlighted ? "ring-1 ring-[rgba(204,255,0,0.35)]" : ""
                   }`}
                 >
                   <div className="flex items-baseline justify-between gap-2 mb-3">
                     <p className="text-[14px] font-medium text-white">{tier.name}</p>
                     {tier.badge && (
-                      <span className="text-[11px]" style={{ color: "var(--green-text)" }}>
+                      <span className="text-[11px]" style={{ color: "var(--color-lime)" }}>
                         {tier.badge}
                       </span>
                     )}

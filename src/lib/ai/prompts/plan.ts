@@ -5,17 +5,32 @@ import {
   FrameworkPreset,
 } from "./shared";
 
-const FRAMEWORK_STACK_DEFAULTS: Record<FrameworkPreset, string> = {
+const FRAMEWORK_STACK_DEFAULTS: Partial<Record<FrameworkPreset, string>> = {
   nextjs:
     "Next.js 15+ (App Router) + Tailwind CSS + shadcn/ui + Supabase + Prisma + Vercel",
+  nuxt: "Nuxt 3 + Tailwind CSS + Supabase + Pinia + Vercel",
+  remix: "Remix + Tailwind CSS + Prisma + PostgreSQL + Fly.io",
+  sveltekit: "SvelteKit + Tailwind CSS + Supabase + Prisma + Vercel",
+  astro: "Astro + Tailwind CSS + Sanity CMS + Cloudflare Pages",
+  "react-spa": "React (Vite) + Tailwind CSS + React Query + Supabase + Netlify",
+  "vue-spa": "Vue 3 (Vite) + Tailwind CSS + Pinia + Supabase + Netlify",
+  "vanilla-js": "Vanilla JS + Vite + Tailwind CSS + Supabase + Netlify",
   laravel:
     "Laravel 12 + Filament 3 + PostgreSQL + Horizon + Cashier + Forge/Vapor",
+  express: "Express.js + TypeScript + Prisma + PostgreSQL + Redis + Railway",
+  nestjs: "NestJS + TypeScript + Prisma + PostgreSQL + Redis + AWS",
   django:
     "Django 5 + DRF + PostgreSQL + Celery + Redis + Railway",
   rails:
     "Rails 7 + Hotwire + PostgreSQL + Sidekiq + Fly.io",
   fastapi:
     "FastAPI + SQLAlchemy + PostgreSQL + Redis + Celery + Railway",
+  "go-fiber": "Go Fiber + GORM + PostgreSQL + Redis + Docker + Fly.io",
+  hono: "Hono + Cloudflare Workers + D1 + R2 + Supabase",
+  "react-native": "React Native (Expo) + Supabase + Zustand + Stripe + EAS Build",
+  flutter: "Flutter + Supabase + Riverpod + Stripe + Firebase",
+  expo: "Expo (React Native) + Supabase + Jotai + EAS Build",
+  "ai-recommend": "AI will recommend the best stack based on product requirements.",
 };
 
 export function buildPlanPrompt(
@@ -26,7 +41,7 @@ export function buildPlanPrompt(
   const base = buildBaseContext(input);
   const contextSummary = summarizeForContext(contextMd, 500);
   const prdSummary = summarizeForContext(prdMd, 500);
-  const frameworkStack = FRAMEWORK_STACK_DEFAULTS[input.presets.framework];
+  const frameworkStack = FRAMEWORK_STACK_DEFAULTS[input.presets.framework] ?? `${input.presets.framework} with appropriate modern packages`;
 
   return `You are a senior software architect and project planner helping a solo developer build their MVP in 4 weeks.
 

@@ -7,237 +7,96 @@ import PricingSection from "@/components/marketing/PricingSection";
 import { SparklesIcon } from "@/components/marketing/icons";
 
 /* ============================================================
-   ArroBuild Landing Page
-   Dark mode only · Green accent · Linear/Vercel inspired
+   ArroBuild Landing Page v2.0
+   Design System: Lime + Orange · Unbounded + JetBrains Mono
+   Dark mode default · No gradients, no decorative blur
    ============================================================ */
 
-// ─── SVG Icons (Tabler-style, inline for zero-dependency) ────
+// ─── Inline SVG Icons ───────────────────────────────────────
 
-function ArrowIcon({ className = "" }: { className?: string }) {
+function ArrowRightIcon({ size = 16 }: { size?: number }) {
   return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="M13 6l6 6-6 6" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
     </svg>
   );
 }
 
-function RocketIcon({ className = "" }: { className?: string }) {
+function BookIcon() {
   return (
-    <svg
-      className={className}
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 13a8 8 0 0 1 7 7 6 6 0 0 0 3-5 9 9 0 0 0 6-8 3 3 0 0 0-3-3 9 9 0 0 0-8 6 6 6 0 0 0-5 3" />
-      <path d="M7 14a6 6 0 0 0-3 6 6 6 0 0 0 6-3" />
-      <circle cx="15" cy="9" r="1" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
     </svg>
   );
 }
 
-function FileTextIcon({ className = "" }: { className?: string }) {
+function WandIcon() {
   return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-      <polyline points="10 9 9 9 8 9" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 4V2" /><path d="M15 16v-2" /><path d="M8 9h2" /><path d="M20 9h2" /><path d="M17.8 11.8 19 13" /><path d="M15 9h0" /><path d="M17.8 6.2 19 5" /><path d="m3 21 9-9" /><path d="M12.2 6.2 11 5" />
     </svg>
   );
 }
 
-function PaletteIcon({ className = "" }: { className?: string }) {
+function PlugIcon() {
   return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="13.5" cy="6.5" r="2" />
-      <circle cx="17.5" cy="10.5" r="2" />
-      <circle cx="8.5" cy="7.5" r="2" />
-      <circle cx="6.5" cy="12.5" r="2" />
-      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22v-5" /><path d="M9 8V2" /><path d="M15 8V2" /><path d="M18 8H6a1 1 0 0 0-1 1v4a5 5 0 0 0 10 0V9a1 1 0 0 0-1-1z" />
     </svg>
   );
 }
 
-function StackIcon({ className = "" }: { className?: string }) {
+function FileTextIcon() {
   return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
     </svg>
   );
 }
 
-function ChecklistIcon({ className = "" }: { className?: string }) {
+function TerminalIcon() {
   return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M9 11l3 3L22 4" />
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
     </svg>
   );
 }
 
-function MapIcon({ className = "" }: { className?: string }) {
+function DownloadIcon() {
   return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-      <line x1="8" y1="2" x2="8" y2="18" />
-      <line x1="16" y1="6" x2="16" y2="22" />
-    </svg>
-  );
-}
-
-function DownloadIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  );
-}
-
-function BulbIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M9 18h6" />
-      <path d="M10 22h4" />
-      <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
-    </svg>
-  );
-}
-
-function RobotIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="11" width="18" height="10" rx="2" />
-      <circle cx="12" cy="5" r="2" />
-      <path d="M12 7v4" />
-      <line x1="8" y1="16" x2="8" y2="16" />
-      <line x1="16" y1="16" x2="16" y2="16" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
     </svg>
   );
 }
 
 function ChevronDownIcon({ className = "" }: { className?: string }) {
   return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="6 9 12 15 18 9" />
     </svg>
   );
 }
 
-// ─── Intersection Observer Hook ──────────────────────────────
+function StarIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
 
-function useInView(threshold = 0.15) {
+function CheckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  );
+}
+
+// ─── Hooks ───────────────────────────────────────────────────
+
+function useInView(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -245,7 +104,7 @@ function useInView(threshold = 0.15) {
     const el = ref.current;
     if (!el) return;
 
-    const fallback = setTimeout(() => setIsVisible(true), 400);
+    const fallback = setTimeout(() => setIsVisible(true), 500);
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -267,55 +126,7 @@ function useInView(threshold = 0.15) {
   return { ref, isVisible };
 }
 
-function FadeInCard({
-  index,
-  delayStep = 80,
-  className = "",
-  children,
-}: {
-  index: number;
-  delayStep?: number;
-  className?: string;
-  children: ReactNode;
-}) {
-  const { ref, isVisible } = useInView(0.1);
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-500 ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-      } ${className}`}
-      style={{ transitionDelay: `${index * delayStep}ms` }}
-    >
-      {children}
-    </div>
-  );
-}
-
-function FadeInStep({
-  index,
-  children,
-}: {
-  index: number;
-  children: ReactNode;
-}) {
-  const { ref, isVisible } = useInView(0.1);
-  return (
-    <div
-      ref={ref}
-      className={`text-center transition-all duration-600 ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-      }`}
-      style={{ transitionDelay: `${index * 150}ms` }}
-    >
-      {children}
-    </div>
-  );
-}
-
-// ─── Animated Counter Hook ──────────────────────────────────
-
-function useCounter(end: number, isVisible: boolean, duration = 2000) {
+function useCounter(end: number, isVisible: boolean, duration = 1800) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -337,240 +148,103 @@ function useCounter(end: number, isVisible: boolean, duration = 2000) {
   return count;
 }
 
-// ─── Data ────────────────────────────────────────────────────
+// ─── Shared animation wrapper ────────────────────────────────
 
-const generatedFiles = [
-  {
-    name: "prd.md",
-    desc: "Product Requirements — user stories, fitur, dan acceptance criteria",
-    icon: FileTextIcon,
-    tier: "Free",
-  },
-  {
-    name: "context.md",
-    desc: "Master reference — source of truth untuk setiap sesi AI agent",
-    icon: FileTextIcon,
-    tier: "Starter+",
-  },
-  {
-    name: "plan.md",
-    desc: "Development plan — task breakdown per fase dengan estimasi",
-    icon: MapIcon,
-    tier: "Starter+",
-  },
-  {
-    name: "design-system.md",
-    desc: "Warna, tipografi, spacing, dan component guidelines",
-    icon: PaletteIcon,
-    tier: "Starter+",
-  },
-  {
-    name: "agents.md",
-    desc: "Role AI agent — PM, Architect, UI, Code, Reviewer",
-    icon: RobotIcon,
-    tier: "Starter+",
-  },
-  {
-    name: "production-hardening.md",
-    desc: "Security, monitoring, CI/CD, dan incident response",
-    icon: ChecklistIcon,
-    tier: "Unlimited",
-  },
-  {
-    name: "scale-performance.md",
-    desc: "Strategi scaling dari single server ke multi-region",
-    icon: StackIcon,
-    tier: "Unlimited",
-  },
-  {
-    name: "growth-quality.md",
-    desc: "Go-to-market, acquisition channel, dan quality metrics",
-    icon: BulbIcon,
-    tier: "Unlimited",
-  },
-];
-
-const howItWorks = [
-  {
-    step: "01",
-    title: "Describe your idea",
-    desc: "Write 1–2 paragraphs about your product. That's it.",
-    icon: BulbIcon,
-  },
-  {
-    step: "02",
-    title: "Choose your presets",
-    desc: "Pick your framework, design style, and AI coding tool.",
-    icon: StackIcon,
-  },
-  {
-    step: "03",
-    title: "Download your foundation",
-    desc: "Get a .zip with 1–8 structured .md files ready for your project root.",
-    icon: DownloadIcon,
-  },
-];
-
-const faqs = [
-  {
-    q: "Apa itu ArroBuild?",
-    a: "ArroBuild adalah generator dokumentasi AI yang mengubah ide produk kamu menjadi bundle file .md terstruktur — PRD, context, plan, design system, agents, dan lainnya. Semua sebelum kamu menulis baris kode pertama.",
-  },
-  {
-    q: "Untuk siapa ArroBuild?",
-    a: "Vibe coders, indie hackers, solo developer, dan siapa pun yang pakai AI coding agent seperti Cursor, Claude Code, atau Windsurf. Kalau kamu langsung coding tanpa planning, ini untuk kamu.",
-  },
-  {
-    q: "Berapa lama proses generate?",
-    a: "PRD gratis selesai dalam ~30 detik. Bundle lengkap (5–8 file) biasanya under 2 menit. Kamu bisa lihat progress real-time saat setiap file di-generate.",
-  },
-  {
-    q: "Framework apa yang didukung?",
-    a: "Next.js, Laravel, Django, Rails, dan FastAPI. Setiap preset menyesuaikan dokumentasi dengan konvensi dan ecosystem framework pilihan kamu.",
-  },
-  {
-    q: "Apakah gratis?",
-    a: "Ya! Free tier: 1 project, 1 file PRD, tanpa login. Upgrade ke Starter (Rp 49K/bulan) untuk 5 file + semua model AI, atau Unlimited (Rp 199K/bulan) untuk 8 file termasuk production & growth guides.",
-  },
-  {
-    q: "Model AI apa yang tersedia?",
-    a: "Free: Gemini 2.5 Flash & DeepSeek V3. Paid: tambahan Gemini 2.5 Pro, GPT-4o, dan Claude Sonnet 4. Kamu bebas pilih model favorit sebelum generate.",
-  },
-];
-
-// ─── Components ──────────────────────────────────────────────
-
-function HeroSection() {
-  const { ref, isVisible } = useInView(0.1);
-
+function FadeIn({
+  index = 0,
+  delay = 0,
+  className = "",
+  children,
+}: {
+  index?: number;
+  delay?: number;
+  className?: string;
+  children: ReactNode;
+}) {
+  const { ref, isVisible } = useInView(0.08);
   return (
-    <section
-      id="hero"
+    <div
       ref={ref}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      className={className}
+      style={{
+        transition: "opacity 500ms ease-out, transform 500ms ease-out",
+        transitionDelay: `${index * 80 + delay}ms`,
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "translateY(0)" : "translateY(20px)",
+      }}
     >
-      {/* Background effects */}
-      <div className="absolute inset-0 grid-bg opacity-40" />
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full opacity-20"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%)",
-        }}
-      />
-      {/* Floating orbs */}
-      <div
-        className="absolute top-[15%] left-[10%] w-2 h-2 rounded-full animate-float opacity-40"
-        style={{ backgroundColor: "var(--green-500)", animationDelay: "0s" }}
-      />
-      <div
-        className="absolute top-[25%] right-[15%] w-1.5 h-1.5 rounded-full animate-float opacity-30"
-        style={{ backgroundColor: "var(--green-text)", animationDelay: "1s" }}
-      />
-      <div
-        className="absolute bottom-[30%] left-[20%] w-1 h-1 rounded-full animate-float opacity-25"
-        style={{ backgroundColor: "var(--green-500)", animationDelay: "2s" }}
-      />
-      <div
-        className="absolute bottom-[20%] right-[25%] w-2.5 h-2.5 rounded-full animate-float opacity-20"
-        style={{ backgroundColor: "var(--green-text)", animationDelay: "1.5s" }}
-      />
-
-      <div className="relative z-10 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12 text-center pt-20">
-        <div
-          className={`transition-all duration-700 ${
-            isVisible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-6"
-          }`}
-        >
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 mb-8">
-            <span className="badge badge-success">
-              <RocketIcon className="w-3.5 h-3.5" />
-              Now in beta
-            </span>
-          </div>
-
-          {/* Headline */}
-          <h1
-            className="text-[clamp(2rem,5vw,3.5rem)] font-medium leading-[1.1] tracking-[-1px] mb-6 max-w-3xl mx-auto"
-            style={{ color: "#ffffff" }}
-          >
-            Generate everything{" "}
-            <span className="gradient-text">before</span> your first line
-            of code
-          </h1>
-
-          {/* Subheadline */}
-          <p
-            className="text-[clamp(1rem,2vw,1.125rem)] leading-relaxed max-w-xl mx-auto mb-10"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Turn your product idea into structured project documentation — PRD,
-            context, plan, design system & agents. Powered by 5 AI models.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="/generate"
-              className="btn btn-primary btn-lg animate-pulse-glow group"
-              id="hero-cta-primary"
-            >
-              <SparklesIcon />
-              Generate your foundation
-              <ArrowIcon className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </a>
-            <a
-              href="#how-it-works"
-              className="btn btn-secondary btn-lg"
-              id="hero-cta-secondary"
-            >
-              See how it works
-            </a>
-          </div>
-
-          {/* Social proof */}
-          <p
-            className="mt-8 text-[13px]"
-            style={{ color: "var(--text-tertiary)" }}
-          >
-            Free to start · No login required · Download in under 2 minutes
-          </p>
-        </div>
-
-        {/* Terminal Preview */}
-        <div
-          className={`mt-16 max-w-2xl mx-auto transition-all duration-700 delay-300 ${
-            isVisible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-10"
-          }`}
-        >
-          <TerminalPreview />
-        </div>
-      </div>
-    </section>
+      {children}
+    </div>
   );
 }
 
+// ─── Eyebrow helper ──────────────────────────────────────────
+
+function Eyebrow({
+  children,
+  orange = false,
+}: {
+  children: ReactNode;
+  orange?: boolean;
+}) {
+  return (
+    <p
+      style={{
+        fontFamily: "var(--font-jetbrains-mono), monospace",
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.14em",
+        textTransform: "uppercase",
+        color: orange ? "var(--color-orange)" : "var(--color-lime)",
+        marginBottom: 14,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+      }}
+    >
+      — {children}
+    </p>
+  );
+}
+
+// ─── Section divider ─────────────────────────────────────────
+
+function Divider() {
+  return (
+    <div
+      style={{
+        height: "0.5px",
+        background:
+          "linear-gradient(90deg, transparent, var(--color-border-default), transparent)",
+        width: "60%",
+        margin: "0 auto",
+      }}
+    />
+  );
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+
+// 1. HERO ─────────────────────────────────────────────────────
+
 function TerminalPreview() {
   const [visibleLines, setVisibleLines] = useState(0);
-  const { ref, isVisible } = useInView(0.3);
+  const { ref, isVisible } = useInView(0.2);
 
   const lines = [
-    { text: "$ arrobuild generate --idea", color: "var(--text-tertiary)" },
-    { text: '> "I want to build a study planner app for students..."', color: "var(--green-text)" },
-    { text: "", color: "" },
-    { text: "⠋ Generating prd.md ................ done ✓", color: "var(--green-text)" },
-    { text: "⠋ Generating context.md ............ done ✓", color: "var(--green-text)" },
-    { text: "⠋ Generating plan.md ............... done ✓", color: "var(--green-text)" },
-    { text: "⠋ Generating design-system.md ...... done ✓", color: "var(--green-text)" },
-    { text: "⠋ Generating agents.md ............. done ✓", color: "var(--green-text)" },
-    { text: "", color: "" },
-    { text: "✓ 5 files generated in 1m 12s", color: "#ffffff" },
-    { text: "✓ Exported to arrobuild-studyplanner.zip", color: "var(--green-text)" },
+    { text: "$ arrobuild generate", dim: true },
+    { text: '> "Mau bikin SaaS untuk manajemen freelance..."', lime: true },
+    { text: "", dim: false, lime: false },
+    { text: "⠋  Generating prd.md ................. done ✓", lime: true },
+    { text: "⠋  Generating context.md ............. done ✓", lime: true },
+    { text: "⠋  Generating plan.md ................ done ✓", lime: true },
+    { text: "⠋  Generating design-system.md ....... done ✓", lime: true },
+    { text: "⠋  Generating agents.md .............. done ✓", lime: true },
+    { text: "", dim: false, lime: false },
+    { text: "✓  5 files · 1m 08s", primary: true },
+    { text: "✓  arrobuild-freelance-saas.zip ready", lime: true },
   ];
 
   useEffect(() => {
@@ -583,43 +257,84 @@ function TerminalPreview() {
         }
         return prev + 1;
       });
-    }, 300);
+    }, 280);
     return () => clearInterval(interval);
   }, [isVisible, lines.length]);
 
   return (
-    <div ref={ref} className="card glow-green rounded-xl overflow-hidden">
-      {/* Terminal Header */}
+    <div
+      ref={ref}
+      style={{
+        background: "#0D0D0D",
+        border: "0.5px solid var(--color-border-default)",
+        borderRadius: 14,
+        overflow: "hidden",
+      }}
+    >
+      {/* Terminal chrome */}
       <div
-        className="flex items-center gap-2 px-4 py-3 border-b"
-        style={{ borderColor: "var(--bg-border)" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "12px 16px",
+          borderBottom: "0.5px solid var(--color-border-default)",
+        }}
       >
-        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#f87171" }} />
-        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#fbbf24" }} />
-        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#22c55e" }} />
+        {["#F87171", "#FBBF24", "#22C55E"].map((c) => (
+          <div
+            key={c}
+            style={{ width: 10, height: 10, borderRadius: "50%", background: c }}
+          />
+        ))}
         <span
-          className="ml-3 text-[12px] font-mono"
-          style={{ color: "var(--text-tertiary)" }}
+          style={{
+            marginLeft: 8,
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            fontSize: 11,
+            color: "var(--color-text-tertiary)",
+          }}
         >
           terminal — arrobuild
         </span>
       </div>
 
-      {/* Terminal Body */}
-      <div className="p-4 sm:p-5 font-mono text-[12px] sm:text-[13px] leading-6 min-h-[240px] sm:min-h-[280px] overflow-x-auto">
+      {/* Terminal body */}
+      <div
+        style={{
+          padding: "16px 20px",
+          fontFamily: "var(--font-jetbrains-mono), monospace",
+          fontSize: 12,
+          lineHeight: 1.7,
+          minHeight: 260,
+          overflowX: "auto",
+        }}
+      >
         {lines.slice(0, visibleLines).map((line, i) => (
           <div
             key={i}
             className="animate-fade-in"
-            style={{ color: line.color, animationDuration: "0.3s" }}
+            style={{
+              color: line.lime
+                ? "var(--color-lime)"
+                : line.primary
+                ? "var(--color-text-primary)"
+                : "var(--color-text-tertiary)",
+              animationDuration: "0.25s",
+            }}
           >
             {line.text || "\u00A0"}
           </div>
         ))}
         {visibleLines < lines.length && (
           <span
-            className="inline-block w-2 h-4 animate-pulse"
-            style={{ backgroundColor: "var(--green-500)" }}
+            style={{
+              display: "inline-block",
+              width: 8,
+              height: 14,
+              background: "var(--color-lime)",
+            }}
+            className="animate-cursor-blink"
           />
         )}
       </div>
@@ -627,55 +342,325 @@ function TerminalPreview() {
   );
 }
 
-function ProblemSection() {
+function HeroSection() {
+  const { ref, isVisible } = useInView(0.05);
+
+  return (
+    <section
+      id="hero"
+      ref={ref}
+      style={{
+        position: "relative",
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+        paddingTop: 60,
+      }}
+    >
+      {/* Grid bg */}
+      <div
+        className="grid-bg"
+        style={{ position: "absolute", inset: 0, opacity: 1 }}
+      />
+
+      {/* Content */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 10,
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "0 24px",
+          textAlign: "center",
+          paddingTop: 60,
+          paddingBottom: 80,
+        }}
+      >
+        {/* Eyebrow */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: 32,
+            transition: "opacity 600ms ease",
+            opacity: isVisible ? 1 : 0,
+          }}
+        >
+          <span
+            className="badge badge-soft-lime"
+            style={{ fontSize: 10, gap: 6 }}
+          >
+            <SparklesIcon />
+            Beta · Gratis · Tanpa login
+          </span>
+        </div>
+
+        {/* Headline */}
+        <h1
+          style={{
+            fontFamily: "var(--font-unbounded), 'Unbounded', sans-serif",
+            fontSize: "clamp(2.2rem, 5vw, 3.75rem)",
+            fontWeight: 900,
+            lineHeight: 1.0,
+            letterSpacing: "-0.03em",
+            color: "var(--color-text-primary)",
+            maxWidth: 820,
+            margin: "0 auto 24px",
+            transition: "opacity 600ms ease, transform 600ms ease",
+            transitionDelay: "100ms",
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? "translateY(0)" : "translateY(16px)",
+          }}
+        >
+          Satu tempat untuk{" "}
+          <span style={{ color: "var(--color-lime)" }}>belajar</span>,{" "}
+          <span style={{ color: "var(--color-lime)" }}>planning</span>, dan{" "}
+          <span style={{ color: "var(--color-lime)" }}>build</span> dengan AI
+          agent.
+        </h1>
+
+        {/* Subheadline */}
+        <p
+          style={{
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            fontSize: "clamp(13px, 1.5vw, 15px)",
+            fontWeight: 300,
+            lineHeight: 1.75,
+            color: "var(--color-text-secondary)",
+            maxWidth: 560,
+            margin: "0 auto 40px",
+            transition: "opacity 600ms ease, transform 600ms ease",
+            transitionDelay: "200ms",
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? "translateY(0)" : "translateY(16px)",
+          }}
+        >
+          Learn Hub gratis + doc generator + export ke tools favorit kamu.
+          Dibuat untuk developer yang build dengan AI.
+        </p>
+
+        {/* CTAs */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12,
+            transition: "opacity 600ms ease, transform 600ms ease",
+            transitionDelay: "300ms",
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? "translateY(0)" : "translateY(16px)",
+          }}
+        >
+          <a
+            href="/generate"
+            className="btn btn-primary btn-lg"
+            id="hero-cta-generate"
+            style={{ gap: 8 }}
+          >
+            <WandIcon />
+            Mulai generate
+            <ArrowRightIcon />
+          </a>
+          <a
+            href="/learn"
+            className="btn btn-secondary btn-lg"
+            id="hero-cta-learn"
+          >
+            Mulai belajar →
+          </a>
+        </div>
+
+        {/* Terminal */}
+        <div
+          style={{
+            marginTop: 64,
+            maxWidth: 680,
+            margin: "64px auto 0",
+            transition: "opacity 700ms ease, transform 700ms ease",
+            transitionDelay: "400ms",
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? "translateY(0)" : "translateY(24px)",
+          }}
+        >
+          <TerminalPreview />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 2. THREE PILLARS ────────────────────────────────────────────
+
+function PillarSection() {
   const { ref, isVisible } = useInView();
 
-  const problems = [
-    { emoji: "🎯", title: "Scope creep", desc: "Features keep growing with no clear boundary" },
-    { emoji: "🔀", title: "Inconsistency", desc: "AI generates different styles each session" },
-    { emoji: "📄", title: "No source of truth", desc: "No docs for AI agents to reference" },
-    { emoji: "🎨", title: "Design chaos", desc: "Colors and components made ad-hoc" },
-    { emoji: "🏗️", title: "Technical debt", desc: "Architecture not planned from day one" },
-    { emoji: "🧠", title: "Lost context", desc: "Re-explain everything each new session" },
+  const pillars = [
+    {
+      num: "①",
+      label: "Learn",
+      title: "Belajar agent engineering",
+      desc: "Learning path gratis dan terstruktur — dari vibe coding 101 sampai multi-agent workflow. Semua gratis, tanpa paywall.",
+      cta: "Lihat learning path →",
+      href: "/learn",
+      accent: "var(--color-lime)",
+      icon: <BookIcon />,
+    },
+    {
+      num: "②",
+      label: "Build",
+      title: "Generate doc fondasi proyek",
+      desc: "Ubah ide jadi bundle PRD, context, plan, design system & agents. Framework-aware, siap paste ke AI coding agent.",
+      cta: "Mulai generate →",
+      href: "/generate",
+      accent: "var(--color-lime)",
+      icon: <WandIcon />,
+    },
+    {
+      num: "③",
+      label: "Integrate",
+      title: "Export ke tools favorit kamu",
+      desc: "Output siap pakai untuk Cursor (.cursorrules), Claude Code (CLAUDE.md), Windsurf, dan lainnya. Tanpa modifikasi manual.",
+      cta: "Lihat integrasi →",
+      href: "/integrations",
+      accent: "var(--color-orange)",
+      icon: <PlugIcon />,
+    },
   ];
 
   return (
-    <section id="problem" className="py-16 md:py-24 relative">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
-        <div ref={ref} className="text-center mb-16">
-          <span
-            className={`text-label block mb-3 transition-all duration-500 ${
-              isVisible ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            THE PROBLEM
-          </span>
+    <section
+      id="pillars"
+      style={{ padding: "96px 0", position: "relative" }}
+    >
+      <Divider />
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "0 24px",
+          paddingTop: 80,
+        }}
+      >
+        <div ref={ref} style={{ textAlign: "center", marginBottom: 56 }}>
+          <Eyebrow>Ekosistem</Eyebrow>
           <h2
-            className={`text-[clamp(1.5rem,3vw,2rem)] font-medium tracking-[-0.5px] mb-4 transition-all duration-500 delay-100 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-            style={{ color: "#ffffff" }}
+            className="text-h2"
+            style={{
+              maxWidth: 500,
+              margin: "0 auto 16px",
+              transition: "opacity 500ms ease, transform 500ms ease",
+              transitionDelay: "100ms",
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? "translateY(0)" : "translateY(12px)",
+            }}
           >
-            You jump straight to code.{" "}
-            <span style={{ color: "var(--text-tertiary)" }}>We get it.</span>
+            Tiga pilar ekosistem ArroBuild
           </h2>
           <p
-            className={`text-body-lg max-w-lg mx-auto transition-all duration-500 delay-200 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
+            className="text-body-lg"
+            style={{
+              maxWidth: 480,
+              margin: "0 auto",
+              transition: "opacity 500ms ease, transform 500ms ease",
+              transitionDelay: "180ms",
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? "translateY(0)" : "translateY(12px)",
+            }}
           >
-            But without planning, your AI agent makes things up every session.
-            Here&apos;s what happens:
+            Belajar konsep, lalu langsung praktek generate, lalu export ke
+            tools nyata kamu.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {problems.map((p, i) => (
-            <FadeInCard key={p.title} index={i} className="card card-interactive">
-              <span className="text-2xl mb-3 block">{p.emoji}</span>
-              <h3 className="text-h3 mb-1">{p.title}</h3>
-              <p className="text-body">{p.desc}</p>
-            </FadeInCard>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {pillars.map((p, i) => (
+            <FadeIn key={p.label} index={i} delay={100}>
+              <div
+                style={{
+                  background: "var(--color-bg-surface)",
+                  border: "0.5px solid var(--color-border-default)",
+                  borderTop: `2.5px solid ${p.accent}`,
+                  borderRadius: "0 0 14px 14px",
+                  padding: "24px 28px",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  transition: "border-color 150ms ease-out",
+                }}
+              >
+                {/* Icon + label */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 20,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "var(--color-bg-elevated)",
+                      border: "0.5px solid var(--color-border-default)",
+                      color: p.accent,
+                    }}
+                  >
+                    {p.icon}
+                  </div>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: p.accent,
+                    }}
+                  >
+                    {p.num} {p.label}
+                  </span>
+                </div>
+
+                <h3 className="text-h3" style={{ marginBottom: 10 }}>
+                  {p.title}
+                </h3>
+                <p className="text-body" style={{ flex: 1, marginBottom: 24 }}>
+                  {p.desc}
+                </p>
+
+                <a
+                  href={p.href}
+                  style={{
+                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: p.accent,
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    transition: "gap 150ms ease",
+                  }}
+                >
+                  {p.cta}
+                </a>
+              </div>
+            </FadeIn>
           ))}
         </div>
       </div>
@@ -683,378 +668,1048 @@ function ProblemSection() {
   );
 }
 
-function FeaturesSection() {
+// 3. SAMPLE OUTPUT ────────────────────────────────────────────
+
+const sampleOutputs: Record<
+  string,
+  { label: string; meta: string; code: string }
+> = {
+  "prd.md": {
+    label: "prd.md",
+    meta: "Generated with: Claude Sonnet 4 · Framework: Next.js · Type: SaaS",
+    code: `# PRD — Freelance Manager SaaS
+
+## Overview
+Platform manajemen freelance untuk developer Indonesia.
+Target: solo developer & small agency.
+
+## Core Features
+- **Dashboard proyek** — status, deadline, billing
+- **Klien management** — kontak, riwayat proyek
+- **Invoice generator** — export PDF, share link
+- **Time tracking** — per-task, billable hours
+
+## User Stories
+- Sebagai freelancer, saya ingin melihat semua proyek
+  aktif dalam satu dashboard.
+- Sebagai freelancer, saya ingin generate invoice
+  dari time tracking secara otomatis.
+
+## Success Metrics
+- Time-to-first-invoice: < 10 menit
+- Invoice paid rate: > 85%`,
+  },
+  "context.md": {
+    label: "context.md",
+    meta: "Generated with: Gemini 2.5 Pro · Framework: Next.js · Stack: Supabase",
+    code: `# Context — Freelance Manager
+
+## Stack
+- Frontend: Next.js 15 App Router + TypeScript
+- Database: Supabase (PostgreSQL + Auth + Storage)
+- Styling: Tailwind CSS + shadcn/ui
+- Deploy: Vercel
+
+## Architecture Decisions
+- Gunakan Server Components secara default
+- Client Components hanya untuk interaktivitas
+- Row Level Security di Supabase untuk semua tabel
+
+## Current State
+- [ ] Auth flow (login, signup, OAuth)
+- [ ] Dashboard layout
+- [ ] Project CRUD
+- [ ] Invoice generation
+
+## AI Agent Rules
+Selalu referensikan file ini sebelum mulai coding.
+Jangan buat komponen baru jika sudah ada di shadcn.`,
+  },
+  "design-system.md": {
+    label: "design-system.md",
+    meta: "Generated with: Claude Sonnet 4 · Style: Minimal · Primary: Violet",
+    code: `# Design System — Freelance Manager
+
+## Brand Colors
+- Primary: #7C3AED (violet)
+- Surface: #0F0F0F
+- Border: rgba(255,255,255,0.08)
+
+## Typography
+- Display: Cal Sans, 900, -0.03em
+- Body: Inter, 400, 1.6 line-height
+- Code: JetBrains Mono, 400
+
+## Components
+### Button
+\`\`\`
+background: #7C3AED
+color: #ffffff
+padding: 10px 20px
+border-radius: 8px
+\`\`\`
+
+### Card
+\`\`\`
+background: #111111
+border: 0.5px solid rgba(255,255,255,0.08)
+border-radius: 12px
+\`\`\``,
+  },
+  "agents.md": {
+    label: "agents.md",
+    meta: "Generated with: Claude Sonnet 4 · AI Tool: Cursor + Claude Code",
+    code: `# AI Agent Roles — Freelance Manager
+
+## PM Agent
+Role: Product Manager
+Scope: Prioritization, user stories, acceptance criteria
+Prompt prefix: "Kamu adalah PM untuk proyek ini..."
+
+## Architect Agent
+Role: System Architect
+Scope: Database schema, API design, folder structure
+Constraint: Selalu gunakan stack yang ada di context.md
+
+## UI Agent
+Role: Frontend Developer
+Scope: Komponen, layout, responsive design
+Constraint: Gunakan shadcn/ui, jangan buat dari scratch
+
+## Code Reviewer
+Role: Senior Developer
+Scope: Code review, security check, performance
+Trigger: Sebelum setiap commit ke main`,
+  },
+};
+
+function SampleOutputSection() {
   const { ref, isVisible } = useInView();
+  const [activeTab, setActiveTab] =
+    useState<keyof typeof sampleOutputs>("prd.md");
+
+  const tabs = Object.keys(sampleOutputs) as (keyof typeof sampleOutputs)[];
+  const current = sampleOutputs[activeTab];
 
   return (
-    <section id="features" className="py-16 md:py-24 relative scroll-mt-24">
-      {/* Subtle separator */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent, var(--bg-border), transparent)",
-        }}
-      />
-
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
-        <div ref={ref} className="text-center mb-16">
-          <span
-            className={`text-label block mb-3 transition-all duration-500 ${
-              isVisible ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            WHAT YOU GET
-          </span>
+    <section id="sample-output" style={{ padding: "0 0 96px" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+        <div ref={ref} style={{ textAlign: "center", marginBottom: 48 }}>
+          <Eyebrow>Sample output</Eyebrow>
           <h2
-            className={`text-[clamp(1.5rem,3vw,2rem)] font-medium tracking-[-0.5px] mb-4 transition-all duration-500 delay-100 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-            style={{ color: "#ffffff" }}
+            className="text-h2"
+            style={{
+              maxWidth: 500,
+              margin: "0 auto 14px",
+              transition: "opacity 500ms ease, transform 500ms ease",
+              transitionDelay: "100ms",
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? "translateY(0)" : "translateY(12px)",
+            }}
           >
-            A complete project foundation.{" "}
-            <span className="gradient-text">In minutes.</span>
+            Lihat seperti apa output-nya
           </h2>
           <p
-            className={`text-body-lg max-w-lg mx-auto transition-all duration-500 delay-200 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
+            className="text-body-lg"
+            style={{
+              maxWidth: 440,
+              margin: "0 auto",
+              transition: "opacity 500ms ease, transform 500ms ease",
+              transitionDelay: "180ms",
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? "translateY(0)" : "translateY(12px)",
+            }}
           >
-            1 file gratis, hingga 8 file di tier Unlimited — semuanya
-            framework-aware dan siap paste ke root proyek.
+            Real output dari ArroBuild. Framework-aware, langsung siap paste ke
+            project root.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {generatedFiles.map((file, i) => {
-            const Icon = file.icon;
-            return (
-              <FadeInCard
-                key={file.name}
-                index={i}
-                delayStep={60}
-                className="card card-interactive group cursor-default"
+        <FadeIn delay={200}>
+          {/* Tab bar */}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              marginBottom: 16,
+              overflowX: "auto",
+              paddingBottom: 4,
+            }}
+            className="scrollbar-none"
+          >
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={activeTab === tab ? "tab-pill active" : "tab-pill"}
+                style={{ flexShrink: 0 }}
               >
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-150"
-                    style={{
-                      backgroundColor: "var(--bg-card)",
-                      border: "1px solid var(--bg-border)",
-                    }}
-                  >
-                    <Icon className="w-5 h-5 text-[var(--green-text)] group-hover:scale-110 transition-transform" />
-                  </div>
-                  <span
-                    className="text-[10px] font-medium px-2 py-0.5 rounded-full border shrink-0"
-                    style={{
-                      color: "var(--text-tertiary)",
-                      borderColor: "var(--bg-border)",
-                    }}
-                  >
-                    {file.tier}
-                  </span>
-                </div>
-                <h3
-                  className="font-mono text-[13px] font-medium mb-2"
-                  style={{ color: "var(--green-text)" }}
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Code block */}
+          <div
+            style={{
+              background: "#0D0D0D",
+              border: "0.5px solid var(--color-border-default)",
+              borderRadius: 12,
+              overflow: "hidden",
+            }}
+          >
+            {/* File header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 16px",
+                borderBottom: "0.5px solid var(--color-border-default)",
+                flexWrap: "wrap",
+                gap: 8,
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: 8 }}
+              >
+                <span style={{ color: "var(--color-lime)" }}>
+                  <FileTextIcon />
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "var(--color-text-primary)",
+                  }}
                 >
-                  {file.name}
-                </h3>
-                <p className="text-body text-[13px]">{file.desc}</p>
-              </FadeInCard>
-            );
-          })}
+                  {current.label}
+                </span>
+              </div>
+              <span
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono), monospace",
+                  fontSize: 10,
+                  color: "var(--color-text-tertiary)",
+                }}
+              >
+                {current.meta}
+              </span>
+            </div>
+
+            {/* Code content */}
+            <pre
+              style={{
+                margin: 0,
+                padding: "20px 24px",
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                fontSize: 12,
+                lineHeight: 1.75,
+                color: "var(--color-text-primary)",
+                overflowX: "auto",
+                maxHeight: 380,
+                overflowY: "auto",
+              }}
+            >
+              {current.code}
+            </pre>
+          </div>
+
+          {/* CTA below */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginTop: 24,
+            }}
+          >
+            <a
+              href="/generate"
+              className="btn btn-primary"
+              id="sample-output-cta"
+              style={{ gap: 8 }}
+            >
+              <WandIcon />
+              Generate versimu sendiri
+              <ArrowRightIcon />
+            </a>
+          </div>
+        </FadeIn>
+      </div>
+    </section>
+  );
+}
+
+// 4. SOCIAL PROOF ─────────────────────────────────────────────
+
+function SocialProofSection() {
+  const { ref, isVisible } = useInView();
+  const projectCount = useCounter(347, isVisible, 2000);
+  const devCount = useCounter(1200, isVisible, 2200);
+
+  const testimonials = [
+    {
+      quote:
+        "ArroBuild menghemat 3-4 jam setup awal per project. context.md-nya langsung jadi source of truth untuk semua sesi Cursor.",
+      name: "Rizky A.",
+      role: "Indie Hacker · Surabaya",
+    },
+    {
+      quote:
+        "PRD yang dihasilkan lebih terstruktur dari yang biasa saya tulis manual. Langsung pakai ke Claude Code tanpa edit.",
+      name: "Sarah M.",
+      role: "Solo Dev · Jakarta",
+    },
+    {
+      quote:
+        "Generate 5 file dalam 90 detik. Setup project jadi lebih cepat dan AI agent-nya lebih fokus karena punya context yang jelas.",
+      name: "Budi P.",
+      role: "Fullstack Dev · Bandung",
+    },
+  ];
+
+  return (
+    <section id="social-proof" style={{ padding: "0 0 96px" }}>
+      <Divider />
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "80px 24px 0",
+        }}
+      >
+        {/* Counters */}
+        <div ref={ref}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: 32,
+              marginBottom: 64,
+              textAlign: "center",
+            }}
+          >
+            {[
+              { value: projectCount.toLocaleString(), label: "project foundations generated" },
+              { value: devCount.toLocaleString() + "+", label: "developers joined" },
+              { value: "5", label: "model AI tersedia" },
+            ].map((stat, i) => (
+              <div
+                key={i}
+                style={{
+                  transition: "opacity 500ms ease, transform 500ms ease",
+                  transitionDelay: `${i * 100}ms`,
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible ? "translateY(0)" : "translateY(16px)",
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: "var(--font-unbounded), 'Unbounded', sans-serif",
+                    fontSize: "clamp(2rem, 4vw, 3rem)",
+                    fontWeight: 900,
+                    letterSpacing: "-0.03em",
+                    color: "var(--color-lime)",
+                    lineHeight: 1.0,
+                    marginBottom: 8,
+                  }}
+                >
+                  {stat.value}
+                </div>
+                <div className="text-body">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Testimonials */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {testimonials.map((t, i) => (
+            <FadeIn key={i} index={i} delay={100}>
+              <div
+                style={{
+                  background: "var(--color-bg-surface)",
+                  border: "0.5px solid var(--color-border-default)",
+                  borderRadius: 14,
+                  padding: "24px 28px",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 16,
+                }}
+              >
+                {/* Stars */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 3,
+                    color: "var(--color-lime)",
+                  }}
+                >
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <StarIcon key={j} />
+                  ))}
+                </div>
+                <p
+                  className="text-body"
+                  style={{ lineHeight: 1.75, flex: 1 }}
+                >
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--color-text-primary)",
+                    }}
+                  >
+                    {t.name}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                      fontSize: 11,
+                      fontWeight: 400,
+                      color: "var(--color-text-tertiary)",
+                      marginTop: 2,
+                    }}
+                  >
+                    {t.role}
+                  </div>
+                </div>
+              </div>
+            </FadeIn>
+          ))}
         </div>
       </div>
     </section>
   );
 }
+
+// 5. HOW IT WORKS ─────────────────────────────────────────────
 
 function HowItWorksSection() {
   const { ref, isVisible } = useInView();
 
-  return (
-    <section id="how-it-works" className="py-16 md:py-24 relative scroll-mt-24">
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent, var(--bg-border), transparent)",
-        }}
-      />
-
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
-        <div ref={ref} className="text-center mb-16">
-          <span
-            className={`text-label block mb-3 transition-all duration-500 ${
-              isVisible ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            HOW IT WORKS
-          </span>
-          <h2
-            className={`text-[clamp(1.5rem,3vw,2rem)] font-medium tracking-[-0.5px] mb-4 transition-all duration-500 delay-100 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-            style={{ color: "#ffffff" }}
-          >
-            Three steps. Under two minutes.
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          {howItWorks.map((step, i) => {
-            const Icon = step.icon;
-            return (
-              <FadeInStep key={step.step} index={i}>
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 glow-green-sm"
-                  style={{
-                    backgroundColor: "var(--green-900)",
-                    border: "1px solid var(--green-muted)",
-                  }}
-                >
-                  <Icon className="w-6 h-6 text-[var(--green-text)]" />
-                </div>
-                <div
-                  className="text-[12px] font-mono font-medium mb-2"
-                  style={{ color: "var(--green-text)" }}
-                >
-                  STEP {step.step}
-                </div>
-                <h3 className="text-h2 mb-2">{step.title}</h3>
-                <p className="text-body max-w-[260px] mx-auto">{step.desc}</p>
-              </FadeInStep>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function StatsSection() {
-  const { ref, isVisible } = useInView();
-  const filesCount = useCounter(8, isVisible);
-  const modelsCount = useCounter(5, isVisible);
-
-  return (
-    <section id="stats" className="py-20 relative">
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent, var(--bg-border), transparent)",
-        }}
-      />
-
-      <div ref={ref} className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {[
-            { value: `1–${filesCount}`, label: "File per project (by tier)" },
-            { value: `< 2 min`, label: "Bundle lengkap (5 file)" },
-            { value: `${modelsCount}`, label: "Model AI tersedia" },
-          ].map((stat, i) => (
-            <div
-              key={i}
-              className={`text-center transition-all duration-500 ${
-                isVisible
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-6"
-              }`}
-              style={{ transitionDelay: `${i * 100}ms` }}
-            >
-              <div
-                className="text-[clamp(2rem,4vw,3rem)] font-medium tracking-[-1px] mb-1 gradient-text"
-              >
-                {stat.value}
-              </div>
-              <div className="text-body">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PresetSection() {
-  const { ref, isVisible } = useInView();
-  const [activeTab, setActiveTab] = useState(0);
-
-  const presets = [
+  const steps = [
     {
-      category: "Framework",
-      items: ["Next.js", "Laravel", "Django", "Rails", "FastAPI"],
+      step: "01",
+      title: "Describe",
+      desc: 'Ceritakan ide produk kamu. Tipe produk, target user, fitur inti. Bisa 1 paragraf.',
+      icon: <TerminalIcon />,
     },
     {
-      category: "Design Style",
-      items: ["Linear", "Apple", "Stripe", "Notion", "Vercel"],
+      step: "02",
+      title: "Configure",
+      desc: "Pilih framework, design style, dan AI coding tool target kamu.",
+      icon: <WandIcon />,
     },
     {
-      category: "Agent Tool",
-      items: ["Cursor", "Claude Code", "Windsurf", "Cline", "OpenCode"],
+      step: "03",
+      title: "Generate",
+      desc: "Pilih dokumen yang mau di-generate. Lihat progress real-time per file.",
+      icon: <FileTextIcon />,
+    },
+    {
+      step: "04",
+      title: "Export",
+      desc: "Download .zip dan langsung paste ke root project. Siap untuk Cursor, Claude Code, Windsurf.",
+      icon: <DownloadIcon />,
     },
   ];
 
   return (
-    <section id="presets" className="py-16 md:py-24 relative scroll-mt-24">
+    <section
+      id="how-it-works"
+      style={{ padding: "0 0 96px", scrollMarginTop: 80 }}
+    >
+      <Divider />
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px"
         style={{
-          background:
-            "linear-gradient(90deg, transparent, var(--bg-border), transparent)",
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "80px 24px 0",
         }}
-      />
-
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
-        <div ref={ref} className="text-center mb-12">
-          <span
-            className={`text-label block mb-3 transition-all duration-500 ${
-              isVisible ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            CUSTOMIZABLE
-          </span>
+      >
+        <div ref={ref} style={{ textAlign: "center", marginBottom: 56 }}>
+          <Eyebrow>Cara kerja</Eyebrow>
           <h2
-            className={`text-[clamp(1.5rem,3vw,2rem)] font-medium tracking-[-0.5px] mb-4 transition-all duration-500 delay-100 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-            style={{ color: "#ffffff" }}
+            className="text-h2"
+            style={{
+              margin: "0 auto 14px",
+              transition: "opacity 500ms ease, transform 500ms ease",
+              transitionDelay: "100ms",
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? "translateY(0)" : "translateY(12px)",
+            }}
           >
-            Tailored to your stack.{" "}
-            <span className="gradient-text">Always.</span>
+            Empat langkah, under 2 menit.
           </h2>
-          <p
-            className={`text-body-lg max-w-lg mx-auto transition-all duration-500 delay-200 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-          >
-            Every generated document adapts to your chosen framework, design
-            style, and AI coding tool.
-          </p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex justify-start sm:justify-center gap-2 mb-8 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
-          {presets.map((p, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveTab(i)}
-              className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 cursor-pointer shrink-0 ${
-                activeTab === i
-                  ? "text-[var(--green-text)]"
-                  : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-              }`}
-              style={{
-                backgroundColor: activeTab === i ? "var(--green-900)" : "transparent",
-                border: `1px solid ${activeTab === i ? "var(--green-muted)" : "var(--bg-border)"}`,
-              }}
-            >
-              {p.category}
-            </button>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {steps.map((s, i) => (
+            <FadeIn key={s.step} index={i} delay={80}>
+              <div
+                style={{
+                  background: "var(--color-bg-surface)",
+                  border: "0.5px solid var(--color-border-default)",
+                  borderRadius: 14,
+                  padding: "24px",
+                  height: "100%",
+                }}
+              >
+                {/* Step number */}
+                <div
+                  style={{
+                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "var(--color-lime)",
+                    marginBottom: 12,
+                  }}
+                >
+                  {s.step}
+                </div>
+                {/* Icon */}
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "var(--color-bg-elevated)",
+                    border: "0.5px solid var(--color-border-default)",
+                    color: "var(--color-lime)",
+                    marginBottom: 16,
+                  }}
+                >
+                  {s.icon}
+                </div>
+                <h3 className="text-h3" style={{ marginBottom: 8 }}>
+                  {s.title}
+                </h3>
+                <p className="text-body">{s.desc}</p>
+              </div>
+            </FadeIn>
           ))}
         </div>
 
-        {/* Preset Grid */}
-        <div className="flex flex-wrap justify-center gap-3 max-w-2xl mx-auto">
-          {presets[activeTab].items.map((item, i) => (
-            <div
-              key={`${activeTab}-${i}`}
-              className="card card-interactive px-6 py-4 flex items-center gap-3 animate-fade-in"
-              style={{ animationDelay: `${i * 60}ms`, animationDuration: "0.3s" }}
+        {/* Highlight note */}
+        <div
+          style={{
+            marginTop: 32,
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+              fontSize: 12,
+              fontWeight: 400,
+              color: "var(--color-text-tertiary)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <span style={{ color: "var(--color-lime)" }}>
+              <CheckIcon />
+            </span>
+            Output siap paste ke Cursor, Claude Code, Windsurf — tanpa modifikasi
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 6. LEARN HUB TEASER ─────────────────────────────────────────
+
+function LearnHubTeaserSection() {
+  const { ref, isVisible } = useInView();
+
+  const paths = [
+    {
+      tag: "Pemula",
+      title: "Vibe Coding 101",
+      desc: "Setup AI agent pertama, cara buat PRD yang baik, deploy project pertama. 5 lesson.",
+      lessons: 5,
+      time: "~2 jam",
+    },
+    {
+      tag: "Core",
+      title: "PRD & Documentation",
+      desc: "Kenapa dokumentasi penting, anatomi PRD, context.md sebagai master reference.",
+      lessons: 5,
+      time: "~3 jam",
+    },
+    {
+      tag: "Lanjut",
+      title: "Agent Engineering",
+      desc: "Multi-agent workflow, prompt engineering, context window management.",
+      lessons: 5,
+      time: "~4 jam",
+    },
+  ];
+
+  return (
+    <section
+      id="learn"
+      style={{ padding: "0 0 96px", scrollMarginTop: 80 }}
+    >
+      <Divider />
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "80px 24px 0",
+        }}
+      >
+        <div
+          ref={ref}
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            gap: 24,
+            flexWrap: "wrap",
+            marginBottom: 48,
+          }}
+        >
+          <div>
+            <Eyebrow orange>Learn Hub</Eyebrow>
+            <h2
+              className="text-h2"
+              style={{
+                maxWidth: 440,
+                transition: "opacity 500ms ease, transform 500ms ease",
+                transitionDelay: "100ms",
+                opacity: isVisible ? 1 : 0,
+                transform: isVisible ? "translateY(0)" : "translateY(12px)",
+              }}
             >
-              <div
-                className="w-8 h-8 rounded-md flex items-center justify-center text-[14px] font-medium"
+              Belajar agent engineering, gratis.
+            </h2>
+          </div>
+          <a
+            href="/learn"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+              fontSize: 12,
+              fontWeight: 700,
+              color: "var(--color-orange)",
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              flexShrink: 0,
+              transition: "opacity 500ms ease",
+              transitionDelay: "200ms",
+              opacity: isVisible ? 1 : 0,
+            }}
+          >
+            Lihat semua learning path
+            <ArrowRightIcon />
+          </a>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {paths.map((p, i) => (
+            <FadeIn key={p.title} index={i} delay={100}>
+              <a
+                href="/learn"
                 style={{
-                  backgroundColor: "var(--bg-card)",
-                  border: "1px solid var(--bg-border)",
-                  color: "var(--green-text)",
+                  display: "block",
+                  background: "var(--color-bg-surface)",
+                  border: "0.5px solid var(--color-border-default)",
+                  borderTop: "2.5px solid var(--color-orange)",
+                  borderRadius: "0 0 14px 14px",
+                  padding: "24px 28px",
+                  textDecoration: "none",
+                  height: "100%",
+                  transition: "border-color 150ms ease",
                 }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLElement).style.borderColor =
+                    "var(--color-border-strong)")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLElement).style.borderColor =
+                    "var(--color-border-default)")
+                }
               >
-                {item[0]}
-              </div>
-              <span className="text-[14px] font-medium" style={{ color: "var(--text-primary)" }}>
-                {item}
-              </span>
-            </div>
+                {/* Tag */}
+                <span
+                  className="badge badge-orange"
+                  style={{ marginBottom: 16, display: "inline-flex" }}
+                >
+                  {p.tag}
+                </span>
+
+                <h3 className="text-h3" style={{ marginBottom: 10 }}>
+                  {p.title}
+                </h3>
+                <p className="text-body" style={{ marginBottom: 20 }}>
+                  {p.desc}
+                </p>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 16,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                      fontSize: 11,
+                      fontWeight: 400,
+                      color: "var(--color-text-tertiary)",
+                    }}
+                  >
+                    {p.lessons} lesson
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                      fontSize: 11,
+                      fontWeight: 400,
+                      color: "var(--color-text-tertiary)",
+                    }}
+                  >
+                    {p.time}
+                  </span>
+                  <span
+                    className="badge badge-ghost"
+                    style={{ marginLeft: "auto" }}
+                  >
+                    Gratis
+                  </span>
+                </div>
+              </a>
+            </FadeIn>
           ))}
         </div>
       </div>
     </section>
   );
 }
+
+// 7. FREE TOOLS TEASER ────────────────────────────────────────
+
+function ToolsTeaserSection() {
+  const { ref, isVisible } = useInView();
+
+  const tools = [
+    {
+      name: "Portfolio Generator",
+      href: "/tools/portfolio",
+      desc: "Generate README portfolio + context.md untuk AI dari nama, skills, dan projects kamu.",
+      label: "New",
+    },
+    {
+      name: "README Generator",
+      href: "/tools/readme",
+      desc: "README lengkap untuk open source project — badges, install steps, API docs.",
+      label: "Coming soon",
+      soon: true,
+    },
+    {
+      name: "API Docs Generator",
+      href: "/tools/api-docs",
+      desc: "Dokumentasi API dari endpoint list kamu. Format Markdown, siap untuk AI agent.",
+      label: "Coming soon",
+      soon: true,
+    },
+  ];
+
+  return (
+    <section
+      id="tools"
+      style={{ padding: "0 0 96px", scrollMarginTop: 80 }}
+    >
+      <Divider />
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "80px 24px 0",
+        }}
+      >
+        <div ref={ref} style={{ marginBottom: 48 }}>
+          <Eyebrow>Free tools</Eyebrow>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: 24,
+              flexWrap: "wrap",
+            }}
+          >
+            <h2
+              className="text-h2"
+              style={{
+                maxWidth: 440,
+                transition: "opacity 500ms ease, transform 500ms ease",
+                transitionDelay: "100ms",
+                opacity: isVisible ? 1 : 0,
+                transform: isVisible ? "translateY(0)" : "translateY(12px)",
+              }}
+            >
+              Tools spesifik. Gratis, tanpa login.
+            </h2>
+            <p
+              className="text-body"
+              style={{
+                maxWidth: 300,
+                transition: "opacity 500ms ease",
+                transitionDelay: "180ms",
+                opacity: isVisible ? 1 : 0,
+              }}
+            >
+              Purpose-built tools untuk kebutuhan spesifik — bukan doc bundle generik.
+            </p>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {tools.map((t, i) => (
+            <FadeIn key={t.name} index={i} delay={80}>
+              <a
+                href={t.soon ? undefined : t.href}
+                style={{
+                  display: "block",
+                  background: "var(--color-bg-surface)",
+                  border: "0.5px solid var(--color-border-default)",
+                  borderRadius: 14,
+                  padding: "24px 28px",
+                  textDecoration: "none",
+                  height: "100%",
+                  opacity: t.soon ? 0.6 : 1,
+                  cursor: t.soon ? "default" : "pointer",
+                  transition: "border-color 150ms ease",
+                }}
+                onMouseEnter={(e) => {
+                  if (!t.soon)
+                    (e.currentTarget as HTMLElement).style.borderColor =
+                      "var(--color-border-strong)";
+                }}
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLElement).style.borderColor =
+                    "var(--color-border-default)")
+                }
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 14,
+                  }}
+                >
+                  <h3 className="text-h4">{t.name}</h3>
+                  <span
+                    className={t.soon ? "badge badge-ghost" : "badge badge-lime"}
+                  >
+                    {t.label}
+                  </span>
+                </div>
+                <p className="text-body">{t.desc}</p>
+              </a>
+            </FadeIn>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 8. FAQ ──────────────────────────────────────────────────────
+
+const faqs = [
+  {
+    q: "Apa itu ArroBuild?",
+    a: "ArroBuild adalah ekosistem untuk developer yang build dengan AI agent — Learn Hub gratis untuk belajar agent engineering, generator dokumentasi proyek (PRD, context, plan, design system, agents), dan export ke tools favorit kamu (Cursor, Claude Code, Windsurf).",
+  },
+  {
+    q: "Untuk siapa ArroBuild?",
+    a: "Vibe coders, indie hackers, solo developer, dan siapa pun yang pakai AI coding agent. Kalau kamu langsung coding tanpa planning, dan hasilnya AI-mu sering keliru arah — ini untuk kamu.",
+  },
+  {
+    q: "Learn Hub itu apa?",
+    a: "Kumpulan learning path gratis dan terstruktur tentang vibe coding, PRD writing, agent engineering, dan integrasi tools. Semua gratis, tanpa login, tersedia di /learn.",
+  },
+  {
+    q: "Berapa lama proses generate?",
+    a: "PRD gratis selesai ~30 detik. Bundle lengkap (5 file) biasanya under 2 menit. Kamu bisa lihat progress real-time saat setiap file di-generate.",
+  },
+  {
+    q: "Framework apa yang didukung?",
+    a: "Next.js, Laravel, Django, Rails, dan FastAPI. Setiap preset menyesuaikan dokumentasi dengan konvensi dan ecosystem framework pilihan kamu.",
+  },
+  {
+    q: "Model AI apa yang tersedia?",
+    a: "Free: Gemini 2.5 Flash & DeepSeek V3. Paid: tambahan Gemini 2.5 Pro, GPT-4o, dan Claude Sonnet 4.",
+  },
+  {
+    q: "Tools apa yang didukung untuk export?",
+    a: "Cursor (via .cursorrules), Claude Code (via CLAUDE.md), Windsurf (via rules file). GitHub, Notion, dan Linear menyusul.",
+  },
+  {
+    q: "Apakah gratis?",
+    a: "Ya! Free tier: 1 project, 1 file PRD, tanpa login. Upgrade ke Starter (Rp 49K/bulan) untuk 5 file + semua model AI, atau Unlimited (Rp 199K/bulan) untuk 8 file.",
+  },
+];
 
 function FAQSection() {
   const { ref, isVisible } = useInView();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="py-16 md:py-24 relative scroll-mt-24">
+    <section
+      id="faq"
+      style={{ padding: "0 0 96px", scrollMarginTop: 80 }}
+    >
+      <Divider />
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px"
         style={{
-          background:
-            "linear-gradient(90deg, transparent, var(--bg-border), transparent)",
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "80px 24px 0",
         }}
-      />
-
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
-        <div ref={ref} className="text-center mb-16">
-          <span
-            className={`text-label block mb-3 transition-all duration-500 ${
-              isVisible ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            FAQ
-          </span>
+      >
+        <div ref={ref} style={{ textAlign: "center", marginBottom: 48 }}>
+          <Eyebrow>FAQ</Eyebrow>
           <h2
-            className={`text-[clamp(1.5rem,3vw,2rem)] font-medium tracking-[-0.5px] transition-all duration-500 delay-100 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-            style={{ color: "#ffffff" }}
+            className="text-h2"
+            style={{
+              transition: "opacity 500ms ease, transform 500ms ease",
+              transitionDelay: "100ms",
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? "translateY(0)" : "translateY(12px)",
+            }}
           >
-            Questions? Answers.
+            Pertanyaan? Jawaban.
           </h2>
         </div>
 
-        <div className="max-w-2xl mx-auto space-y-3">
+        <div
+          style={{
+            maxWidth: 720,
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
           {faqs.map((faq, i) => {
             const isOpen = openIndex === i;
             return (
-              <div
-                key={i}
-                className="card overflow-hidden transition-all duration-200"
-                style={{
-                  borderColor: isOpen ? "var(--green-muted)" : undefined,
-                }}
-              >
-                <button
-                  onClick={() => setOpenIndex(isOpen ? null : i)}
-                  className="w-full flex items-center justify-between text-left py-1 cursor-pointer gap-4"
-                  id={`faq-toggle-${i}`}
-                >
-                  <span
-                    className="text-[14px] sm:text-[15px] font-medium"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    {faq.q}
-                  </span>
-                  <ChevronDownIcon
-                    className={`flex-shrink-0 ml-4 transition-transform duration-200 text-[var(--text-tertiary)] ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
+              <FadeIn key={i} index={i} delay={40}>
                 <div
-                  className={`overflow-hidden transition-all duration-200 ${
-                    isOpen ? "max-h-[400px] mt-3" : "max-h-0"
-                  }`}
+                  style={{
+                    background: "var(--color-bg-surface)",
+                    border: `0.5px solid ${isOpen ? "var(--color-border-strong)" : "var(--color-border-default)"}`,
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    transition: "border-color 150ms ease",
+                  }}
                 >
-                  <p className="text-body leading-relaxed pb-1">{faq.a}</p>
+                  <button
+                    onClick={() => setOpenIndex(isOpen ? null : i)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      textAlign: "left",
+                      padding: "18px 20px",
+                      gap: 16,
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                    id={`faq-toggle-${i}`}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--font-jetbrains-mono), monospace",
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: "var(--color-text-primary)",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {faq.q}
+                    </span>
+                    <span
+                      style={{
+                        color: "var(--color-text-tertiary)",
+                        flexShrink: 0,
+                        transform: isOpen ? "rotate(180deg)" : "rotate(0)",
+                        transition: "transform 200ms ease",
+                        display: "inline-flex",
+                      }}
+                    >
+                      <ChevronDownIcon />
+                    </span>
+                  </button>
+                  <div
+                    style={{
+                      maxHeight: isOpen ? 400 : 0,
+                      overflow: "hidden",
+                      transition: "max-height 200ms ease",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontFamily: "var(--font-jetbrains-mono), monospace",
+                        fontSize: 13,
+                        fontWeight: 300,
+                        lineHeight: 1.75,
+                        color: "var(--color-text-secondary)",
+                        padding: "0 20px 18px",
+                      }}
+                    >
+                      {faq.a}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </FadeIn>
             );
           })}
         </div>
@@ -1063,79 +1718,88 @@ function FAQSection() {
   );
 }
 
+// 9. CTA ──────────────────────────────────────────────────────
+
 function CTASection() {
   const { ref, isVisible } = useInView();
 
   return (
-    <section id="cta" className="py-24 relative">
+    <section id="cta" style={{ padding: "0 0 96px" }}>
+      <Divider />
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px"
         style={{
-          background:
-            "linear-gradient(90deg, transparent, var(--bg-border), transparent)",
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "80px 24px 0",
         }}
-      />
-
-      <div ref={ref} className="max-w-[1280px] mx-auto px-6 md:px-12">
+      >
         <div
-          className={`card card-featured max-w-2xl mx-auto text-center py-16 px-8 relative overflow-hidden transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
+          ref={ref}
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "0.5px solid var(--color-border-default)",
+            borderTop: "2.5px solid var(--color-lime)",
+            borderRadius: "0 0 20px 20px",
+            padding: "clamp(40px, 6vw, 80px) clamp(24px, 5vw, 80px)",
+            textAlign: "center",
+            maxWidth: 720,
+            margin: "80px auto 0",
+            transition: "opacity 600ms ease, transform 600ms ease",
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? "translateY(0)" : "translateY(20px)",
+          }}
         >
-          {/* Background glow */}
+          <Eyebrow>Mulai sekarang</Eyebrow>
+          <h2 className="text-h2" style={{ marginBottom: 14 }}>
+            Ready to build dengan rencana?
+          </h2>
+          <p
+            className="text-body-lg"
+            style={{ maxWidth: 400, margin: "0 auto 40px" }}
+          >
+            Generate PRD gratis sekarang, atau upgrade untuk bundle 5–8 file
+            dengan model AI premium.
+          </p>
+
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-10"
             style={{
-              background:
-                "radial-gradient(circle, rgba(34,197,94,0.5) 0%, transparent 70%)",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 12,
             }}
-          />
-
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 mb-6">
-              <span className="badge badge-success">
-                <RocketIcon className="w-3.5 h-3.5" />
-                Live & free to use
-              </span>
-            </div>
-
-            <h2
-              className="text-[clamp(1.5rem,3vw,2.25rem)] font-medium tracking-[-0.5px] mb-4"
-              style={{ color: "#ffffff" }}
+          >
+            <a
+              href="/generate"
+              className="btn btn-primary btn-lg"
+              id="cta-start-btn"
+              style={{ gap: 8 }}
             >
-              Ready to build with a plan?
-            </h2>
-            <p className="text-body-lg mb-10 max-w-md mx-auto">
-              Generate PRD gratis sekarang, atau upgrade untuk bundle 5–8 file
-              dengan model AI premium.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="/generate"
-                className="btn btn-primary btn-lg animate-pulse-glow group w-full sm:w-auto"
-                id="cta-start-btn"
-              >
-                <SparklesIcon />
-                Mulai generate gratis
-                <ArrowIcon className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </a>
-              <a
-                href="/login"
-                className="btn btn-secondary btn-lg w-full sm:w-auto"
-                id="cta-login-btn"
-              >
-                Masuk / Upgrade
-              </a>
-            </div>
-
-            <p
-              className="mt-6 text-[13px]"
-              style={{ color: "var(--text-tertiary)" }}
+              <SparklesIcon />
+              Mulai generate gratis
+              <ArrowRightIcon />
+            </a>
+            <a
+              href="/learn"
+              className="btn btn-secondary btn-lg"
+              id="cta-learn-btn"
             >
-              Free tier tanpa login · Pembayaran Midtrans segera hadir
-            </p>
+              Mulai belajar →
+            </a>
           </div>
+
+          <p
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+              fontSize: 11,
+              fontWeight: 400,
+              color: "var(--color-text-tertiary)",
+              marginTop: 24,
+            }}
+          >
+            Free tier tanpa login · Pembayaran Midtrans segera hadir
+          </p>
         </div>
       </div>
     </section>
@@ -1146,14 +1810,15 @@ function CTASection() {
 
 export default function LandingPage() {
   return (
-    <main className="flex-1">
+    <main>
       <Navbar />
       <HeroSection />
-      <ProblemSection />
-      <FeaturesSection />
+      <PillarSection />
+      <SampleOutputSection />
+      <SocialProofSection />
       <HowItWorksSection />
-      <StatsSection />
-      <PresetSection />
+      <LearnHubTeaserSection />
+      <ToolsTeaserSection />
       <PricingSection />
       <FAQSection />
       <CTASection />

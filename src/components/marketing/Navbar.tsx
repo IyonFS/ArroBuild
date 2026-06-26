@@ -5,14 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getNavLabel } from "@/lib/display-name";
-import { LogoIcon, SparklesIcon, MenuIcon, CloseIcon } from "./icons";
+import { SparklesIcon, MenuIcon, CloseIcon } from "./icons";
 
 const NAV_LINKS = [
-  { href: "/#features", label: "Fitur" },
-  { href: "/#how-it-works", label: "Cara kerja" },
+  { href: "/learn", label: "Belajar" },
+  { href: "/tools/portfolio", label: "Mini Tools" },
+  { href: "/generate", label: "Buat Web" },
   { href: "/#pricing", label: "Harga" },
-  { href: "/docs", label: "Docs" },
-  { href: "/#faq", label: "FAQ" },
+  { href: "/docs", label: "Dokumentasi" },
 ];
 
 interface AuthUser {
@@ -91,85 +91,195 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
       ? NAV_LINKS.filter((l) => l.href === "/docs" || l.href === "/#pricing")
       : NAV_LINKS;
 
-  const hideGenerateCta = pathname === "/dashboard" || pathname.startsWith("/generate");
+  const hideGenerateCta =
+    pathname === "/dashboard" || pathname.startsWith("/generate");
   const navUserLabel = user ? getNavLabel(user.name, user.email) : "Dashboard";
 
   return (
     <>
+      {/* ── Top Nav ── */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-[202] transition-all duration-200 ${
-          scrolled || menuOpen ? "glass py-3" : "bg-transparent py-4 md:py-5"
-        }`}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 202,
+          height: 60,
+          display: "flex",
+          alignItems: "center",
+          borderBottom: scrolled
+            ? "0.5px solid var(--color-border-default)"
+            : "0.5px solid transparent",
+          background: scrolled
+            ? "rgba(10,10,10,0.92)"
+            : "transparent",
+          backdropFilter: scrolled ? "blur(12px)" : "none",
+          transition: "background 200ms ease, border-color 200ms ease",
+          padding: "0 24px",
+        }}
       >
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12 flex items-center justify-between gap-4">
-          <a href="/" className="flex items-center gap-2.5 shrink-0">
-            <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "var(--green-500)" }}
-            >
-              <LogoIcon />
-            </div>
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+          }}
+        >
+          {/* Logo */}
+          <a
+            href="/"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0,
+              textDecoration: "none",
+              flexShrink: 0,
+            }}
+          >
             <span
-              className="text-[17px] font-medium tracking-[-0.3px]"
-              style={{ color: "var(--text-primary)" }}
+              style={{
+                fontFamily: "var(--font-unbounded), 'Unbounded', sans-serif",
+                fontSize: 22,
+                fontWeight: 900,
+                letterSpacing: "-0.02em",
+                color: "var(--color-text-primary)",
+                lineHeight: 1,
+              }}
             >
-              ArroBuild
+              Arro
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-unbounded), 'Unbounded', sans-serif",
+                fontSize: 22,
+                fontWeight: 900,
+                letterSpacing: "-0.02em",
+                color: "var(--color-lime)",
+                lineHeight: 1,
+              }}
+            >
+              Build
             </span>
           </a>
 
-          <div className="hidden lg:flex items-center gap-7">
+          {/* Desktop nav links */}
+          <div
+            className="hidden lg:flex"
+            style={{ alignItems: "center", gap: 28 }}
+          >
             {links.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="text-[14px] transition-colors duration-150 hover:text-[var(--text-primary)]"
-                style={{ color: "var(--text-secondary)" }}
+                className="nav-link"
+                style={{
+                  fontSize: 15,
+                  color:
+                    pathname === link.href ||
+                    (link.href === "/learn" && pathname.startsWith("/learn"))
+                      ? "var(--color-text-primary)"
+                      : undefined,
+                }}
               >
                 {link.label}
               </a>
             ))}
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Right side actions */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexShrink: 0,
+            }}
+          >
             {user ? (
               <Link
                 href="/dashboard"
-                className="hidden sm:inline-flex items-center gap-2 btn btn-secondary btn-sm max-w-[160px]"
+                className="hidden sm:inline-flex btn btn-secondary btn-sm"
+                style={{ maxWidth: 160, gap: 8 }}
               >
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="" className="w-5 h-5 rounded-full" />
+                  <img
+                    src={user.avatarUrl}
+                    alt=""
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
                 ) : (
                   <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium"
-                    style={{ background: "var(--green-900)", color: "var(--green-text)" }}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: "50%",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      background: "rgba(204,255,0,0.15)",
+                      color: "var(--color-lime)",
+                    }}
                   >
                     {(user.name ?? user.email)[0]?.toUpperCase()}
                   </span>
                 )}
-                <span className="truncate">{navUserLabel}</span>
+                <span
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {navUserLabel}
+                </span>
               </Link>
             ) : (
               <>
-                <Link href="/signup" className="hidden md:inline-flex btn btn-ghost btn-sm">
-                  Daftar
-                </Link>
-                <Link href="/login" className="hidden sm:inline-flex btn btn-secondary btn-sm">
+                <Link
+                  href="/login"
+                  className="hidden sm:inline-flex btn btn-ghost btn-sm"
+                >
                   Masuk
                 </Link>
               </>
             )}
+
             {!hideGenerateCta && (
-              <Link href="/generate" className="hidden sm:inline-flex btn btn-primary btn-sm">
-                Generate
+              <Link
+                href="/generate"
+                className="hidden sm:inline-flex btn btn-primary btn-sm"
+                style={{ gap: 6 }}
+              >
+                <SparklesIcon />
+                Buat Web
               </Link>
             )}
+
+            {/* Mobile hamburger */}
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center border transition-colors"
+              className="lg:hidden flex items-center justify-center"
               style={{
-                borderColor: "var(--bg-border)",
-                color: "var(--text-secondary)",
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                border: "0.5px solid var(--color-border-strong)",
+                background: "transparent",
+                color: "var(--color-text-secondary)",
+                cursor: "pointer",
               }}
               aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
               aria-expanded={menuOpen}
@@ -180,78 +290,131 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
         </div>
       </nav>
 
+      {/* ── Mobile overlay backdrop ── */}
       {menuOpen && (
         <div
-          className="fixed inset-0 z-[199] lg:hidden"
-          style={{ backgroundColor: "rgba(15, 17, 23, 0.85)" }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 199,
+            background: "rgba(10,10,10,0.8)",
+          }}
           onClick={() => setMenuOpen(false)}
           aria-hidden
         />
       )}
 
+      {/* ── Mobile drawer ── */}
       <div
-        className={`fixed top-0 right-0 z-[201] h-full w-[min(100%,320px)] glass border-l transform transition-transform duration-300 lg:hidden ${
-          menuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-        style={{ borderColor: "var(--bg-border)" }}
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          zIndex: 201,
+          height: "100%",
+          width: "min(100%, 300px)",
+          background: "var(--color-bg-surface)",
+          borderLeft: "0.5px solid var(--color-border-default)",
+          transform: menuOpen ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 300ms ease",
+          display: "flex",
+          flexDirection: "column",
+          paddingTop: 76,
+          paddingBottom: 32,
+          paddingLeft: 24,
+          paddingRight: 24,
+        }}
+        className="lg:hidden"
       >
-        <div className="flex flex-col h-full pt-20 px-6 pb-8">
-          <nav className="flex flex-col gap-1">
-            {links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="py-3 px-3 rounded-lg text-[15px] font-medium transition-colors hover:bg-[var(--bg-surface)]"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {link.label}
-              </a>
-            ))}
-            {user && (
+        {/* Mobile nav links */}
+        <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {links.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                padding: "12px",
+                borderRadius: 8,
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                fontSize: 14,
+                fontWeight: 500,
+                color: "var(--color-text-primary)",
+                textDecoration: "none",
+                transition: "background 150ms ease",
+              }}
+              onMouseEnter={(e) =>
+                ((e.target as HTMLElement).style.background =
+                  "var(--color-bg-elevated)")
+              }
+              onMouseLeave={(e) =>
+                ((e.target as HTMLElement).style.background = "transparent")
+              }
+            >
+              {link.label}
+            </a>
+          ))}
+          {user && (
+            <Link
+              href="/dashboard"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                padding: "12px",
+                borderRadius: 8,
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                fontSize: 14,
+                fontWeight: 500,
+                color: "var(--color-lime)",
+                textDecoration: "none",
+              }}
+            >
+              Dashboard
+            </Link>
+          )}
+        </nav>
+
+        {/* Mobile bottom actions */}
+        <div
+          style={{
+            marginTop: "auto",
+            paddingTop: 24,
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+            borderTop: "0.5px solid var(--color-border-default)",
+          }}
+        >
+          {!user && (
+            <>
               <Link
-                href="/dashboard"
+                href="/signup"
                 onClick={() => setMenuOpen(false)}
-                className="py-3 px-3 rounded-lg text-[15px] font-medium transition-colors hover:bg-[var(--bg-surface)]"
-                style={{ color: "var(--green-text)" }}
+                className="btn btn-ghost"
+                style={{ width: "100%", justifyContent: "center" }}
               >
-                Dashboard
+                Daftar
               </Link>
-            )}
-          </nav>
-          <div
-            className="mt-auto pt-6 flex flex-col gap-3 border-t"
-            style={{ borderColor: "var(--bg-border)" }}
-          >
-            {!user && (
-              <>
-                <Link
-                  href="/signup"
-                  onClick={() => setMenuOpen(false)}
-                  className="btn btn-ghost w-full"
-                >
-                  Daftar
-                </Link>
-                <Link
-                  href="/login"
-                  onClick={() => setMenuOpen(false)}
-                  className="btn btn-secondary w-full"
-                >
-                  Masuk
-                </Link>
-              </>
-            )}
-            {!hideGenerateCta && (
               <Link
-                href="/generate"
+                href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="btn btn-primary w-full"
+                className="btn btn-secondary"
+                style={{ width: "100%", justifyContent: "center" }}
               >
-                <SparklesIcon />
-                Mulai generate
+                Masuk
               </Link>
-            )}
-          </div>
+            </>
+          )}
+          {!hideGenerateCta && (
+            <Link
+              href="/generate"
+              onClick={() => setMenuOpen(false)}
+              className="btn btn-primary"
+              style={{ width: "100%", justifyContent: "center", gap: 8 }}
+            >
+              <SparklesIcon />
+              Mulai Buat
+            </Link>
+          )}
         </div>
       </div>
     </>

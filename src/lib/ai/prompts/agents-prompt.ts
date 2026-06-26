@@ -26,6 +26,10 @@ const AGENT_TOOL_FORMATS: Record<AgentToolPreset, { fileName: string; format: st
     fileName: "opencode-rules.md",
     format: "Generic markdown rules",
   },
+  custom: {
+    fileName: "agents.md",
+    format: "Generic markdown rules for any AI agent",
+  },
 };
 
 export function buildAgentsPrompt(

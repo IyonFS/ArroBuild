@@ -83,7 +83,7 @@ export default function EmailCaptureModal({
           maxWidth: "420px",
           padding: "2rem",
           position: "relative",
-          border: "1px solid var(--bg-border)",
+          border: "0.5px solid var(--color-border-default)",
         }}
       >
         {/* Close button */}
@@ -111,9 +111,8 @@ export default function EmailCaptureModal({
         {/* Icon */}
         <div
           className="flex items-center justify-center w-12 h-12 rounded-xl mb-5"
-          style={{ background: "var(--green-muted)", border: "1px solid var(--green-border)" }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green-text)" strokeWidth={1.8}>
+          style={{ background: "rgba(204,255,0,0.08)", border: "0.5px solid rgba(204,255,0,0.25)" }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-lime)" strokeWidth={1.8}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
@@ -184,10 +183,10 @@ export default function EmailCaptureModal({
               <div
                 className="w-full h-full rounded flex items-center justify-center transition-colors"
                 style={{
-                  background: emailOptIn ? "var(--green-text)" : "transparent",
+                  background: emailOptIn ? "var(--color-lime)" : "transparent",
                   border: emailOptIn
-                    ? "1px solid var(--green-text)"
-                    : "1px solid var(--bg-border)",
+                    ? "1px solid var(--color-lime)"
+                    : "0.5px solid var(--color-border-default)",
                 }}
                 onClick={() => setEmailOptIn(!emailOptIn)}
               >
@@ -195,7 +194,7 @@ export default function EmailCaptureModal({
                   <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                     <path
                       d="M2 6l3 3 5-5"
-                      stroke="#0f1117"
+                      stroke="#0A0A0A"
                       strokeWidth="1.8"
                       strokeLinecap="round"
                       strokeLinejoin="round"

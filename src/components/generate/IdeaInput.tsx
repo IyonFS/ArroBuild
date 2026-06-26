@@ -53,24 +53,24 @@ export default function IdeaInput({ idea, onChange, onNext }: IdeaInputProps) {
           rows={8}
           className="w-full bg-transparent resize-none text-body-lg outline-none placeholder:text-tertiary leading-relaxed"
           style={{
-            color: "var(--text-primary)",
+            color: "var(--color-text-primary)",
           }}
         />
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: "1px solid var(--bg-border)" }}>
+        <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: "0.5px solid var(--color-border-default)" }}>
           {/* Progress bar */}
           <div className="flex items-center gap-3 flex-1">
             <div
               className="h-1 flex-1 max-w-32 rounded-full overflow-hidden"
-              style={{ background: "var(--bg-border)" }}
+              style={{ background: "var(--color-border-default)" }}
             >
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{
                   width: `${progress * 100}%`,
                   background:
-                    progress >= 1 ? "var(--green-500)" : "var(--text-tertiary)",
+                    progress >= 1 ? "var(--color-lime)" : "var(--color-text-tertiary)",
                 }}
               />
             </div>
@@ -79,8 +79,8 @@ export default function IdeaInput({ idea, onChange, onNext }: IdeaInputProps) {
               style={{
                 color:
                   count < MIN_CHARS
-                    ? "var(--text-tertiary)"
-                    : "var(--green-text)",
+                    ? "var(--color-text-tertiary)"
+                    : "var(--color-lime)",
               }}
             >
               {count < MIN_CHARS
@@ -102,8 +102,8 @@ export default function IdeaInput({ idea, onChange, onNext }: IdeaInputProps) {
               onClick={() => handleExample(ex)}
               className="card card-interactive text-left p-3 text-small w-full"
               style={{
-                color: "var(--text-secondary)",
-                borderColor: idea === ex ? "var(--green-500)" : undefined,
+                color: "var(--color-text-secondary)",
+                borderColor: idea === ex ? "var(--color-lime)" : undefined,
               }}
             >
               {ex}

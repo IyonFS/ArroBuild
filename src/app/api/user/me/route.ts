@@ -20,6 +20,8 @@ export async function GET() {
       idea: true,
       status: true,
       createdAt: true,
+      clarifications: true,
+      presets: true,
       _count: { select: { files: true } },
     },
   });

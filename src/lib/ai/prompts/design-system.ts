@@ -6,6 +6,18 @@ import {
 } from "./shared";
 
 const DESIGN_PRESET_TRAITS: Record<DesignPreset, string> = {
+  "neo-brutalist":
+    "Bold borders, high contrast black/white, geometric sans-serif (e.g. Space Grotesk), offset box shadows, visible structure, raw and confident aesthetic",
+  minimal:
+    "Generous whitespace, single accent color, system font stack, no decorative elements, content-first layout, extreme clarity",
+  corporate:
+    "Professional blues/navys, Inter font, trust-building layout, conservative spacing, table-heavy data presentation, enterprise polish",
+  bold:
+    "Vibrant color palette, expressive typography, playful micro-animations, gradient accents, high visual energy, consumer-friendly",
+  glassmorphism:
+    "Frosted glass panels (backdrop-filter blur), translucent backgrounds, subtle borders, depth layers, dark or gradient backgrounds",
+  dashboard:
+    "Dense information hierarchy, compact spacing, data table emphasis, chart-ready layout, sidebar navigation, monospace for numbers",
   apple:
     "SF Pro / system-ui font, generous whitespace, subtle shadows, rounded-xl corners, neutral warm palette (grays), minimal decoration, clarity over density",
   linear:
@@ -16,6 +28,8 @@ const DESIGN_PRESET_TRAITS: Record<DesignPreset, string> = {
     "Inter font, minimal styling, serif headings (or system serif), lots of whitespace, neutral light grays, inline code, simplicity-first",
   vercel:
     "Geist font, dark mode first, white accent on dark, monospace heavy, sharp corners, high contrast, builder/engineering aesthetic",
+  "ai-recommend":
+    "AI will choose the best design style based on product context. Let the output be creative and appropriate for the product type.",
 };
 
 export function buildDesignSystemPrompt(

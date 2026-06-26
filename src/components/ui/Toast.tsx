@@ -54,7 +54,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
 
   const icons: Record<ToastType, React.ReactNode> = {
     success: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-text)" strokeWidth={2.5}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-lime)" strokeWidth={2.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
       </svg>
     ),
@@ -72,7 +72,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
   };
 
   const borderColor: Record<ToastType, string> = {
-    success: "var(--green-border)",
+    success: "rgba(204,255,0,0.2)",
     error: "rgba(248,113,113,0.3)",
     info: "var(--bg-border)",
   };

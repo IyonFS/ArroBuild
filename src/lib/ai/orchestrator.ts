@@ -265,7 +265,12 @@ export async function* orchestrateGeneration(
 ): AsyncGenerator<GenerationEvent> {
   const tier = input.tier ?? "free";
   const tierConfig = TIER_CONFIGS[tier];
-  const files = getFilesForTier(tier);
+  
+  // Use selectedDocs if provided, otherwise fallback to all files for the tier (which is now all files)
+  const filesToGenerate = input.selectedDocs 
+    ? input.selectedDocs.map(k => ALL_FILES[k])
+    : getFilesForTier(tier);
+    
   const generatedFiles: Partial<Record<FileKey, string>> = {};
   let ctx: AccumulatedContext = {};
 
@@ -285,7 +290,7 @@ export async function* orchestrateGeneration(
   // For free tier: generate PRD first (standalone)
   // For paid tiers: generate Context first, then PRD (with context), then rest
   // Reorder files so context comes before prd if both present
-  const orderedFiles = [...files];
+  const orderedFiles = [...filesToGenerate];
   const contextIdx = orderedFiles.findIndex((f) => f.key === "context");
   const prdIdx = orderedFiles.findIndex((f) => f.key === "prd");
   if (contextIdx > prdIdx && contextIdx !== -1 && prdIdx !== -1) {

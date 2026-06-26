@@ -8,19 +8,47 @@ export type Scope = "mvp" | "full-product" | "experiment";
 
 export type FrameworkPreset =
   | "nextjs"
+  | "nuxt"
+  | "remix"
+  | "sveltekit"
+  | "astro"
+  | "react-spa"
+  | "vue-spa"
+  | "vanilla-js"
   | "laravel"
+  | "express"
+  | "nestjs"
+  | "fastapi"
   | "django"
   | "rails"
-  | "fastapi";
+  | "go-fiber"
+  | "hono"
+  | "react-native"
+  | "flutter"
+  | "expo"
+  | "ai-recommend";
 
-export type DesignPreset = "apple" | "linear" | "stripe" | "notion" | "vercel";
+export type DesignPreset =
+  | "neo-brutalist"
+  | "minimal"
+  | "corporate"
+  | "bold"
+  | "glassmorphism"
+  | "dashboard"
+  | "apple"
+  | "linear"
+  | "stripe"
+  | "notion"
+  | "vercel"
+  | "ai-recommend";
 
 export type AgentToolPreset =
   | "cursor"
   | "claude-code"
   | "windsurf"
   | "cline"
-  | "opencode";
+  | "opencode"
+  | "custom";
 
 export interface Clarifications {
   platform?: Platform;
@@ -40,6 +68,7 @@ export interface GenerationInput {
   presets: Presets;
   tier?: UserTier;
   modelId?: string;
+  selectedDocs?: FileKey[];
 }
 
 // ─── Tier System ────────────────────────────────────────────────────────────
@@ -92,31 +121,34 @@ export interface TierConfig {
   maxOutputTokens: number;
 }
 
+/** All available file keys — everyone can pick any document */
+export const ALL_FILE_KEYS: FileKey[] = [
+  "prd",
+  "context",
+  "plan",
+  "design-system",
+  "agents",
+  "production-hardening",
+  "scale-performance",
+  "growth-quality",
+];
+
 /** Files available per tier */
 export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
   free: {
-    fileKeys: ["prd"],
+    fileKeys: ALL_FILE_KEYS,
     defaultModel: "gemini-2.5-flash",
     maxOutputTokens: 8192,
   },
   paid: {
-    fileKeys: ["prd", "context", "plan", "design-system", "agents"],
+    fileKeys: ALL_FILE_KEYS,
     defaultModel: "gemini-2.5-pro",
-    maxOutputTokens: 16384,
+    maxOutputTokens: 8192,
   },
   unlimited: {
-    fileKeys: [
-      "prd",
-      "context",
-      "plan",
-      "design-system",
-      "agents",
-      "production-hardening",
-      "scale-performance",
-      "growth-quality",
-    ],
+    fileKeys: ALL_FILE_KEYS,
     defaultModel: "gemini-2.5-pro",
-    maxOutputTokens: 16384,
+    maxOutputTokens: 8192,
   },
 };
 

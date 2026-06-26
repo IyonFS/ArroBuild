@@ -50,13 +50,13 @@ function CopyButton({ text }: { text: string }) {
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path
               d="M2 6l3 3 5-5"
-              stroke="var(--green-text)"
+              stroke="var(--color-lime)"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
-          <span style={{ color: "var(--green-text)" }}>Copied!</span>
+          <span style={{ color: "var(--color-lime)" }}>Copied!</span>
         </>
       ) : (
         <>
@@ -74,30 +74,30 @@ function CopyButton({ text }: { text: string }) {
 // ─── Markdown renderer styles ─────────────────────────────────────────────────
 
 const markdownStyles = `
-  .md-content h1 { font-size: 1.4rem; font-weight: 700; color: #f1f5f9; margin: 1.5rem 0 0.75rem; letter-spacing: -0.3px; line-height: 1.3; }
-  .md-content h2 { font-size: 1.1rem; font-weight: 600; color: #e2e8f0; margin: 1.5rem 0 0.5rem; letter-spacing: -0.1px; border-bottom: 1px solid #1e2a40; padding-bottom: 6px; }
-  .md-content h3 { font-size: 0.95rem; font-weight: 600; color: #cbd5e1; margin: 1.1rem 0 0.4rem; }
-  .md-content h4 { font-size: 0.875rem; font-weight: 600; color: #94a3b8; margin: 0.9rem 0 0.35rem; }
-  .md-content p { font-size: 14px; line-height: 1.75; color: #94a3b8; margin: 0.5rem 0; }
-  .md-content code { font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 1px 6px; border-radius: 4px; background: #1a2035; color: #4ade80; border: 1px solid #1e2a40; white-space: pre-wrap; word-break: break-all; }
-  .md-content pre { background: #0d1117; border: 1px solid #1e2a40; border-radius: 8px; padding: 1rem; margin: 0.75rem 0; overflow-x: auto; }
-  .md-content pre code { background: none; border: none; padding: 0; font-size: 13px; color: #e2e8f0; white-space: pre; word-break: normal; }
+  .md-content h1 { font-family: var(--font-unbounded, 'Unbounded'), sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--color-text-primary); margin: 1.5rem 0 0.75rem; letter-spacing: -0.03em; line-height: 1.2; }
+  .md-content h2 { font-family: var(--font-jetbrains-mono, monospace); font-size: 1rem; font-weight: 600; color: var(--color-text-primary); margin: 1.5rem 0 0.5rem; border-bottom: 0.5px solid var(--color-border-default); padding-bottom: 6px; }
+  .md-content h3 { font-family: var(--font-jetbrains-mono, monospace); font-size: 0.9rem; font-weight: 600; color: var(--color-text-secondary); margin: 1.1rem 0 0.4rem; }
+  .md-content h4 { font-family: var(--font-jetbrains-mono, monospace); font-size: 0.85rem; font-weight: 600; color: var(--color-text-tertiary); margin: 0.9rem 0 0.35rem; }
+  .md-content p { font-family: var(--font-jetbrains-mono, monospace); font-size: 13px; line-height: 1.75; color: var(--color-text-secondary); margin: 0.5rem 0; }
+  .md-content code { font-family: var(--font-jetbrains-mono, monospace); font-size: 12px; padding: 1px 6px; border-radius: 4px; background: rgba(204,255,0,0.06); color: var(--color-lime); border: 0.5px solid rgba(204,255,0,0.2); white-space: pre-wrap; word-break: break-all; }
+  .md-content pre { background: #0D0D0D; border: 0.5px solid var(--color-border-default); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; overflow-x: auto; }
+  .md-content pre code { background: none; border: none; padding: 0; font-size: 12px; color: var(--color-text-primary); white-space: pre; word-break: normal; }
   .md-content ul, .md-content ol { margin: 0.5rem 0 0.5rem 1.5rem; }
-  .md-content li { font-size: 14px; line-height: 1.75; color: #94a3b8; margin: 0.2rem 0; }
-  .md-content li::marker { color: #4ade80; }
-  .md-content blockquote { border-left: 3px solid #4ade80; padding: 0.5rem 1rem; margin: 0.75rem 0; background: rgba(74,222,128,0.05); border-radius: 0 6px 6px 0; }
-  .md-content blockquote p { color: #94a3b8; margin: 0; }
-  .md-content hr { border: none; border-top: 1px solid #1e2a40; margin: 1.25rem 0; }
-  .md-content table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 13px; }
-  .md-content thead tr { background: #1a2035; }
-  .md-content th { padding: 8px 12px; text-align: left; font-weight: 600; color: #e2e8f0; border: 1px solid #1e2a40; }
-  .md-content td { padding: 8px 12px; color: #94a3b8; border: 1px solid #1e2a40; }
-  .md-content tr:nth-child(even) { background: rgba(30,42,64,0.4); }
-  .md-content a { color: #4ade80; text-decoration: none; }
+  .md-content li { font-family: var(--font-jetbrains-mono, monospace); font-size: 13px; line-height: 1.75; color: var(--color-text-secondary); margin: 0.2rem 0; }
+  .md-content li::marker { color: var(--color-lime); }
+  .md-content blockquote { border-left: 2.5px solid var(--color-lime); padding: 0.5rem 1rem; margin: 0.75rem 0; background: rgba(204,255,0,0.04); border-radius: 0 6px 6px 0; }
+  .md-content blockquote p { color: var(--color-text-secondary); margin: 0; }
+  .md-content hr { border: none; border-top: 0.5px solid var(--color-border-default); margin: 1.25rem 0; }
+  .md-content table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 12px; font-family: var(--font-jetbrains-mono, monospace); }
+  .md-content thead tr { background: var(--color-bg-elevated); }
+  .md-content th { padding: 8px 12px; text-align: left; font-weight: 600; color: var(--color-text-primary); border: 0.5px solid var(--color-border-default); }
+  .md-content td { padding: 8px 12px; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-default); }
+  .md-content tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+  .md-content a { color: var(--color-lime); text-decoration: none; }
   .md-content a:hover { text-decoration: underline; }
-  .md-content strong { color: #e2e8f0; font-weight: 600; }
-  .md-content em { color: #94a3b8; font-style: italic; }
-  .md-content input[type="checkbox"] { accent-color: #4ade80; margin-right: 6px; }
+  .md-content strong { color: var(--color-text-primary); font-weight: 600; }
+  .md-content em { color: var(--color-text-secondary); font-style: italic; }
+  .md-content input[type="checkbox"] { accent-color: var(--color-lime); margin-right: 6px; }
 `;
 
 // ─── DocPreview ───────────────────────────────────────────────────────────────
@@ -179,39 +179,129 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-8 gap-4">
-        <div>
-          <div className="badge badge-success mb-3">✓ Generation Complete</div>
-          <h1 className="text-h1 mb-1">Your documentation is ready</h1>
-          <p className="text-body">{availableKeys.length} files generated successfully</p>
+      <div className="mb-8">
+        {/* Success banner */}
+        <div
+          className="flex items-start justify-between gap-4 px-5 py-4 rounded-xl mb-5"
+          style={{
+            background: "rgba(204,255,0,0.05)",
+            border: "0.5px solid rgba(204,255,0,0.2)",
+          }}
+        >
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span style={{ color: "var(--color-lime)", fontSize: 16 }}>✦</span>
+              <span
+                className="font-mono text-[10px] font-bold tracking-widest uppercase"
+                style={{ color: "var(--color-lime)" }}
+              >
+                Docs siap!
+              </span>
+            </div>
+            <h1
+              className="font-unbounded font-bold text-xl mb-1"
+              style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
+            >
+              {availableKeys.length} dokumen berhasil digenerate
+            </h1>
+            <p className="font-mono text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+              Siap dipakai di AI agent kamu.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              id="preview-download-btn"
+              onClick={handleDownloadClick}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-mono font-bold text-sm transition-all"
+              style={{ background: "var(--color-lime)", color: "#0A0A0A" }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download ZIP
+            </button>
+            <button
+              id="preview-restart-btn"
+              onClick={onRestart}
+              className="px-4 py-2.5 rounded-lg font-mono text-sm transition-all"
+              style={{
+                background: "var(--color-bg-elevated)",
+                color: "var(--color-text-secondary)",
+                border: "0.5px solid var(--color-border-default)",
+              }}
+            >
+              Generate lagi
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            id="preview-download-btn"
-            onClick={handleDownloadClick}
-            className="btn btn-primary"
+
+        {/* Quick Start guide */}
+        <div
+          className="px-4 py-3 rounded-xl mb-4"
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "0.5px solid var(--color-border-default)",
+          }}
+        >
+          <p
+            className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2"
+            style={{ color: "var(--color-text-tertiary)" }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Download Zip
-          </button>
-          <button
-            id="preview-restart-btn"
-            onClick={onRestart}
-            className="btn btn-secondary"
+            — Quick Start
+          </p>
+          <ol className="flex flex-col gap-1.5">
+            {[
+              "Extract ZIP ke root folder proyekmu",
+              "Buka AI agent-mu, paste file rules (.cursorrules / CLAUDE.md)",
+              "Mulai coding — AI sudah punya konteks proyekmu!",
+            ].map((step, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span
+                  className="font-mono text-[10px] font-bold w-4 h-4 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{
+                    background: "rgba(204,255,0,0.1)",
+                    color: "var(--color-lime)",
+                  }}
+                >
+                  {i + 1}
+                </span>
+                <span
+                  className="font-mono text-xs"
+                  style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}
+                >
+                  {step}
+                </span>
+              </li>
+            ))}
+          </ol>
+          <div
+            className="flex flex-wrap gap-3 mt-3 pt-3"
+            style={{ borderTop: "0.5px solid var(--color-border-default)" }}
           >
-            New Project
-          </button>
+            <a
+              href="/learn"
+              className="font-mono text-xs flex items-center gap-1.5 transition-colors"
+              style={{ color: "var(--color-lime)" }}
+            >
+              → Cara pakai context.md di Claude Code
+            </a>
+            <a
+              href="/learn"
+              className="font-mono text-xs flex items-center gap-1.5 transition-colors"
+              style={{ color: "var(--color-lime)" }}
+            >
+              → Setup .cursorrules yang benar
+            </a>
+          </div>
         </div>
       </div>
 
       {/* Tab navigation */}
       <div
         className="flex gap-1 mb-4 p-1 rounded-lg overflow-x-auto"
-        style={{ background: "var(--bg-surface)", border: "1px solid var(--bg-border)" }}
+        style={{ background: "var(--color-bg-elevated)", border: "0.5px solid var(--color-border-default)" }}
       >
         {availableKeys.map((key) => {
           const m = FILE_META[key];
@@ -227,9 +317,9 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all duration-150"
               style={{
-                color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
-                background: isActive ? "var(--bg-card)" : "transparent",
-                border: isActive ? "1px solid var(--bg-border)" : "1px solid transparent",
+                color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                background: isActive ? "var(--color-bg-surface)" : "transparent",
+                border: isActive ? "0.5px solid var(--color-border-default)" : "0.5px solid transparent",
               }}
             >
               <span>{m.icon}</span>
@@ -244,7 +334,7 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
         {/* File header */}
         <div
           className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: "1px solid var(--bg-border)" }}
+          style={{ borderBottom: "0.5px solid var(--color-border-default)" }}
         >
           <div className="flex items-center gap-3">
             <span className="text-xl">{meta.icon}</span>
@@ -277,7 +367,7 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
                 style={{
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: "13px",
-                  color: "var(--text-secondary)",
+                  color: "var(--color-text-secondary)",
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                   lineHeight: 1.6,
@@ -304,7 +394,10 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
 
       {/* Word / char count */}
       {activeContent && (
-        <p className="text-caption mt-3" style={{ color: "var(--text-tertiary)" }}>
+        <p
+          className="font-mono text-[11px] mt-3"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
           {activeContent.split(/\s+/).filter(Boolean).length} words ·{" "}
           {activeContent.length.toLocaleString()} characters
         </p>

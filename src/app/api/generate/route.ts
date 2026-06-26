@@ -27,7 +27,17 @@ const GenerationInputSchema = z.object({
   }),
   presets: z.object({
     framework: z.enum(["nextjs", "laravel", "django", "rails", "fastapi"]),
-    design: z.enum(["apple", "linear", "stripe", "notion", "vercel"]),
+    design: z.enum([
+      "neo-brutalist",
+      "minimal",
+      "corporate",
+      "bold",
+      "apple",
+      "linear",
+      "stripe",
+      "notion",
+      "vercel",
+    ]),
     agentTool: z.enum([
       "cursor",
       "claude-code",
@@ -38,6 +48,18 @@ const GenerationInputSchema = z.object({
   }),
   tier: z.enum(["free", "paid", "unlimited"]).optional().default("free"),
   modelId: z.string().optional(),
+  selectedDocs: z.array(
+    z.enum([
+      "prd",
+      "context",
+      "plan",
+      "design-system",
+      "agents",
+      "production-hardening",
+      "scale-performance",
+      "growth-quality",
+    ])
+  ).optional(),
 });
 
 // ─── Route Handler ────────────────────────────────────────────────────────────
