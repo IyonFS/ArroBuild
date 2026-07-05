@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
 import UpgradeSection from "@/components/dashboard/UpgradeSection";
 import { getDisplayName } from "@/lib/display-name";
+import { OPEN_LEARN_IN_NEW_TAB } from "@/lib/learn-links";
 import type { UserTier } from "@/components/generate/types";
 
 interface ProjectSummary {
@@ -163,7 +164,11 @@ function DashboardContent() {
               Generate baru
             </Link>
           )}
-          <Link href="/learn" className="btn btn-secondary btn-sm hidden sm:inline-flex">
+          <Link
+            href="/learn"
+            {...OPEN_LEARN_IN_NEW_TAB}
+            className="btn btn-secondary btn-sm hidden sm:inline-flex"
+          >
             Learn Hub
           </Link>
           <button type="button" onClick={handleSignOut} className="btn btn-ghost btn-sm">

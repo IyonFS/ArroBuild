@@ -3,6 +3,8 @@
 
 export type LessonLevel = "pemula" | "menengah" | "lanjut";
 
+export type PathIconId = "foundation" | "document" | "workflow" | "toolkit";
+
 export type BlockType =
   | "text"
   | "code"
@@ -36,7 +38,7 @@ export interface LearningPath {
   level: LessonLevel;
   estimasi: string;  // e.g. "30 menit"
   tag: string;
-  icon: string;
+  icon: PathIconId;
   featured?: boolean;
   lessons: Lesson[];
 }
@@ -51,7 +53,7 @@ const vibeCoding101: LearningPath = {
   level: "pemula",
   estimasi: "45 menit",
   tag: "Gratis",
-  icon: "🚀",
+  icon: "foundation",
   featured: true,
   lessons: [
     {
@@ -505,7 +507,7 @@ const prdDocumentation: LearningPath = {
   level: "pemula",
   estimasi: "35 menit",
   tag: "Gratis",
-  icon: "📝",
+  icon: "document",
   lessons: [
     {
       slug: "kenapa-dokumentasi-penting",
@@ -714,7 +716,7 @@ const agentEngineering: LearningPath = {
   level: "menengah",
   estimasi: "50 menit",
   tag: "Gratis",
-  icon: "🤖",
+  icon: "workflow",
   lessons: [
     {
       slug: "apa-itu-ai-agent",
@@ -891,7 +893,7 @@ const toolsIntegrations: LearningPath = {
   level: "pemula",
   estimasi: "40 menit",
   tag: "Gratis",
-  icon: "🔧",
+  icon: "toolkit",
   lessons: [
     {
       slug: "setup-cursor",

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, type ReactNode } from "react";
 import Navbar from "@/components/marketing/Navbar";
 import Footer from "@/components/marketing/Footer";
 import PricingSection from "@/components/marketing/PricingSection";
+import { OPEN_LEARN_IN_NEW_TAB } from "@/lib/learn-links";
 import { SparklesIcon } from "@/components/marketing/icons";
 
 /* ============================================================
@@ -467,6 +468,7 @@ function HeroSection() {
           </a>
           <a
             href="/learn"
+            {...OPEN_LEARN_IN_NEW_TAB}
             className="btn btn-secondary btn-lg"
             id="hero-cta-learn"
           >
@@ -645,6 +647,7 @@ function PillarSection() {
 
                 <a
                   href={p.href}
+                  {...(p.href === "/learn" ? OPEN_LEARN_IN_NEW_TAB : {})}
                   style={{
                     fontFamily: "var(--font-jetbrains-mono), monospace",
                     fontSize: 12,
@@ -1314,6 +1317,7 @@ function LearnHubTeaserSection() {
           </div>
           <a
             href="/learn"
+            {...OPEN_LEARN_IN_NEW_TAB}
             style={{
               fontFamily: "var(--font-jetbrains-mono), monospace",
               fontSize: 12,
@@ -1345,6 +1349,7 @@ function LearnHubTeaserSection() {
             <FadeIn key={p.title} index={i} delay={100}>
               <a
                 href="/learn"
+                {...OPEN_LEARN_IN_NEW_TAB}
                 style={{
                   display: "block",
                   background: "var(--color-bg-surface)",
@@ -1782,6 +1787,7 @@ function CTASection() {
             </a>
             <a
               href="/learn"
+              {...OPEN_LEARN_IN_NEW_TAB}
               className="btn btn-secondary btn-lg"
               id="cta-learn-btn"
             >

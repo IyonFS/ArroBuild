@@ -1,4 +1,5 @@
 import AppShell from "@/components/layout/AppShell";
+import { OPEN_LEARN_IN_NEW_TAB } from "@/lib/learn-links";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -39,7 +40,7 @@ export default function DocsPage() {
             className="font-mono text-base"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            Dokumentasi teknis untuk memahami struktur output ArroBuild dan cara memanfaatkannya di dalam ekosistem AI. Untuk tutorial edukasi, silakan kunjungi <a href="/learn" className="text-lime hover:underline">Learn Hub</a>.
+            Dokumentasi teknis untuk memahami struktur output ArroBuild dan cara memanfaatkannya di dalam ekosistem AI. Untuk tutorial edukasi, silakan kunjungi <a href="/learn" {...OPEN_LEARN_IN_NEW_TAB} className="text-lime hover:underline">Learn Hub</a>.
           </p>
         </div>
 
