@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getNavLabel } from "@/lib/display-name";
+import { OPEN_LEARN_IN_NEW_TAB, LEARN_HUB_PATH } from "@/lib/learn-links";
 import { SparklesIcon, MenuIcon, CloseIcon } from "./icons";
 
 const NAV_LINKS = [
@@ -176,6 +177,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
               <a
                 key={link.href}
                 href={link.href}
+                {...(link.href === LEARN_HUB_PATH ? OPEN_LEARN_IN_NEW_TAB : {})}
                 className="nav-link"
                 style={{
                   fontSize: 15,
@@ -332,6 +334,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
             <a
               key={link.href}
               href={link.href}
+              {...(link.href === LEARN_HUB_PATH ? OPEN_LEARN_IN_NEW_TAB : {})}
               onClick={() => setMenuOpen(false)}
               style={{
                 padding: "12px",

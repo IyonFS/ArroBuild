@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { PortfolioFormState } from "./types";
 import { buildPortfolioPrompt } from "./buildPrompt";
+import { OPEN_LEARN_IN_NEW_TAB } from "@/lib/learn-links";
 
 interface Props {
   state: PortfolioFormState;
@@ -295,6 +296,7 @@ export default function ResultScreen({ state, onEdit, onReset }: Props) {
         </p>
         <a
           href="/learn"
+          {...OPEN_LEARN_IN_NEW_TAB}
           className="inline-flex items-center gap-2 font-mono text-sm font-bold px-4 py-2.5 rounded-lg transition-all"
           style={{ background: "var(--color-lime)", color: "#0A0A0A" }}
         >

@@ -5,18 +5,23 @@ import type { Block } from "@/lib/learn-content";
 
 interface Props {
   blocks: Block[];
+  variant?: "learn" | "default";
 }
 
-export default function LessonContent({ blocks }: Props) {
+export default function LessonContent({ blocks, variant = "learn" }: Props) {
   return (
     <div className="flex flex-col gap-5">
       {blocks.map((block, i) => {
+        if (variant === "learn" && block.type === "cta-link") {
+          return null;
+        }
+
         switch (block.type) {
           case "heading":
             return (
               <h2
                 key={i}
-                className="font-unbounded font-bold text-lg mt-6 first:mt-0"
+                className="learn-section-title text-lg mt-7 first:mt-0"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 {block.content}
@@ -27,8 +32,7 @@ export default function LessonContent({ blocks }: Props) {
             return (
               <p
                 key={i}
-                className="font-mono text-sm leading-[1.8]"
-                style={{ color: "var(--color-text-secondary)" }}
+                className="learn-body"
                 dangerouslySetInnerHTML={{
                   __html: renderInline(block.content ?? ""),
                 }}
@@ -37,16 +41,15 @@ export default function LessonContent({ blocks }: Props) {
 
           case "list":
             return (
-              <ul key={i} className="flex flex-col gap-2 pl-0">
+              <ul key={i} className="flex flex-col gap-2.5 pl-0">
                 {block.items?.map((item, j) => (
                   <li
                     key={j}
-                    className="flex gap-3 font-mono text-sm"
-                    style={{ color: "var(--color-text-secondary)" }}
+                    className="flex gap-3 learn-body-sm"
                   >
                     <span
-                      className="mt-[0.4rem] w-1 h-1 rounded-full flex-shrink-0"
-                      style={{ background: "var(--color-lime)" }}
+                      className="mt-[0.4rem] w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ background: "var(--color-orange)" }}
                     />
                     <span
                       className="leading-relaxed"
@@ -99,21 +102,20 @@ export default function LessonContent({ blocks }: Props) {
                 key={i}
                 className="rounded-xl p-5"
                 style={{
-                  background: "rgba(204,255,0,0.05)",
-                  border: "0.5px solid rgba(204,255,0,0.2)",
+                  background: "rgba(255,92,26,0.06)",
+                  border: "0.5px solid rgba(255,92,26,0.28)",
                 }}
               >
                 {block.label && (
                   <p
-                    className="font-mono font-bold text-xs mb-2"
-                    style={{ color: "var(--color-lime)" }}
+                    className="learn-label mb-2"
+                    style={{ color: "var(--color-orange)" }}
                   >
-                    ⚡ {block.label}
+                    {block.label}
                   </p>
                 )}
                 <p
-                  className="font-mono text-sm leading-relaxed"
-                  style={{ color: "var(--color-text-secondary)" }}
+                  className="learn-body-sm"
                   dangerouslySetInnerHTML={{
                     __html: renderInline(block.content ?? ""),
                   }}
@@ -133,15 +135,14 @@ export default function LessonContent({ blocks }: Props) {
               >
                 {block.label && (
                   <p
-                    className="font-mono font-bold text-xs mb-2"
+                    className="font-mono font-bold text-xs mb-2 uppercase tracking-wide"
                     style={{ color: "#60a5fa" }}
                   >
-                    💡 {block.label}
+                    Tip · {block.label}
                   </p>
                 )}
                 <p
-                  className="font-mono text-sm leading-relaxed"
-                  style={{ color: "var(--color-text-secondary)" }}
+                  className="learn-body-sm"
                   dangerouslySetInnerHTML={{
                     __html: renderInline(block.content ?? ""),
                   }}
@@ -161,15 +162,14 @@ export default function LessonContent({ blocks }: Props) {
               >
                 {block.label && (
                   <p
-                    className="font-mono font-bold text-xs mb-2"
+                    className="font-mono font-bold text-xs mb-2 uppercase tracking-wide"
                     style={{ color: "var(--color-orange)" }}
                   >
-                    ⚠ {block.label}
+                    Perhatian · {block.label}
                   </p>
                 )}
                 <p
-                  className="font-mono text-sm leading-relaxed"
-                  style={{ color: "var(--color-text-secondary)" }}
+                  className="learn-body-sm"
                   dangerouslySetInnerHTML={{
                     __html: renderInline(block.content ?? ""),
                   }}
@@ -182,10 +182,10 @@ export default function LessonContent({ blocks }: Props) {
               <div key={i} className="pt-2">
                 <Link
                   href={block.href ?? "/generate"}
-                  className="inline-flex items-center gap-2 font-mono font-bold text-sm px-5 py-2.5 rounded-lg transition-all hover:opacity-90"
+                  className="learn-hover-btn inline-flex items-center gap-2 font-mono font-bold text-sm px-5 py-2.5 rounded-lg"
                   style={{
-                    background: "var(--color-lime)",
-                    color: "#0A0A0A",
+                    background: "var(--color-orange)",
+                    color: "#FFFFFF",
                   }}
                 >
                   {block.label ?? "Coba langsung →"}
@@ -205,5 +205,5 @@ export default function LessonContent({ blocks }: Props) {
 function renderInline(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, "<strong style=\"color:var(--color-text-primary)\">$1</strong>")
-    .replace(/`(.+?)`/g, "<code style=\"font-family:monospace;font-size:12px;padding:1px 5px;border-radius:3px;background:rgba(204,255,0,0.08);color:var(--color-lime);border:0.5px solid rgba(204,255,0,0.2)\">$1</code>");
+    .replace(/`(.+?)`/g, "<code style=\"font-family:monospace;font-size:12px;padding:1px 5px;border-radius:3px;background:rgba(255,92,26,0.1);color:var(--color-orange);border:0.5px solid rgba(255,92,26,0.25)\">$1</code>");
 }

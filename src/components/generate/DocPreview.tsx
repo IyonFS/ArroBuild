@@ -8,6 +8,7 @@ import { FILE_META } from "./types";
 import EmailCaptureModal from "./EmailCaptureModal";
 import { useToast } from "@/components/ui/Toast";
 import { trackEvent } from "@/lib/analytics";
+import { OPEN_LEARN_IN_NEW_TAB } from "@/lib/learn-links";
 
 interface DocPreviewProps {
   projectId: string | null;
@@ -282,6 +283,7 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
           >
             <a
               href="/learn"
+              {...OPEN_LEARN_IN_NEW_TAB}
               className="font-mono text-xs flex items-center gap-1.5 transition-colors"
               style={{ color: "var(--color-lime)" }}
             >
@@ -289,6 +291,7 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
             </a>
             <a
               href="/learn"
+              {...OPEN_LEARN_IN_NEW_TAB}
               className="font-mono text-xs flex items-center gap-1.5 transition-colors"
               style={{ color: "var(--color-lime)" }}
             >

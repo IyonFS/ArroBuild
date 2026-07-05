@@ -1,4 +1,7 @@
+"use client";
+
 import { GithubIcon, TwitterIcon } from "./icons";
+import { OPEN_LEARN_IN_NEW_TAB, LEARN_HUB_PATH } from "@/lib/learn-links";
 
 const FOOTER_LINKS = {
   product: [
@@ -150,6 +153,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <a
                     href={link.href}
+                    {...(link.href === LEARN_HUB_PATH ? OPEN_LEARN_IN_NEW_TAB : {})}
                     style={{
                       fontFamily: "var(--font-jetbrains-mono), monospace",
                       fontSize: 13,
