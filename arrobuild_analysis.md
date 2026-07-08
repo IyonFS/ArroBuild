@@ -436,7 +436,7 @@ flowchart TD
 > - **Supabase SERVICE ROLE KEY** (line 4) — 🔴 **BERBAHAYA**, memberi akses admin penuh ke database
 > - **Database password** (line 7, 10) — `6LNxkKB9Zq2H7frP` terekspos
 > - **Gemini API Key** (line 14) — terekspos
-> - **Midtrans Server Key** (line 37) — `Mid-server-BsiP7lBtYYqwebcUhfHMzwsL` — 🔴 **PRODUCTION KEY terekspos**
+> - **Midtrans Server Key** (line 37) — `[REDACTED: MIDTRANS SERVER KEY]` — 🔴 **PRODUCTION KEY terekspos**
 > - **Midtrans Client Key** (line 38) — terekspos
 >
 > **Jika file ini pernah di-commit ke Git (bahkan sekali), semua keys ini harus di-rotate segera.**
