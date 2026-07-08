@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PRICING_TIERS } from "@/lib/pricing";
 import type { PricingTierId } from "@/lib/pricing";
-import type { UserTier } from "@/components/generate/types";
+import type { UserPlanStatus } from "@/components/generate/types";
+import { TIER_LABELS, isSubscribed } from "@/components/generate/types";
 
 declare global {
   interface Window {
@@ -61,7 +62,7 @@ async function confirmPayment(orderId: string, retries = 5): Promise<boolean> {
 }
 
 interface UpgradeSectionProps {
-  currentTier: UserTier;
+  currentTier: UserPlanStatus;
   highlightPlan?: string | null;
   onPaymentSuccess: () => void;
 }
@@ -90,10 +91,9 @@ export default function UpgradeSection({
     if (highlightPlan) setExpanded(true);
   }, [highlightPlan]);
 
-  const paidTiers = PRICING_TIERS.filter((t) => t.id !== "free");
+  const paidTiers = PRICING_TIERS;
 
   async function handleUpgrade(tierId: PricingTierId) {
-    if (tierId === "free") return;
     setLoadingTier(tierId);
     setError("");
     setSuccessMsg("");
@@ -153,12 +153,12 @@ export default function UpgradeSection({
     }
   }
 
-  if (currentTier !== "free") {
+  if (isSubscribed(currentTier)) {
     return (
       <div className="app-panel px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <p className="text-[14px] font-medium text-white">
-            Paket {currentTier === "unlimited" ? "Pro Max" : "Pro"} aktif
+            Paket {TIER_LABELS[currentTier]} aktif
           </p>
           <p className="text-[13px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
             Semua model AI dan bundle file tersedia.

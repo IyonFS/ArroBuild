@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Unbounded } from "next/font/google";
+import { Inter, JetBrains_Mono, Unbounded } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/react";
 import { ToastProvider } from "@/components/ui/Toast";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
 
 const unbounded = Unbounded({
   variable: "--font-unbounded",
@@ -62,6 +69,7 @@ export default function RootLayout({
       lang="id"
       className={cn(
         "h-full antialiased",
+        inter.variable,
         unbounded.variable,
         jetbrainsMono.variable
       )}

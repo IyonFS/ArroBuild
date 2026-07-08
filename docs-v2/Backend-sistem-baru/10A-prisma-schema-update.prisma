@@ -1,0 +1,414 @@
+// prisma/schema.prisma
+// 
+// PERUBAHAN DARI SCHEMA LAMA:
+// - Tambah tabel: credit_ledger, payment_events, system_config
+// - Update tabel: subscription (tambah expiresAt, uniqueness untuk order_id), users (update credit logic)
+// - Update enum: Tier (hilangkan STARTER jika belum ada, atau tetap untuk backward compat)
+// 
+// Instruksi: Replace section yang sesuai di schema existing kamu dengan kode di bawah
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// AUTH & USER
+// ============================================================================
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  avatar        String?
+  emailVerified DateTime?
+  
+  // Auth (Supabase)
+  supabaseId    String     @unique
+  
+  // Subscription & Billing
+  tier          Tier       @default(STARTER)
+  subscription  Subscription?
+  
+  // Credits (read-only di user table, source of truth adalah credit_ledger)
+  // DEPRECATED: gunakan CreditLedger untuk query balance
+  creditBalance Int        @default(0)  // cache saja, reconcile weekly
+  
+  // Relations
+  projects      Project[]
+  creditLedger  CreditLedger[]
+  payments      Payment[]
+  whatsappChat  WhatsappChat[]
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  // Indexes
+  @@index([supabaseId])
+  @@index([email])
+}
+
+enum Tier {
+  STARTER
+  PRO
+  PRO_MAX
+}
+
+// ============================================================================
+// SUBSCRIPTION & PAYMENT
+// ============================================================================
+
+model Subscription {
+  id            String     @id @default(cuid())
+  userId        String     @unique
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tier          Tier
+  
+  // Billing cycle
+  startDate     DateTime
+  renewalDate   DateTime   // Tanggal renewal bulanan (misal: tanggal langganan dimulai, tiap bulan sama)
+  expiresAt     DateTime   // Kapan subscription berakhir (untuk downgrade otomatis kalau tidak renew)
+  
+  // Status
+  status        SubscriptionStatus @default(ACTIVE)
+  
+  // Midtrans relation (opsional, untuk recurring billing ke depan)
+  midtransSubscriptionId String?
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([userId])
+  @@index([expiresAt, status])  // Untuk query cron: subscriptions yang mau expired
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  EXPIRED  // Subscription berakhir, belum renew
+}
+
+// ============================================================================
+// PAYMENT (One-time & Events)
+// ============================================================================
+
+model Payment {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Midtrans
+  orderId       String     @unique  // order_id dari request create-snap
+  snapToken     String?
+  midtransId    String?    // transaction_id dari Midtrans response
+  
+  // Details
+  tier          Tier
+  amountIdr     Int
+  
+  // Status
+  status        PaymentStatus @default(PENDING)
+  
+  // Timestamps
+  createdAt     DateTime   @default(now())
+  settledAt     DateTime?  // Kapan payment berhasil
+  updatedAt     DateTime   @updatedAt
+  
+  // Payment events (untuk audit)
+  events        PaymentEvent[]
+  
+  @@index([userId])
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum PaymentStatus {
+  PENDING          // Snap token dibuat, user belum bayar
+  SETTLEMENT       // Pembayaran berhasil
+  CAPTURE          // Settlement dengan instant (e-wallet dll)
+  DENY             // Pembayaran ditolak/fraud
+  CANCEL           // User cancel
+  EXPIRE           // Snap token expired (30 menit)
+  FAILED           // Pembayaran gagal
+}
+
+/**
+ * Ledger untuk setiap webhook yang diterima dari Midtrans
+ * UNIQUE pada (orderId) supaya tidak proses 2x kalau webhook repeat
+ * 
+ * Contoh flow:
+ * 1. User bayar → Midtrans send webhook (status=settlement)
+ * 2. Kami INSERT ke payment_events + update Payment status + INSERT credit_ledger (MONTHLY_REFRESH)
+ * 3. Webhook repeat (network retry) → cek UNIQUE orderId, sudah ada → skip
+ */
+model PaymentEvent {
+  id            String     @id @default(cuid())
+  paymentId     String
+  payment       Payment    @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  
+  orderId       String     @unique  // Sumber kebenaran: orderId, tidak boleh dobel
+  
+  // Webhook payload
+  rawPayload    Json                // Full response dari Midtrans webhook
+  
+  // Verifikasi
+  signatureValid Boolean   @default(false)
+  signature     String?
+  
+  // Timestamps
+  receivedAt    DateTime   @default(now())
+  processedAt   DateTime?
+  
+  @@index([orderId])
+  @@index([paymentId])
+}
+
+// ============================================================================
+// CREDIT LEDGER - Double-entry accounting untuk kredit
+// ============================================================================
+
+/**
+ * FILOSOFI: Setiap perubahan kredit adalah 1 baris ledger
+ * Saldo user saat ini = SUM(credit_ledger.amount) WHERE user_id = X
+ * 
+ * Advantage:
+ * - Fully auditable: bisa telusur kapan kredit berubah & kenapa
+ * - Concurrent safe: pakai SELECT ... FOR UPDATE di transaction
+ * - Reporting mudah: group by type, period, dst
+ */
+model CreditLedger {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Transaksi
+  type          CreditLedgerType
+  amount        Int            // Positif = tambah, Negatif = potong
+  
+  // Reference: bisa telusur balik ke sumber
+  projectId     String?
+  paymentId     String?
+  documentType  String?        // 'prd', 'architecture', dst (kalau type=GENERATE_DOCUMENT)
+  toolId        String?        // 'prompt-doctor', 'stitch-composer', dst (kalau type=TOOL_USAGE)
+  
+  // Metadata untuk breakdown
+  metadata      Json?          // { modelClass, tokensUsed, reason, adminNote, dst }
+  
+  // Snapshot saldo (untuk query cepat tanpa SUM tiap kali)
+  balanceAfter  Int            // Saldo user setelah transaksi ini
+  
+  createdAt     DateTime       @default(now())
+  
+  @@index([userId, createdAt])
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum CreditLedgerType {
+  // Incoming
+  MONTHLY_REFRESH              // Kredit bulanan di awal bulan/renewal
+  ROLLOVER                     // Rollover dari bulan sebelumnya (sampai cap)
+  TOPUP                        // User beli top-up kredit
+  MANUAL_ADJUSTMENT            // Kamu adjust manual (kompensasi, error correction, dst)
+  
+  // Outgoing
+  GENERATE_DOCUMENT            // Generate 1 atau lebih dokumen untuk 1 proyek
+  REVISION                     // Revisi dokumen (di panel IDE)
+  TOOL_USAGE                   // Pakai mini tool
+  
+  // Reserve pattern (untuk concurrent safety)
+  RESERVATION_HOLD             // Kredit di-hold saat request masuk (belum dipotong permanen)
+  RESERVATION_RELEASE          // Kredit di-release kalau request gagal (kurangi hold)
+}
+
+// ============================================================================
+// PROJECT & GENERATION
+// ============================================================================
+
+model Project {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Metadata
+  name          String
+  description   String?
+  
+  // Generation state
+  status        ProjectStatus @default(PLANNING)
+  
+  // Plan data (Knowledge Model JSON dari Bagian 6, 09-backend-architecture)
+  planData      Json       // { productType, targetUser, mainProblem, features: [{ id, name, description }], stack, dst }
+  
+  // Generated documents
+  documents     GeneratedDocument[]
+  
+  // Timestamps
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ProjectStatus {
+  PLANNING       // User masih isi form, belum generate
+  GENERATING     // Sedang generate (SSE stream)
+  COMPLETED      // Generate selesai
+  ARCHIVED       // User archive
+}
+
+model GeneratedDocument {
+  id            String     @id @default(cuid())
+  projectId     String
+  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Dokumen
+  fileKey       String     // 'prd', 'architecture', 'plan-task', dst
+  fileName      String     // 'prd.md'
+  
+  // Isi
+  content       String     // Full markdown content
+  
+  // Metadata
+  modelClass    String     // 'HEMAT', 'MENENGAH', 'FLAGSHIP', 'ULTRA' — model mana yang generate
+  tokensUsed    Int        // Token aktual yang dipakai (untuk ledger audit)
+  
+  // Version history (opsional, untuk revisi di panel IDE)
+  version       Int        @default(1)
+  revisions     DocumentRevision[]
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([projectId])
+  @@unique([projectId, fileKey])  // Per project, fileKey unik (hanya 1 prd.md, dst)
+}
+
+// Opsional: tracking revisi dokumen (untuk Bagian 8.2, panel IDE revisi)
+model DocumentRevision {
+  id            String     @id @default(cuid())
+  documentId    String
+  document      GeneratedDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  version       Int
+  content       String
+  
+  // Metadata revisi
+  revisionType  String     // 'section_rewrite', 'full_rewrite', 'ai_suggestion', dst
+  sectionName   String?    // Kalau partial revision
+  
+  createdAt     DateTime   @default(now())
+  
+  @@index([documentId, version])
+}
+
+// ============================================================================
+// SYSTEM CONFIG (Optional, untuk runtime configuration)
+// ============================================================================
+
+/**
+ * Simpan copy dari lib/config/tiers.ts di database
+ * Supaya konfigurasi bisa diubah tanpa deploy (via admin panel)
+ * 
+ * Pemakaian:
+ * - Cache di Redis TTL 5 menit
+ * - Setiap request, cek Redis dulu
+ * - Kalau cache miss atau update, query database
+ * - Kalau database kosong, fallback ke hardcode di tiers.ts
+ */
+model SystemConfig {
+  id            String     @id @default("tier_config")  // Key unik
+  
+  // Tier config (JSON mirror dari TIER_CONFIG di tiers.ts)
+  tierConfig    Json       // Serialized TIER_CONFIG
+  
+  // Metadata
+  version       Int        @default(1)
+  
+  updatedAt     DateTime   @updatedAt
+  updatedBy     String?    // Admin yang update
+  
+  @@unique([id])
+}
+
+// ============================================================================
+// WHATSAPP CHAT (untuk Bagian 8.1, chat WA dengan founder)
+// ============================================================================
+
+model WhatsappChat {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Thread
+  title         String?    // Topik chat
+  status        ChatStatus @default(OPEN)
+  
+  // Quota tracking
+  month         Int        // Bulan (1-12)
+  year          Int        // Tahun
+  
+  createdAt     DateTime   @default(now())
+  closedAt      DateTime?
+  
+  @@index([userId, month, year])
+  @@index([status])
+}
+
+enum ChatStatus {
+  OPEN
+  WAITING_FOUNDER_RESPONSE
+  WAITING_USER_RESPONSE
+  CLOSED
+}
+
+// ============================================================================
+// RATE LIMIT & QUOTA (Optional, untuk detailed tracking)
+// ============================================================================
+
+/**
+ * Optional: simpan rate limit event untuk analytics
+ * Kalau tidak butuh detail tracking, bisa skip — Redis Upstash sudah cukup
+ */
+model RateLimitEvent {
+  id            String     @id @default(cuid())
+  userId        String?    // Null kalau IP-based limit
+  ipAddress     String
+  
+  endpoint      String     // '/api/generate', '/api/tools/prompt-doctor', dst
+  limitType     String     // 'per_user', 'per_ip'
+  
+  rejectedAt    DateTime   @default(now())
+  
+  @@index([userId, rejectedAt])
+  @@index([ipAddress, rejectedAt])
+}
+
+// ============================================================================
+// ENABLE ROW LEVEL SECURITY (RLS) - Keamanan di database level
+// ============================================================================
+
+/**
+ * Di Supabase SQL editor, jalankan:
+ * 
+ * ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
+ * ALTER TABLE "Project" ENABLE ROW LEVEL SECURITY;
+ * ALTER TABLE "GeneratedDocument" ENABLE ROW LEVEL SECURITY;
+ * ALTER TABLE "Subscription" ENABLE ROW LEVEL SECURITY;
+ * ALTER TABLE "CreditLedger" ENABLE ROW LEVEL SECURITY;
+ * 
+ * CREATE POLICY "own_projects_only"
+ *   ON "Project" FOR SELECT
+ *   USING (auth.uid()::text = "userId");
+ * 
+ * ... (lihat file terpisah: 11-rls-policies.sql untuk lengkapnya)
+ */

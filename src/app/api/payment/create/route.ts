@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db/prisma";
 import { getSessionProfile } from "@/lib/auth";
 import {
-  createSnapToken,
   getMidtransConfigHint,
   getMidtransMode,
   isMidtransConfigured,
@@ -11,6 +9,7 @@ import {
   tierIdToSubscriptionTier,
 } from "@/lib/midtrans";
 import { getPaidTier, PAID_TIER_IDS } from "@/lib/pricing";
+import { PaymentService } from "@/lib/services/payment.service";
 
 const BodySchema = z.object({
   tierId: z.enum(PAID_TIER_IDS as [string, ...string[]]),
@@ -25,9 +24,7 @@ export async function POST(req: Request) {
   if (!isMidtransConfigured()) {
     const hint = getMidtransConfigHint();
     return NextResponse.json(
-      {
-        error: hint ?? "Pembayaran belum dikonfigurasi dengan benar.",
-      },
+      { error: hint ?? "Pembayaran belum dikonfigurasi dengan benar." },
       { status: 503 }
     );
   }
@@ -49,25 +46,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Paket tidak ditemukan" }, { status: 404 });
   }
 
-  const orderId = `arro-${profile.id.slice(0, 8)}-${tier.id}-${Date.now()}`;
-
   try {
-    const { token: snapToken, redirectUrl } = await createSnapToken({
-      orderId,
+    const { snapToken, orderId, redirectUrl } = await PaymentService.createPaymentSnap({
+      userId: profile.id,
+      email: profile.email,
+      name: profile.name,
+      tierSlug: tier.id,
       amount: tier.priceAmount,
-      tierId: tier.id as Exclude<typeof tier.id, "free">,
-      customer: { email: profile.email, name: profile.name },
-    });
-
-    await prisma.payment.create({
-      data: {
-        orderId,
-        userId: profile.id,
-        tier: tierIdToSubscriptionTier(tier.id as "pro" | "unlimited"),
-        amount: tier.priceAmount,
-        snapToken,
-        status: "PENDING",
-      },
+      subscriptionTier: tierIdToSubscriptionTier(tier.id),
     });
 
     return NextResponse.json({
@@ -81,10 +67,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("Payment create error:", err);
     return NextResponse.json(
-      {
-        error:
-          err instanceof Error ? err.message : "Gagal membuat pembayaran",
-      },
+      { error: err instanceof Error ? err.message : "Gagal membuat pembayaran" },
       { status: 500 }
     );
   }

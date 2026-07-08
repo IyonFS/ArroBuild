@@ -1,0 +1,74 @@
+{
+  "slug": "product-planning-for-ai",
+  "title": "Product Planning for AI",
+  "description": "Rancang PRD, context.md, design-system.md, dan agents.md yang benar-benar berguna sebagai konteks untuk AI agent.",
+  "level": "menengah",
+  "estimasi": "45 menit",
+  "tag": "Gratis",
+  "icon": "document",
+  "track": "workflow",
+  "objective": "Membuat dokumentasi produk yang menjadi single source of truth untuk setiap sesi AI.",
+  "prerequisites": ["vibe-coding-fundamentals", "setup-tooling"],
+  "outcome": "Kamu punya set dokumentasi MVP (PRD + context + design system + agents) siap dipakai AI.",
+  "lessons": [
+    {
+      "slug": "anatomi-prd-untuk-ai",
+      "title": "Anatomi PRD untuk AI",
+      "estimasi": "12 menit",
+      "outcome": "Kamu menulis PRD MVP dengan section wajib termasuk Non-Goals yang eksplisit.",
+      "blocks": [
+        {
+          "type": "callout",
+          "label": "Outcome",
+          "content": "Kamu menulis PRD MVP dengan section wajib termasuk Non-Goals yang eksplisit."
+        },
+        {
+          "type": "heading",
+          "content": "Core Concept"
+        },
+        {
+          "type": "text",
+          "content": "Ganti paragraf ini dengan penjelasan materi asli. PRD untuk AI harus **spesifik**, **terstruktur**, dan **maksimal 1-2 halaman** untuk MVP."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Overview** — Apa produk ini dan untuk siapa",
+            "**Problem Statement** — Masalah yang dipecahkan",
+            "**Core Features** — Fitur MVP saja",
+            "**Non-Goals** — Apa yang tidak dibangun",
+            "**Tech Stack** — Stack spesifik, bukan generik"
+          ]
+        },
+        {
+          "type": "heading",
+          "content": "Worked Example"
+        },
+        {
+          "type": "code",
+          "language": "markdown",
+          "content": "# Product Requirements Document\n## Nama Project\n\n### Overview\nSatu paragraf...\n\n### Non-Goals\n- Tidak ada multi-tenancy di fase ini"
+        },
+        {
+          "type": "heading",
+          "content": "Practice Task"
+        },
+        {
+          "type": "text",
+          "content": "Tulis PRD 1 halaman untuk ide project kamu. Pastikan section Non-Goals terisi minimal 3 poin."
+        },
+        {
+          "type": "heading",
+          "content": "Common Pitfalls"
+        },
+        {
+          "type": "list",
+          "items": [
+            "PRD terlalu panjang sehingga AI kehilangan fokus",
+            "Tech stack hanya ditulis 'React' tanpa versi atau library pendukung"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -6,9 +6,13 @@ import type {
   Presets,
   GeneratedFiles,
   FileKey,
-  UserTier,
+  UserPlanStatus,
+  PerDocumentModelClass,
+  Feature,
+  ProductType,
+  ProjectStage,
 } from "./types";
-import { FILE_META, TIER_FILE_KEYS } from "./types";
+import { FILE_META, TIER_FILE_KEYS, resolvePreviewTier, isSubscribed } from "./types";
 import { trackEvent } from "@/lib/analytics";
 
 type FileStatus = "pending" | "generating" | "done" | "error";
@@ -26,9 +30,14 @@ interface GenerationProgressProps {
   idea: string;
   clarifications: Clarifications;
   presets: Presets;
-  tier: UserTier;
+  plan: UserPlanStatus;
   modelId?: string;
   selectedDocs?: FileKey[];
+  perDocModelClass?: PerDocumentModelClass;
+  estimatedCredits?: number;
+  productType?: ProductType;
+  projectStage?: ProjectStage;
+  features?: Feature[];
   onProjectCreated: (id: string) => void;
   onComplete: (files: GeneratedFiles) => void;
   onError: () => void;
@@ -62,14 +71,20 @@ export default function GenerationProgress({
   idea,
   clarifications,
   presets,
-  tier,
+  plan,
   modelId,
   selectedDocs,
+  perDocModelClass,
+  estimatedCredits,
+  productType,
+  projectStage,
+  features,
   onProjectCreated,
   onComplete,
   onError,
 }: GenerationProgressProps) {
-  const fileKeys = selectedDocs ?? TIER_FILE_KEYS[tier];
+  const previewTier = resolvePreviewTier(plan);
+  const fileKeys = selectedDocs ?? TIER_FILE_KEYS[previewTier];
 
   const [files, setFiles] = useState<FileState[]>(
     fileKeys.map((key) => ({ key, status: "pending", chunks: "", retryCount: 0 }))
@@ -95,7 +110,19 @@ export default function GenerationProgress({
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idea, clarifications, presets, tier, modelId }),
+          body: JSON.stringify({
+            idea,
+            clarifications,
+            presets,
+            modelId,
+            selectedDocs,
+            perDocumentModelClass: perDocModelClass,
+            estimatedCredits,
+            productType,
+            projectStage,
+            features,
+            tier: isSubscribed(plan) ? plan : undefined,
+          }),
         });
 
         if (!res.ok || !res.body) {

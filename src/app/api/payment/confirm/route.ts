@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Pembayaran tidak ditemukan" }, { status: 404 });
   }
 
-  if (payment.status === "PAID") {
+  if (payment.status === "SETTLEMENT" || payment.status === "PAID") {
     return NextResponse.json({ ok: true, status: "paid" });
   }
 

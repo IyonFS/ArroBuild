@@ -15,14 +15,14 @@ import { V3_TIER_CONFIG, type V3Tier, type ModelId } from "./tier-enforcer";
  */
 export const FALLBACK_CHAIN: Record<ModelId, ModelId[]> = {
   "claude-sonnet-4-20250514": [
-    "gpt-4o",
+    "gpt-5.4",
     "gemini-2.5-pro",
     "gemini-2.5-flash",
   ],
-  "gpt-4o": ["gemini-2.5-pro", "gemini-2.5-flash"],
-  "gemini-2.5-pro": ["gpt-4o", "gemini-2.5-flash"],
-  "gemini-2.5-flash": ["deepseek-chat"],
-  "deepseek-chat": ["gemini-2.5-flash"],
+  "gpt-5.4": ["gemini-2.5-pro", "gemini-2.5-flash"],
+  "gemini-2.5-pro": ["gpt-5.4", "gemini-2.5-flash"],
+  "gemini-2.5-flash": ["deepseek-v4-flash"],
+  "deepseek-v4-flash": ["gemini-2.5-flash"],
 };
 
 // ─── Error Classifiers ──────────────────────────────────────────────────────

@@ -2,13 +2,11 @@ import { NextResponse } from "next/server";
 import { getSessionProfile } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 
-const FREE_PROJECT_LIMIT = 1;
-
 export async function GET() {
   const profile = await getSessionProfile();
 
   if (!profile) {
-    return NextResponse.json({ user: null, tier: "free" as const });
+    return NextResponse.json({ user: null, tier: "none" as const, plan: "none" as const });
   }
 
   const projects = await prisma.project.findMany({
@@ -26,7 +24,9 @@ export async function GET() {
     },
   });
 
-  const projectLimit = profile.tier === "free" ? FREE_PROJECT_LIMIT : null;
+  const projectLimit = profile.hasActiveSubscription
+    ? null
+    : 0;
 
   return NextResponse.json({
     user: {
@@ -36,8 +36,11 @@ export async function GET() {
       avatarUrl: profile.avatarUrl,
       subscriptionTier: profile.subscriptionTier,
       subscriptionStatus: profile.subscriptionStatus,
+      creditBalance: profile.creditBalance,
+      hasActiveSubscription: profile.hasActiveSubscription,
     },
-    tier: profile.tier,
+    tier: profile.plan,
+    plan: profile.plan,
     projectCount: projects.length,
     projectLimit,
     projects,

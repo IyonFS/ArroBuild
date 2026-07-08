@@ -116,6 +116,14 @@ export default function LearnLessonDashboard({
               >
                 {lesson.title}
               </h1>
+              {lesson.outcome && (
+                <p
+                  className="learn-body-sm mt-4 max-w-2xl"
+                  style={{ color: "var(--learn-text-tertiary)" }}
+                >
+                  {lesson.outcome}
+                </p>
+              )}
             </div>
 
             {children}

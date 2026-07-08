@@ -164,7 +164,7 @@ export default function AuthForm({ mode, plan, error }: AuthFormProps) {
         </p>
       </div>
 
-      {selectedPlan && selectedPlan.id !== "free" && (
+      {selectedPlan && (
         <div className="app-panel px-4 py-3 mb-5">
           <p className="text-label mb-1">Paket dipilih</p>
           <p className="text-[14px] font-medium text-white">

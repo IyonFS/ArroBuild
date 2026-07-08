@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import type { ProductType, ContextData } from "./types";
+import { useState, useEffect, useRef } from "react";
+import type { ProductType, ContextData, Feature } from "./types";
+import FeatureBuilder from "./FeatureBuilder";
+import LiveJsonPreview from "./LiveJsonPreview";
 
 interface Props {
   productType: ProductType;
   value: ContextData;
   onChange: (v: ContextData) => void;
+  features: Feature[];
+  onFeaturesChange: (features: Feature[]) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -18,132 +22,166 @@ interface Question {
   type?: "text" | "textarea";
   example?: string;
   chips?: string[];
+  multiChip?: boolean;
+  required?: boolean;
 }
 
-// Questions per product type
+// ─── Question bank per ProductType ────────────────────────────────────────────
+
 const QUESTIONS: Record<ProductType, Question[]> = {
   saas: [
     {
       key: "targetUser",
-      label: "① Siapa target user utama kamu?",
-      placeholder: "Contoh: freelance designer yang perlu invoicing sederhana",
+      label: "Siapa target user utama kamu?",
+      placeholder: "Siapa yang akan paling sering pakai produk ini...",
       type: "text",
+      required: true,
       example: "Developer Indonesia yang baru mulai belajar vibe coding",
+      chips: ["Freelancer", "Tim kecil (2-10 orang)", "Startup tahap awal", "Developer individu", "Perusahaan menengah"],
+      multiChip: true,
     },
     {
       key: "mainProblem",
-      label: "② Masalah utama yang ingin dipecahkan?",
-      placeholder: "Jelaskan pain point user secara spesifik",
+      label: "Masalah utama yang ingin dipecahkan?",
+      placeholder: "Pain point spesifik yang bikin mereka frustrasi hari-hari...",
       type: "textarea",
-      example:
-        "Developer kesulitan membuat dokumentasi proyek sebelum mulai coding — jadinya sering salah arah",
+      required: true,
+      example: "Developer kesulitan membuat dokumentasi proyek sebelum mulai coding — jadinya sering salah arah",
+      chips: ["Proses manual yang makan waktu", "Data tersebar di banyak tools", "Biaya software mahal", "Sulit koordinasi tim jarak jauh", "Workflow berulang tanpa otomasi"],
+      multiChip: true,
     },
     {
       key: "coreFeatures",
-      label: "③ Fitur inti yang HARUS ada di v1?",
-      placeholder: "List fitur core, pisahkan dengan koma atau enter",
+      label: "Fitur inti yang HARUS ada di versi pertama?",
+      placeholder: "Fitur-fitur core yang kalau tidak ada, produknya tidak bisa jalan...",
       type: "textarea",
-      example:
-        "AI doc generator, project dashboard, template library, 1-click export ke .md",
+      example: "AI doc generator, project dashboard, template library, 1-click export ke .md",
+      chips: ["Dashboard analytics", "User authentication", "Payment / billing", "Team collaboration", "API / integrations", "Export / download"],
+      multiChip: true,
     },
     {
       key: "pricingModel",
-      label: "④ Model bisnis? (opsional)",
-      placeholder: "Contoh: Freemium, Paid only, Trial 14 hari, One-time",
+      label: "Model bisnis yang direncanakan?",
+      placeholder: "Bagaimana kamu akan memonetisasi produk ini...",
       type: "text",
+      chips: ["Freemium", "Subscription bulanan", "Pay-per-use / credit", "One-time purchase", "Trial 14 hari → paid"],
     },
   ],
   marketplace: [
     {
       key: "buyerDesc",
-      label: "① Siapa buyer-nya?",
-      placeholder: "Deskripsikan buyer: siapa, kebutuhan utamanya",
+      label: "Siapa buyer-nya?",
+      placeholder: "Deskripsikan buyer: siapa, apa kebutuhan utamanya...",
       type: "text",
+      required: true,
       example: "Startup & UMKM yang butuh desainer profesional",
+      chips: ["Pembeli individu", "UMKM / bisnis kecil", "Perusahaan / enterprise", "Freelancer yang butuh jasa"],
+      multiChip: true,
     },
     {
       key: "sellerDesc",
-      label: "② Siapa seller-nya?",
-      placeholder: "Deskripsikan seller: siapa, apa yang mereka tawarkan",
+      label: "Siapa seller-nya?",
+      placeholder: "Deskripsikan seller: siapa, apa yang mereka tawarkan...",
       type: "text",
+      required: true,
       example: "Freelance designer lokal yang mau dapat klien",
+      chips: ["Penjual UMKM", "Freelancer jasa", "Reseller / dropshipper", "Creator / content maker"],
+      multiChip: true,
     },
     {
       key: "transactionType",
-      label: "③ Apa yang ditransaksikan?",
-      placeholder: "Produk fisik / digital / jasa / informasi",
+      label: "Apa yang ditransaksikan?",
+      placeholder: "Produk fisik, digital, jasa, atau informasi...",
       type: "text",
       chips: ["Produk fisik", "Produk digital", "Jasa", "Informasi / konten"],
     },
     {
       key: "mainProblem",
-      label: "④ Masalah utama yang dipecahkan?",
-      placeholder: "Problem untuk buyer dan seller — bisa dua paragraf",
+      label: "Masalah utama yang dipecahkan?",
+      placeholder: "Problem untuk buyer dan/atau seller yang belum terpecahkan...",
       type: "textarea",
-      example:
-        "Buyer: susah cari designer lokal terpercaya. Seller: tidak ada platform khusus untuk jangkau klien",
+      example: "Buyer: susah cari designer lokal terpercaya. Seller: tidak ada platform khusus untuk jangkau klien",
+      chips: ["Sulit menemukan penjual/pembeli terpercaya", "Transaksi manual via chat", "Tidak ada sistem rating / escrow", "Susah bandingkan harga / kualitas"],
+      multiChip: true,
     },
     {
       key: "pricingModel",
-      label: "⑤ Monetisasi marketplace? (opsional)",
-      placeholder: "Contoh: komisi 10%, subscription seller, listing berbayar",
+      label: "Monetisasi marketplace?",
+      placeholder: "Komisi, subscription seller, listing berbayar...",
       type: "text",
+      chips: ["Komisi per transaksi", "Subscription seller", "Listing berbayar", "Freemium + premium features"],
     },
   ],
   mobile: [
     {
       key: "platforms",
-      label: "① Platform target?",
-      placeholder: "iOS, Android, atau keduanya",
+      label: "Platform target?",
+      placeholder: "iOS saja, Android saja, atau keduanya...",
       type: "text",
+      required: true,
       chips: ["iOS saja", "Android saja", "iOS & Android", "Cross-platform (Expo)"],
     },
     {
       key: "targetUser",
-      label: "② Siapa target user utama?",
-      placeholder: "Deskripsikan user dan konteks pemakaian",
+      label: "Siapa target user utama?",
+      placeholder: "Siapa yang akan pakai app ini dan dalam konteks apa...",
       type: "text",
+      required: true,
       example: "Mahasiswa yang butuh catatan kuliah terorganisir",
+      chips: ["Mahasiswa / pelajar", "Profesional mobile-first", "Commuter / on-the-go", "Pengguna media sosial aktif", "Parent / keluarga"],
+      multiChip: true,
     },
     {
       key: "mainProblem",
-      label: "③ Apa yang bisa dilakukan di app ini yang tidak bisa di web?",
-      placeholder: "Mobile-specific value proposition",
+      label: "Apa value spesifik yang hanya bisa dilakukan di mobile?",
+      placeholder: "Fitur atau experience yang tidak bisa dilakukan di web...",
       type: "textarea",
+      required: true,
       example: "Scan langsung dari kamera, notifikasi real-time, offline mode",
+      chips: ["Akses kamera / scan", "Notifikasi push real-time", "Offline mode / sync", "GPS / location-based", "Widget / quick action"],
+      multiChip: true,
     },
     {
       key: "nativeFeatures",
-      label: "④ Ada fitur native device? (opsional)",
-      placeholder: "Kamera, GPS, notifikasi push, sensor, NFC",
+      label: "Ada fitur native device yang dibutuhkan?",
+      placeholder: "Kamera, GPS, notifikasi, sensor, NFC, biometrik...",
       type: "text",
+      chips: ["Kamera", "GPS / lokasi", "Notifikasi push", "Sensor", "NFC", "Biometrik (FaceID/fingerprint)"],
+      multiChip: true,
     },
   ],
   api: [
     {
       key: "targetDev",
-      label: "① Siapa developer yang akan pakai ini?",
-      placeholder: "Contoh: backend developer Node.js yang butuh OCR as a service",
+      label: "Siapa developer yang akan pakai API ini?",
+      placeholder: "Backend dev, frontend dev, data engineer, mobile dev...",
       type: "text",
+      required: true,
       example: "Backend developer yang butuh ekstrak data dari dokumen scan",
+      chips: ["Backend developer", "Frontend / fullstack developer", "Data engineer / ML engineer", "DevOps / SRE", "Mobile developer"],
+      multiChip: true,
     },
     {
       key: "mainProblem",
-      label: "② Apa yang bisa dilakukan dengan API ini?",
-      placeholder: "Jelaskan core capability API atau tool ini",
+      label: "Apa yang bisa dilakukan dengan API atau tool ini?",
+      placeholder: "Core capability yang ditawarkan...",
       type: "textarea",
+      required: true,
       example: "Ekstrak structured data dari invoice, receipt, atau KTP secara otomatis",
+      chips: ["Data processing / transformation", "Authentication / authorization", "Payment processing", "AI / ML inference", "File processing / conversion", "Communication (email, SMS, push)"],
+      multiChip: true,
     },
     {
       key: "inputOutput",
-      label: "③ Input apa yang diterima, output apa yang dihasilkan?",
-      placeholder: "Contoh: input PDF/gambar → output JSON dengan field yang diekstrak",
+      label: "Input apa yang diterima, output apa yang dihasilkan?",
+      placeholder: "Contoh: input PDF/gambar → output JSON dengan field yang diekstrak...",
       type: "text",
+      chips: ["JSON ↔ JSON", "File upload → processed output", "Text → structured data", "Webhook / event-driven"],
     },
     {
       key: "deploymentTarget",
-      label: "④ Deployment target? (opsional)",
-      placeholder: "Self-hosted, cloud service, npm package, CLI",
+      label: "Deployment target?",
+      placeholder: "Self-hosted, cloud service, npm package, CLI...",
       type: "text",
       chips: ["Self-hosted", "Cloud / SaaS", "npm package", "CLI tool"],
     },
@@ -151,136 +189,172 @@ const QUESTIONS: Record<ProductType, Question[]> = {
   "ai-app": [
     {
       key: "aiUseCase",
-      label: "① AI digunakan untuk apa di produk ini?",
-      placeholder: "Core use case AI di app ini",
+      label: "AI digunakan untuk apa di produk ini?",
+      placeholder: "Core use case AI — apa yang AI lakukan...",
       type: "textarea",
+      required: true,
       example: "Generate dokumentasi teknis dari deskripsi produk dalam bahasa alami",
+      chips: ["Generate konten (teks / gambar / kode)", "Analisis & klasifikasi data", "Chatbot / asisten percakapan", "Rekomendasi / personalisasi", "Ekstraksi informasi dari dokumen", "Otomasi workflow dengan AI"],
+      multiChip: true,
     },
     {
       key: "targetUser",
-      label: "② Siapa target user dan bagaimana mereka berinteraksi dengan AI?",
-      placeholder: "User persona dan pola interaksinya dengan AI",
+      label: "Siapa target user dan bagaimana mereka berinteraksi dengan AI?",
+      placeholder: "User persona dan pola interaksi dengan AI-nya...",
       type: "textarea",
-      example:
-        "Developer non-teknis yang berinteraksi via chat, tidak perlu tahu AI di baliknya",
+      required: true,
+      example: "Developer non-teknis yang berinteraksi via chat, tidak perlu tahu AI di baliknya",
+      chips: ["Non-teknis, interaksi lewat chat", "Developer, integrasi via API", "Content creator, generate konten", "Analis data, insight otomatis", "Tim operasional, otomasi proses"],
+      multiChip: true,
     },
     {
       key: "aiModel",
-      label: "③ Model AI yang direncanakan?",
-      placeholder: "GPT-4, Claude, Gemini, Llama, atau custom model",
+      label: "Model AI yang direncanakan?",
+      placeholder: "GPT-4o, Claude, Gemini, Llama, atau custom model...",
       type: "text",
       chips: ["GPT-4o", "Claude Sonnet", "Gemini 2.5", "Open source / Custom"],
     },
     {
       key: "aiPrivacy",
-      label: "④ Ada data user yang diproses AI? Bagaimana privacynya? (opsional)",
-      placeholder: "Apakah data dikirim ke API eksternal, on-device, atau self-hosted",
+      label: "Bagaimana privasi data user yang diproses AI?",
+      placeholder: "Data dikirim ke API eksternal, on-device, atau self-hosted...",
       type: "text",
+      chips: ["Data dikirim ke API cloud (OpenAI, dll)", "Self-hosted / on-premise model", "On-device inference", "Data di-anonymize sebelum diproses"],
     },
   ],
   ecommerce: [
     {
       key: "targetUser",
-      label: "① Siapa target pembeli?",
-      placeholder: "Deskripsikan customer utama toko ini",
+      label: "Siapa target pembeli?",
+      placeholder: "Deskripsikan customer utama toko ini...",
       type: "text",
+      required: true,
       example: "Ibu rumah tangga 25-40 tahun yang suka belanja produk lokal UMKM",
+      chips: ["Konsumen langsung (B2C)", "Bisnis / wholesale (B2B)", "Reseller / dropshipper", "Niche community / hobbyist"],
+      multiChip: true,
     },
     {
       key: "productType",
-      label: "② Apa yang dijual?",
-      placeholder: "Produk fisik, digital, atau keduanya",
+      label: "Apa yang dijual?",
+      placeholder: "Produk fisik, digital, atau keduanya...",
       type: "text",
+      required: true,
       chips: ["Produk fisik", "Produk digital", "Keduanya", "Subscription / member"],
     },
     {
       key: "mainProblem",
-      label: "③ Masalah utama yang dipecahkan untuk pembeli?",
-      placeholder: "Kenapa mereka pilih toko ini vs alternatif yang ada",
+      label: "Masalah utama yang dipecahkan untuk pembeli?",
+      placeholder: "Kenapa mereka pilih toko ini vs marketplace atau toko lain...",
       type: "textarea",
+      chips: ["Produk sulit ditemukan di marketplace besar", "Pengalaman belanja generik / tidak personal", "Harga tidak transparan", "Kualitas produk tidak terjamin", "Pengiriman lambat / mahal"],
+      multiChip: true,
     },
     {
       key: "salesChannel",
-      label: "④ Channel penjualan? (opsional)",
-      placeholder: "Apakah hanya website, atau juga marketplace (Tokopedia, dll)?",
+      label: "Channel penjualan?",
+      placeholder: "Website sendiri, marketplace, social commerce, atau semua...",
       type: "text",
+      chips: ["Website sendiri saja", "Website + marketplace (Tokopedia/Shopee)", "Social commerce (Instagram/TikTok)", "Omnichannel (online + offline)"],
     },
   ],
   portfolio: [
     {
       key: "stackHighlight",
-      label: "① Kamu seorang apa? Tech stack apa yang mau di-highlight?",
-      placeholder: "Contoh: Full-stack developer, Next.js + TypeScript + Supabase",
+      label: "Kamu seorang apa? Tech stack apa yang mau di-highlight?",
+      placeholder: "Role dan stack utama yang ingin ditampilkan...",
       type: "text",
+      required: true,
       example: "Full-stack developer spesialis AI tools, Next.js, TypeScript, Supabase",
+      chips: ["Frontend developer", "Backend developer", "Full-stack developer", "Mobile developer", "UI/UX designer", "DevOps engineer"],
+      multiChip: true,
     },
     {
       key: "audienceType",
-      label: "② Siapa yang akan melihat portfolio ini?",
-      placeholder: "Recruiter, klien potensial, komunitas developer",
+      label: "Siapa yang akan melihat portfolio ini?",
+      placeholder: "Recruiter startup, klien potensial, komunitas developer...",
       type: "text",
+      required: true,
       chips: ["CTO / recruiter startup", "Klien freelance", "Komunitas developer", "Investor"],
     },
     {
       key: "coreFeatures",
-      label: "③ Project atau skill apa yang paling ingin ditonjolkan?",
-      placeholder: "List 2-4 project terbaik atau skill utama",
+      label: "Project atau skill apa yang paling ingin ditonjolkan?",
+      placeholder: "List 2-4 project terbaik atau skill utama...",
       type: "textarea",
+      chips: ["Project showcase dengan screenshot", "Blog / tulisan teknis", "Skill matrix / tech stack visual", "Testimonial / review klien", "Contact form / booking"],
+      multiChip: true,
     },
     {
       key: "caseStudy",
-      label: "④ Ada case study spesifik yang ingin diceritakan? (opsional)",
-      placeholder: "Project dengan impact nyata, angka, atau story menarik",
+      label: "Ada case study spesifik yang ingin diceritakan?",
+      placeholder: "Project dengan impact nyata, angka, atau story menarik...",
       type: "text",
+      chips: ["Project dengan revenue / growth metrics", "Open source project populer", "Project hackathon / kompetisi", "Client project dengan testimoni"],
     },
   ],
   internal: [
     {
       key: "teamSize",
-      label: "① Tim mana yang akan pakai, dan berapa orang?",
-      placeholder: "Contoh: Tim operations 8 orang, atau seluruh perusahaan 50 orang",
+      label: "Tim mana yang akan pakai, dan berapa orang?",
+      placeholder: "Tim ops 8 orang, atau seluruh perusahaan 50 orang...",
       type: "text",
+      required: true,
       example: "Tim operations & finance, ~12 orang",
+      chips: ["Tim kecil (2-5 orang)", "Departemen (10-30 orang)", "Seluruh perusahaan (50+ orang)", "Multi-cabang / distributed"],
     },
     {
       key: "mainProblem",
-      label: "② Proses manual apa yang ingin diotomasi atau dipermudah?",
-      placeholder: "Pain point workflow sekarang yang bikin lambat atau error",
+      label: "Proses manual apa yang ingin diotomasi atau dipermudah?",
+      placeholder: "Pain point workflow sekarang yang bikin lambat atau error-prone...",
       type: "textarea",
-      example:
-        "Manual entry data dari spreadsheet ke sistem, tidak ada audit trail, kolaborasi via email",
+      required: true,
+      example: "Manual entry data dari spreadsheet ke sistem, tidak ada audit trail, kolaborasi via email",
+      chips: ["Data entry manual dari spreadsheet", "Approval workflow via email / chat", "Reporting manual (copas ke PPT / Excel)", "Tracking progress tanpa sistem", "Koordinasi antar departemen lambat"],
+      multiChip: true,
     },
     {
       key: "coreFeatures",
-      label: "③ Fitur inti yang dibutuhkan?",
-      placeholder: "List fitur utama tool internal ini",
+      label: "Fitur inti yang dibutuhkan?",
+      placeholder: "Fitur-fitur yang harus ada untuk tool internal ini...",
       type: "textarea",
+      chips: ["Dashboard & reporting", "Form input / data entry", "Approval workflow", "Role-based access control", "Notifikasi & reminder", "Export data (CSV/PDF)"],
+      multiChip: true,
     },
     {
       key: "integrations",
-      label: "④ Integrasi dengan sistem yang sudah ada? (opsional)",
-      placeholder: "Contoh: Google Workspace, Slack, Notion, sistem ERP",
+      label: "Integrasi dengan sistem yang sudah ada?",
+      placeholder: "Google Workspace, Slack, Notion, sistem ERP...",
       type: "text",
+      chips: ["Google Workspace", "Slack / Microsoft Teams", "Notion / Confluence", "Sistem ERP / accounting", "Tidak ada integrasi"],
+      multiChip: true,
     },
   ],
   other: [
     {
       key: "targetUser",
-      label: "① Siapa target user utama kamu?",
-      placeholder: "Deskripsikan user yang akan memakai produk ini",
+      label: "Siapa target user utama kamu?",
+      placeholder: "Siapa yang akan paling sering pakai produk ini...",
       type: "text",
+      required: true,
+      chips: ["Konsumen umum (B2C)", "Bisnis / perusahaan (B2B)", "Developer / teknis", "Komunitas / niche tertentu"],
+      multiChip: true,
     },
     {
       key: "mainProblem",
-      label: "② Masalah utama yang ingin dipecahkan?",
-      placeholder: "Jelaskan problem secara spesifik",
+      label: "Masalah utama yang ingin dipecahkan?",
+      placeholder: "Pain point spesifik yang belum ada solusinya yang baik...",
       type: "textarea",
+      required: true,
+      chips: ["Proses yang terlalu manual", "Informasi sulit diakses", "Belum ada solusi yang tepat", "Solusi yang ada terlalu mahal"],
+      multiChip: true,
     },
     {
       key: "coreFeatures",
-      label: "③ Fitur atau kemampuan inti produk?",
-      placeholder: "List fitur yang harus ada di versi pertama",
+      label: "Fitur atau kemampuan inti produk?",
+      placeholder: "List fitur yang harus ada di versi pertama...",
       type: "textarea",
+      chips: ["User registration / login", "Search / filter / browse", "Create / edit / delete content", "Notifications", "Analytics / tracking"],
+      multiChip: true,
     },
   ],
 };
@@ -298,301 +372,420 @@ const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
 };
 
 const OPTIONAL_EXTRAS: { key: keyof ContextData; label: string; placeholder: string }[] = [
-  { key: "productName", label: "Nama produk (jika sudah ada)", placeholder: "Contoh: Buildify, NoteAI" },
+  { key: "productName", label: "Nama produk (jika sudah ada)", placeholder: "Contoh: Buildify, NoteAI, TaskFlow" },
   { key: "referenceProducts", label: "Referensi produk sejenis yang disukai", placeholder: "Contoh: Linear untuk tracking, Notion untuk docs" },
   { key: "antiFeatures", label: "Hal yang TIDAK ingin ada di produk ini", placeholder: "Feature yang sengaja dihindari atau out of scope" },
-  { key: "launchTimeline", label: "Target peluncuran", placeholder: "Minggu ini / Bulan ini / Tidak mendesak" },
+  { key: "launchTimeline", label: "Target peluncuran", placeholder: "Minggu ini / Bulan ini / 3 bulan / Tidak mendesak" },
 ];
 
-function QualityBar({ value }: { value: ContextData }) {
-  const fields = Object.values(value).filter(
-    (v) => v && String(v).trim().length > 3
-  ).length;
-  const score = Math.min(fields, 5);
-  const label = score <= 1 ? "Poor" : score <= 2 ? "Fair" : score <= 3 ? "Good" : "Great";
-  const color =
-    score <= 1
-      ? "#EF4444"
-      : score <= 2
-      ? "#F59E0B"
-      : score <= 3
-      ? "#22C55E"
-      : "#CCFF00";
+// ─── Chip helpers ─────────────────────────────────────────────────────────────
+
+function toggleChipInValue(currentVal: string, chip: string): string {
+  const parts = currentVal.split(",").map((s) => s.trim()).filter(Boolean);
+  if (parts.includes(chip)) return parts.filter((p) => p !== chip).join(", ");
+  return [...parts, chip].join(", ");
+}
+
+function isChipActive(currentVal: string, chip: string): boolean {
+  return currentVal.split(",").map((s) => s.trim()).includes(chip);
+}
+
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
+function QualityIndicator({ value, featureCount }: { value: ContextData; featureCount: number }) {
+  const textFilled = Object.values(value).filter((v) => v && typeof v === "string" && String(v).trim().length > 2).length;
+  const filled = textFilled + (featureCount > 0 ? 1 : 0);
+  const score = Math.min(filled, 5);
+  const levels = [
+    { label: "Poor", color: "#EF4444", tip: "Isi minimal 1-2 field untuk memulai" },
+    { label: "Fair", color: "#F59E0B", tip: "Coba tambah info tentang target user atau masalah utama" },
+    { label: "Good", color: "#22C55E", tip: "Bagus! Tambah sedikit lagi untuk hasil yang lebih spesifik" },
+    { label: "Great", color: "#22C55E", tip: "AI sudah punya konteks yang cukup baik" },
+    { label: "Excellent", color: "#CCFF00", tip: "Konteks sangat lengkap — output AI akan sangat spesifik" },
+  ];
+  const level = levels[Math.max(0, score - 1)] ?? levels[0];
   const pct = (score / 5) * 100;
 
   return (
     <div
-      className="flex items-center gap-3 px-4 py-3 rounded-xl"
+      className="rounded-2xl overflow-hidden"
       style={{
         background: "var(--color-bg-elevated)",
-        border: "0.5px solid var(--color-border-default)",
+        border: "0.5px solid rgba(255,255,255,0.08)",
       }}
     >
-      <p className="font-mono text-xs flex-shrink-0" style={{ color: "var(--color-text-tertiary)" }}>
-        Kelengkapan konteks:
-      </p>
-      <div
-        className="flex-1 h-1.5 rounded-full overflow-hidden"
-        style={{ background: "var(--color-border-default)" }}
-      >
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, background: color }}
-        />
+      <div className="px-5 py-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            Kualitas Konteks
+          </span>
+          <span
+            className="text-sm font-bold"
+            style={{ color: score > 0 ? level.color : "rgba(255,255,255,0.2)" }}
+          >
+            {score > 0 ? level.label : "—"}
+          </span>
+        </div>
+        {/* 5-segment bar */}
+        <div className="flex gap-1 mb-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="flex-1 h-1.5 rounded-full transition-all duration-500"
+              style={{
+                background: i <= score ? level.color : "rgba(255,255,255,0.08)",
+              }}
+            />
+          ))}
+        </div>
+        {score > 0 && (
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+            {level.tip}
+          </p>
+        )}
       </div>
-      <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color }}>
-        {label}
-      </span>
     </div>
   );
 }
 
-export default function ContextStep({
-  productType,
+function QuestionCard({
+  q,
+  index,
   value,
-  onChange,
-  onNext,
-  onBack,
-}: Props) {
+  onUpdate,
+  visible,
+  delay,
+}: {
+  q: Question;
+  index: number;
+  value: ContextData;
+  onUpdate: (key: keyof ContextData, val: string) => void;
+  visible: boolean;
+  delay: number;
+}) {
+  const currentVal = (value[q.key] as string) ?? "";
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+
+  const nums = ["①", "②", "③", "④", "⑤"];
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className="animate-fade-slide-up"
+      style={{ animationDelay: `${delay}s` }}
+    >
+      {/* Question label */}
+      <div className="flex items-center gap-2.5 mb-3">
+        <span
+          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+          style={{
+            background: currentVal
+              ? "rgba(204,255,0,0.12)"
+              : "rgba(255,255,255,0.06)",
+            color: currentVal ? "var(--color-lime)" : "rgba(255,255,255,0.3)",
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            fontSize: "10px",
+          }}
+        >
+          {currentVal ? "✓" : nums[index] ?? (index + 1)}
+        </span>
+        <label
+          className="text-sm font-semibold"
+          style={{ color: "var(--color-text-primary)", lineHeight: 1.4 }}
+        >
+          {q.label}
+          {q.required && (
+            <span className="ml-1 text-xs" style={{ color: "rgba(204,255,0,0.5)" }}>
+              *
+            </span>
+          )}
+        </label>
+      </div>
+
+      {/* Chips */}
+      {q.chips && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {q.chips.map((chip) => {
+            const active = q.multiChip ? isChipActive(currentVal, chip) : currentVal === chip;
+            return (
+              <button
+                key={chip}
+                onClick={() => {
+                  onUpdate(
+                    q.key,
+                    q.multiChip ? toggleChipInValue(currentVal, chip) : active ? "" : chip
+                  );
+                }}
+                className="text-sm px-4 py-2 rounded-full transition-all duration-150"
+                style={{
+                  background: active ? "var(--color-lime)" : "rgba(255,255,255,0.05)",
+                  color: active ? "#0A0A0A" : "rgba(255,255,255,0.55)",
+                  border: active ? "none" : "0.5px solid rgba(255,255,255,0.1)",
+                  fontWeight: active ? "600" : "400",
+                  transform: active ? "scale(1.02)" : "scale(1)",
+                }}
+              >
+                {active && q.multiChip && <span className="mr-1">✓ </span>}
+                {chip}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Input */}
+      {q.type === "textarea" ? (
+        <textarea
+          ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+          rows={3}
+          placeholder={q.placeholder}
+          value={currentVal}
+          onChange={(e) => onUpdate(q.key, e.target.value)}
+          className="w-full rounded-xl text-sm resize-none transition-all focus:outline-none"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: currentVal
+              ? "1px solid rgba(204,255,0,0.3)"
+              : "0.5px solid rgba(255,255,255,0.1)",
+            color: "var(--color-text-primary)",
+            padding: "14px 16px",
+            lineHeight: 1.7,
+            fontFamily: "var(--font-inter), system-ui, sans-serif",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "rgba(204,255,0,0.5)";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(204,255,0,0.06)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = currentVal
+              ? "rgba(204,255,0,0.3)"
+              : "rgba(255,255,255,0.1)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        />
+      ) : (
+        <input
+          ref={inputRef as React.RefObject<HTMLInputElement>}
+          type="text"
+          placeholder={q.placeholder}
+          value={currentVal}
+          onChange={(e) => onUpdate(q.key, e.target.value)}
+          className="w-full rounded-xl text-sm transition-all focus:outline-none"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: currentVal
+              ? "1px solid rgba(204,255,0,0.3)"
+              : "0.5px solid rgba(255,255,255,0.1)",
+            color: "var(--color-text-primary)",
+            padding: "14px 16px",
+            fontFamily: "var(--font-inter), system-ui, sans-serif",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "rgba(204,255,0,0.5)";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(204,255,0,0.06)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = currentVal
+              ? "rgba(204,255,0,0.3)"
+              : "rgba(255,255,255,0.1)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        />
+      )}
+
+      {/* Example hint */}
+      {q.example && !currentVal && (
+        <button
+          onClick={() => onUpdate(q.key, q.example!)}
+          className="flex items-start gap-2 mt-2.5 text-left w-full group"
+        >
+          <span className="text-xs flex-shrink-0 mt-0.5" style={{ color: "rgba(255,199,0,0.6)" }}>
+            💡
+          </span>
+          <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
+            Contoh:{" "}
+            <em style={{ color: "rgba(255,255,255,0.45)" }}>
+              &ldquo;{q.example}&rdquo;
+            </em>{" "}
+            <span
+              className="font-semibold group-hover:underline"
+              style={{ color: "var(--color-lime)", textDecorationColor: "rgba(204,255,0,0.4)" }}
+            >
+              pakai ini
+            </span>
+          </span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+
+export default function ContextStep({ productType, value, onChange, features, onFeaturesChange, onNext, onBack }: Props) {
   const questions = QUESTIONS[productType] ?? QUESTIONS.other;
   const [showOptional, setShowOptional] = useState(false);
-  const [revealedCount, setRevealedCount] = useState(1);
-
-  // Progressive reveal: reveal next question when current is filled
-  useEffect(() => {
-    const answered = questions.filter((q) => {
-      const v = value[q.key];
-      return v && String(v).trim().length > 0;
-    }).length;
-    // reveal up to answered + 1, minimum 1
-    setRevealedCount(Math.max(1, Math.min(answered + 1, questions.length)));
-  }, [value, questions]);
+  const [visibleCount, setVisibleCount] = useState(2);
 
   const update = (key: keyof ContextData, val: string) => {
     onChange({ ...value, [key]: val });
   };
 
-  const isValid = questions.some((q) => {
+  // Progressive reveal: show next when current pair has at least one answer
+  useEffect(() => {
+    const answered = questions.filter((q) => {
+      const v = value[q.key];
+      return v && String(v).trim().length > 0;
+    }).length;
+    const newCount = Math.min(Math.max(2, answered + 1), questions.length);
+    setVisibleCount((prev) => Math.max(prev, newCount));
+  }, [value, questions]);
+
+  const hasAnyAnswer = questions.some((q) => {
     const v = value[q.key];
     return v && String(v).trim().length > 0;
   });
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <span
-            className="font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full"
+    <div className="font-inter max-w-[1200px] mx-auto px-6 py-14 flex flex-col lg:flex-row gap-10">
+      <div className="flex-1 max-w-2xl">
+        {/* Header */}
+      <div className="mb-10">
+        <div className="flex items-center gap-3 mb-5">
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase"
             style={{
               background: "rgba(204,255,0,0.08)",
               color: "var(--color-lime)",
-              border: "0.5px solid rgba(204,255,0,0.25)",
+              border: "0.5px solid rgba(204,255,0,0.2)",
+              fontFamily: "var(--font-jetbrains-mono), monospace",
             }}
           >
-            Step 2 of 4 — Cerita Produk
-          </span>
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--color-lime)" }} />
+            Step 2 of 4
+          </div>
           <button
             onClick={onBack}
-            className="font-mono text-xs flex items-center gap-1 transition-colors"
-            style={{ color: "var(--color-text-tertiary)" }}
+            className="flex items-center gap-1.5 text-xs transition-colors"
+            style={{ color: "rgba(255,255,255,0.35)" }}
           >
             <span>{PRODUCT_TYPE_LABELS[productType]}</span>
             <span
-              className="text-[10px] ml-1 underline underline-offset-2"
-              style={{ color: "var(--color-lime)" }}
+              className="hover:underline"
+              style={{ color: "rgba(204,255,0,0.6)", textDecorationColor: "rgba(204,255,0,0.3)" }}
             >
               [ubah]
             </span>
           </button>
         </div>
-        <h2
-          className="font-unbounded font-bold text-xl sm:text-2xl mb-2"
-          style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
+
+        <h1
+          className="font-unbounded font-bold mb-3"
+          style={{
+            fontSize: "clamp(1.75rem, 3vw, 2.25rem)",
+            letterSpacing: "-0.03em",
+            color: "var(--color-text-primary)",
+            lineHeight: 1.15,
+          }}
         >
           Ceritakan proyekmu
-        </h2>
-        <p className="font-mono text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          Makin spesifik, output AI makin relevan.{" "}
-          <span style={{ color: "var(--color-text-tertiary)" }}>
-            Isi minimal satu field.
+        </h1>
+        <p className="text-base" style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+          Makin detail, output AI makin relevan dan spesifik.{" "}
+          <span style={{ color: "rgba(255,255,255,0.3)" }}>
+            Klik chip untuk jawaban cepat, atau ketik langsung.
           </span>
         </p>
       </div>
 
-      {/* Questions — progressive reveal */}
-      <div className="flex flex-col gap-6 mb-6">
-        {questions.slice(0, revealedCount).map((q, idx) => {
-          const currentVal = (value[q.key] as string) ?? "";
-          const isRevealed = idx < revealedCount;
-
-          return (
-            <div
-              key={q.key}
-              className="transition-all duration-300"
-              style={{
-                opacity: isRevealed ? 1 : 0,
-                transform: isRevealed ? "translateY(0)" : "translateY(8px)",
-              }}
-            >
-              <label
-                className="block font-mono font-semibold text-sm mb-2"
-                style={{ color: "var(--color-text-primary)" }}
+      {/* Questions */}
+      <div className="flex flex-col gap-7 mb-8">
+        {questions.map((q, idx) => {
+          // Replace coreFeatures textarea with FeatureBuilder
+          if (q.key === "coreFeatures") {
+            if (idx >= visibleCount) return null;
+            return (
+              <div
+                key={q.key}
+                className="animate-fade-slide-up"
+                style={{ animationDelay: idx === visibleCount - 1 ? "0.05s" : "0s" }}
               >
-                {q.label}
-              </label>
-
-              {/* Chips */}
-              {q.chips && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {q.chips.map((chip) => {
-                    const active = currentVal === chip;
-                    return (
-                      <button
-                        key={chip}
-                        onClick={() => update(q.key, active ? "" : chip)}
-                        className="font-mono text-[11px] px-2.5 py-1 rounded-lg transition-all"
-                        style={{
-                          background: active
-                            ? "rgba(204,255,0,0.1)"
-                            : "var(--color-bg-surface)",
-                          border: active
-                            ? "0.5px solid rgba(204,255,0,0.4)"
-                            : "0.5px solid var(--color-border-default)",
-                          color: active
-                            ? "var(--color-lime)"
-                            : "var(--color-text-secondary)",
-                        }}
-                      >
-                        {chip}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {q.type === "textarea" ? (
-                <textarea
-                  rows={3}
-                  placeholder={q.placeholder}
-                  value={currentVal}
-                  onChange={(e) => update(q.key, e.target.value)}
-                  className="w-full rounded-xl font-mono text-sm resize-none transition-all focus:outline-none"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    border: "0.5px solid var(--color-border-default)",
-                    color: "var(--color-text-primary)",
-                    padding: "12px 14px",
-                    lineHeight: 1.7,
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(204,255,0,0.5)";
-                    e.currentTarget.style.boxShadow =
-                      "0 0 0 3px rgba(204,255,0,0.06)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor =
-                      "var(--color-border-default)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
+                <FeatureBuilder
+                  features={features}
+                  onChange={onFeaturesChange}
+                  productType={productType}
                 />
-              ) : (
-                <input
-                  type="text"
-                  placeholder={q.placeholder}
-                  value={currentVal}
-                  onChange={(e) => update(q.key, e.target.value)}
-                  className="w-full rounded-xl font-mono text-sm transition-all focus:outline-none"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    border: "0.5px solid var(--color-border-default)",
-                    color: "var(--color-text-primary)",
-                    padding: "12px 14px",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(204,255,0,0.5)";
-                    e.currentTarget.style.boxShadow =
-                      "0 0 0 3px rgba(204,255,0,0.06)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor =
-                      "var(--color-border-default)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                />
-              )}
-
-              {/* Example that can be clicked */}
-              {q.example && (
-                <button
-                  onClick={() => update(q.key, q.example!)}
-                  className="flex items-start gap-2 mt-2 text-left w-full group"
-                >
-                  <span className="text-xs mt-0.5 flex-shrink-0" style={{ color: "var(--color-lime)" }}>
-                    💡
-                  </span>
-                  <span
-                    className="font-mono text-[11px] group-hover:underline underline-offset-2 transition-colors"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                  >
-                    Contoh:{" "}
-                    <em style={{ color: "var(--color-text-secondary)" }}>
-                      &ldquo;{q.example}&rdquo;
-                    </em>{" "}
-                    <span
-                      className="font-bold"
-                      style={{ color: "var(--color-lime)" }}
-                    >
-                      [pakai ini]
-                    </span>
-                  </span>
-                </button>
-              )}
-            </div>
+              </div>
+            );
+          }
+          return (
+            <QuestionCard
+              key={q.key}
+              q={q}
+              index={idx}
+              value={value}
+              onUpdate={update}
+              visible={idx < visibleCount}
+              delay={idx === visibleCount - 1 ? 0.05 : 0}
+            />
           );
         })}
       </div>
 
-      {/* Optional extras accordion */}
-      <div className="mb-6">
+      {/* Optional extras */}
+      <div className="mb-8">
         <button
           onClick={() => setShowOptional(!showOptional)}
-          className="font-mono text-xs flex items-center gap-2 transition-colors mb-3"
-          style={{ color: "var(--color-text-tertiary)" }}
+          className="flex items-center gap-2 text-sm transition-colors mb-4 w-full text-left"
+          style={{ color: "rgba(255,255,255,0.4)" }}
         >
-          <span
+          <div
+            className="w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
             style={{
-              transform: showOptional ? "rotate(90deg)" : "none",
-              display: "inline-block",
-              transition: "transform 0.2s",
+              background: showOptional ? "rgba(204,255,0,0.1)" : "rgba(255,255,255,0.05)",
+              border: showOptional ? "0.5px solid rgba(204,255,0,0.2)" : "0.5px solid rgba(255,255,255,0.08)",
             }}
           >
-            ▶
+            <span
+              className="text-[10px] transition-transform duration-200"
+              style={{
+                transform: showOptional ? "rotate(90deg)" : "none",
+                display: "inline-block",
+                color: showOptional ? "var(--color-lime)" : "rgba(255,255,255,0.3)",
+              }}
+            >
+              ▶
+            </span>
+          </div>
+          <span>
+            {showOptional ? "Sembunyikan" : "Tambah konteks opsional"}
+            <span className="ml-2 text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
+              (nama produk, referensi, timeline...)
+            </span>
           </span>
-          {showOptional ? "Sembunyikan konteks opsional" : "▼ Tambah konteks opsional"}
         </button>
 
         {showOptional && (
           <div
-            className="rounded-xl overflow-hidden"
-            style={{
-              border: "0.5px solid var(--color-border-default)",
-            }}
+            className="rounded-2xl overflow-hidden animate-fade-slide-up"
+            style={{ border: "0.5px solid rgba(255,255,255,0.08)" }}
           >
             {OPTIONAL_EXTRAS.map((extra, i) => (
               <div
                 key={extra.key}
-                className="px-4 py-3"
+                className="px-5 py-4"
                 style={{
                   borderBottom:
                     i < OPTIONAL_EXTRAS.length - 1
-                      ? "0.5px solid var(--color-border-default)"
+                      ? "0.5px solid rgba(255,255,255,0.06)"
                       : "none",
+                  background: "var(--color-bg-elevated)",
                 }}
               >
                 <label
-                  className="block font-mono text-[11px] font-semibold mb-1.5"
-                  style={{ color: "var(--color-text-secondary)" }}
+                  className="block text-xs font-semibold mb-2"
+                  style={{ color: "rgba(255,255,255,0.5)" }}
                 >
                   {extra.label}
                 </label>
@@ -601,18 +794,21 @@ export default function ContextStep({
                   placeholder={extra.placeholder}
                   value={(value[extra.key] as string) ?? ""}
                   onChange={(e) => update(extra.key, e.target.value)}
-                  className="w-full rounded-lg font-mono text-xs transition-all focus:outline-none"
+                  className="w-full rounded-lg text-sm transition-all focus:outline-none"
                   style={{
-                    background: "var(--color-bg-surface)",
-                    border: "0.5px solid var(--color-border-default)",
+                    background: "rgba(255,255,255,0.03)",
+                    border: "0.5px solid rgba(255,255,255,0.08)",
                     color: "var(--color-text-primary)",
-                    padding: "8px 12px",
+                    padding: "10px 14px",
+                    fontFamily: "var(--font-inter), system-ui, sans-serif",
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(204,255,0,0.5)";
+                    e.currentTarget.style.borderColor = "rgba(204,255,0,0.4)";
+                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(204,255,0,0.04)";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "var(--color-border-default)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                    e.currentTarget.style.boxShadow = "none";
                   }}
                 />
               </div>
@@ -621,37 +817,45 @@ export default function ContextStep({
         )}
       </div>
 
-      {/* Quality bar */}
-      <div className="mb-6">
-        <QualityBar value={value} />
+      {/* Quality indicator */}
+      <div className="mb-8">
+        <QualityIndicator value={value} featureCount={features.length} />
       </div>
 
       {/* Navigation */}
       <div className="flex gap-3">
         <button
           onClick={onBack}
-          className="px-5 py-3 rounded-xl font-mono text-sm transition-all"
+          className="px-6 py-4 rounded-2xl text-sm font-medium transition-all"
           style={{
             background: "var(--color-bg-elevated)",
-            color: "var(--color-text-secondary)",
-            border: "0.5px solid var(--color-border-default)",
+            color: "rgba(255,255,255,0.5)",
+            border: "0.5px solid rgba(255,255,255,0.08)",
           }}
         >
           ← Kembali
         </button>
         <button
           onClick={onNext}
-          disabled={!isValid}
-          className="flex-1 py-3 rounded-xl font-mono font-bold text-sm transition-all"
+          disabled={!hasAnyAnswer}
+          className="flex-1 py-4 rounded-2xl font-semibold text-base transition-all duration-200"
           style={{
-            background: isValid ? "var(--color-lime)" : "var(--color-bg-elevated)",
-            color: isValid ? "#0A0A0A" : "var(--color-text-disabled)",
-            border: isValid ? "none" : "0.5px solid var(--color-border-default)",
-            cursor: isValid ? "pointer" : "not-allowed",
+            background: hasAnyAnswer ? "var(--color-lime)" : "rgba(255,255,255,0.05)",
+            color: hasAnyAnswer ? "#0A0A0A" : "rgba(255,255,255,0.2)",
+            cursor: hasAnyAnswer ? "pointer" : "not-allowed",
+            border: hasAnyAnswer ? "none" : "0.5px solid rgba(255,255,255,0.06)",
+            boxShadow: hasAnyAnswer ? "0 4px 24px rgba(204,255,0,0.2)" : "none",
+            letterSpacing: "-0.01em",
           }}
         >
-          {isValid ? "Lanjut →" : "Ceritakan sedikit saja dulu"}
+          {hasAnyAnswer ? "Lanjut ke Stack & Preferences →" : "Ceritakan sedikit saja dulu"}
         </button>
+      </div>
+      </div>
+      
+      {/* Live Preview Panel (Right Side on Desktop) */}
+      <div className="hidden lg:block w-[400px] flex-shrink-0 sticky top-14 h-[calc(100vh-120px)] pb-14">
+        <LiveJsonPreview data={value} features={features} />
       </div>
     </div>
   );
