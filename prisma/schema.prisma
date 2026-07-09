@@ -23,11 +23,13 @@ model User {
   tier          SubscriptionTier @default(STARTER)
   creditBalance Int              @default(0)
 
-  subscription Subscription?
-  projects     Project[]
-  payments     Payment[]
-  creditLedger CreditLedger[]
-  whatsappChat WhatsappChat[]
+  subscription      Subscription?
+  projects          Project[]
+  payments          Payment[]
+  creditLedger      CreditLedger[]
+  whatsappChat      WhatsappChat[]
+  interviewSessions InterviewSession[]
+  waitlistEntries   WaitlistEntry[]
 
   @@map("users")
 }
@@ -251,4 +253,53 @@ model RateLimitEvent {
 
   @@index([userId, rejectedAt])
   @@map("rate_limit_events")
+}
+
+enum InterviewSessionStatus {
+  ACTIVE
+  COMPLETED
+  FALLBACK
+  ABANDONED
+}
+
+model InterviewSession {
+  id             String                 @id @default(cuid())
+  userId         String
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status         InterviewSessionStatus @default(ACTIVE)
+  turnCount      Int                    @default(0)
+  filledFields   Json                   @default("{}")
+  messages       Json                   @default("[]")
+  credited       Boolean                @default(false)
+  creditsCharged Int                    @default(0)
+  reservationId  String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@map("interview_sessions")
+}
+
+enum WaitlistStatus {
+  PENDING
+  NOTIFIED
+  CONVERTED
+  CANCELLED
+}
+
+model WaitlistEntry {
+  id        String             @id @default(cuid())
+  userId    String?
+  user      User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email     String
+  tier      SubscriptionTier
+  status    WaitlistStatus     @default(PENDING)
+  note      String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([email, tier])
+  @@index([tier, status])
+  @@map("waitlist_entries")
 }

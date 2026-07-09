@@ -273,6 +273,14 @@ function DashboardContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-3 sm:mt-0 w-full sm:w-auto shrink-0">
+                    {project.status === "DONE" && project._count.files > 0 && (
+                      <Link
+                        href={`/project/${project.id}`}
+                        className="btn btn-primary btn-sm flex-1 sm:flex-none"
+                      >
+                        Buka
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={() => {

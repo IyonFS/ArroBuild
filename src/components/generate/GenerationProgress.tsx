@@ -92,13 +92,26 @@ export default function GenerationProgress({
   const [error, setError] = useState<string | null>(null);
   const [globalStatus, setGlobalStatus] = useState<"running" | "done" | "error">("running");
   const [currentTip, setCurrentTip] = useState<string>("");
+  const [buildLog, setBuildLog] = useState<string[]>([
+    "> arrobuild generate --init",
+    "> compiling knowledge model...",
+  ]);
+  const logRef = useRef<HTMLDivElement>(null);
   const started = useRef(false);
+
+  function pushLog(line: string) {
+    setBuildLog((prev) => [...prev.slice(-80), line]);
+  }
 
   function updateFile(key: FileKey, patch: Partial<FileState>) {
     setFiles((prev) =>
       prev.map((f) => (f.key === key ? { ...f, ...patch } : f))
     );
   }
+
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
+  }, [buildLog]);
 
   useEffect(() => {
     if (started.current) return;
@@ -160,12 +173,13 @@ export default function GenerationProgress({
 
             if (type === "project_created") {
               onProjectCreated(event.projectId as string);
+              pushLog(`✓ project created · ${(event.projectId as string).slice(0, 12)}…`);
             } else if (type === "progress") {
               const key = event.fileKey as FileKey;
               updateFile(key, { status: "generating", chunks: "" });
-              // Set educational tip for this file
               const tip = FILE_TIPS[key];
               if (tip) setCurrentTip(tip);
+              pushLog(`→ generating ${FILE_META[key]?.label ?? key}…`);
             } else if (type === "retry") {
               const key = event.fileKey as FileKey;
               const attempt = event.attempt as number;
@@ -174,6 +188,7 @@ export default function GenerationProgress({
                 retryCount: attempt - 1,
                 status: "generating",
               });
+              pushLog(`↻ retry ${FILE_META[key]?.label ?? key} (attempt ${attempt})`);
             } else if (type === "chunk") {
               const key = event.fileKey as FileKey;
               setFiles((prev) =>
@@ -188,12 +203,18 @@ export default function GenerationProgress({
               const content = event.content as string;
               collectedFiles[key] = content;
               updateFile(key, { status: "done", content });
+              pushLog(
+                `✓ ${FILE_META[key]?.label ?? key} ready · ${content.length.toLocaleString()} chars`
+              );
             } else if (type === "error") {
               const key = event.fileKey as FileKey | undefined;
               const errMsg = (event.error as string) ?? "Generation failed";
               lastError = errMsg;
               if (key) {
                 updateFile(key, { status: "error", errorMessage: errMsg });
+                pushLog(`✗ ${FILE_META[key]?.label ?? key} failed · ${errMsg.slice(0, 80)}`);
+              } else {
+                pushLog(`✗ error · ${errMsg.slice(0, 100)}`);
               }
             } else if (type === "all_done") {
               const success = event.success !== false;
@@ -204,12 +225,14 @@ export default function GenerationProgress({
                   (event.error as string) ??
                   lastError ??
                   "Generation failed. Please try again.";
+                pushLog(`✗ build failed · ${errMsg.slice(0, 100)}`);
                 trackEvent("generation_failed", { error: errMsg });
                 setError(errMsg);
                 setGlobalStatus("error");
                 return;
               }
 
+              pushLog(`✓ build complete · ${Object.keys(files).length} documents`);
               setGlobalStatus("done");
               trackEvent("generation_completed");
               setTimeout(() => onComplete(files), 800);
@@ -218,6 +241,7 @@ export default function GenerationProgress({
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Generation failed";
+        pushLog(`✗ fatal · ${msg.slice(0, 120)}`);
         trackEvent("generation_failed", { error: msg });
         setError(msg);
         setGlobalStatus("error");
@@ -307,6 +331,71 @@ export default function GenerationProgress({
                 : "linear-gradient(90deg, rgba(204,255,0,0.6), var(--color-lime))",
           }}
         />
+      </div>
+
+      {/* Live Build Log — terminal style */}
+      <div
+        className="rounded-xl overflow-hidden mb-6"
+        style={{
+          border: "1px solid rgba(204,255,0,0.18)",
+          background: "#050505",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+        }}
+      >
+        <div
+          className="flex items-center justify-between px-4 py-2.5"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#EF4444" }} />
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#F59E0B" }} />
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#22C55E" }} />
+            <span
+              className="ml-2 text-[10px] uppercase tracking-widest font-bold"
+              style={{
+                color: "rgba(204,255,0,0.7)",
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+              }}
+            >
+              Live Build Log
+            </span>
+          </div>
+          <span
+            className="text-[10px]"
+            style={{
+              color: "rgba(255,255,255,0.3)",
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+            }}
+          >
+            {Math.round(progressPct)}%
+          </span>
+        </div>
+        <div
+          ref={logRef}
+          className="px-4 py-3 overflow-y-auto"
+          style={{
+            maxHeight: 160,
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            fontSize: 11,
+            lineHeight: 1.65,
+            color: "rgba(204,255,0,0.75)",
+          }}
+        >
+          {buildLog.map((line, i) => (
+            <div key={`${i}-${line.slice(0, 12)}`}>
+              <span style={{ color: "rgba(255,255,255,0.25)" }}>
+                {String(i + 1).padStart(2, "0")}
+              </span>{" "}
+              {line}
+            </div>
+          ))}
+          {globalStatus === "running" && (
+            <div>
+              <span style={{ color: "rgba(255,255,255,0.25)" }}>··</span>{" "}
+              <span className="animate-pulse">_</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* File list */}

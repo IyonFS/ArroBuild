@@ -8,6 +8,8 @@ interface AppShellProps {
   padded?: boolean;
   tone?: "app" | "marketing";
   showFooter?: boolean;
+  /** Hide marketing navbar (e.g. full-screen workspace IDE). */
+  showNav?: boolean;
 }
 
 export default function AppShell({
@@ -15,7 +17,10 @@ export default function AppShell({
   padded = true,
   tone = "marketing",
   showFooter = tone === "marketing",
+  showNav = true,
 }: AppShellProps) {
+  const topPad = !showNav ? "" : padded ? "pt-20 pb-12 md:pt-24 md:pb-16" : "pt-[60px]";
+
   return (
     <div
       className="min-h-screen flex flex-col relative"
@@ -28,14 +33,8 @@ export default function AppShell({
           style={{ opacity: 1 }}
         />
       )}
-      <Navbar variant="minimal" />
-      <main
-        className={`flex-1 relative z-10 ${
-          padded ? "pt-20 pb-12 md:pt-24 md:pb-16" : "pt-[60px]"
-        }`}
-      >
-        {children}
-      </main>
+      {showNav && <Navbar variant="minimal" />}
+      <main className={`flex-1 relative z-10 ${topPad}`}>{children}</main>
       {showFooter && <Footer />}
     </div>
   );

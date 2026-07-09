@@ -40,6 +40,8 @@ export interface TierConfig {
   priceIdr: number;
   creditsPerMonth: number;
   rolloverMax: number;
+  /** Fase 1 soft-cap active subscribers (waitlist when full). */
+  maxActiveSeats: number;
   coreDocuments: readonly string[];
   allowedModelClasses: readonly ModelClassId[];
   maxOutputTokensPerDoc: number;
@@ -63,6 +65,7 @@ export const TIER_CONFIG: Record<TierId, TierConfig> = {
     priceIdr: 65_000,
     creditsPerMonth: 3_000,
     rolloverMax: 0,
+    maxActiveSeats: 150,
     coreDocuments: ["prd", "architecture", "plan-task"],
     allowedModelClasses: ["HEMAT"],
     maxOutputTokensPerDoc: 2_500,
@@ -84,6 +87,7 @@ export const TIER_CONFIG: Record<TierId, TierConfig> = {
     priceIdr: 145_000,
     creditsPerMonth: 7_000,
     rolloverMax: 2_000,
+    maxActiveSeats: 60,
     coreDocuments: ["prd", "architecture", "plan-task", "design-system", "agent-rules"],
     allowedModelClasses: ["HEMAT", "MENENGAH", "FLAGSHIP"],
     maxOutputTokensPerDoc: 5_000,
@@ -104,6 +108,7 @@ export const TIER_CONFIG: Record<TierId, TierConfig> = {
     priceIdr: 199_000,
     creditsPerMonth: 14_000,
     rolloverMax: 4_000,
+    maxActiveSeats: 15,
     coreDocuments: [
       "prd",
       "architecture",

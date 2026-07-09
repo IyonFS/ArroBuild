@@ -10,6 +10,8 @@ import {
 } from "@/lib/midtrans";
 import { getPaidTier, PAID_TIER_IDS } from "@/lib/pricing";
 import { PaymentService } from "@/lib/services/payment.service";
+import { assertTierHasCapacity } from "@/lib/services/capacity.service";
+import { tierIdFromPricingSlug } from "@/lib/config/tiers";
 
 const BodySchema = z.object({
   tierId: z.enum(PAID_TIER_IDS as [string, ...string[]]),
@@ -44,6 +46,28 @@ export async function POST(req: Request) {
   const tier = getPaidTier(parsed.data.tierId);
   if (!tier) {
     return NextResponse.json({ error: "Paket tidak ditemukan" }, { status: 404 });
+  }
+
+  const tierId = tierIdFromPricingSlug(tier.id);
+  if (!tierId) {
+    return NextResponse.json({ error: "Paket tidak valid" }, { status: 422 });
+  }
+
+  try {
+    await assertTierHasCapacity(tierId);
+  } catch (err) {
+    const capacity = (err as { capacity?: unknown }).capacity;
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Slot paket penuh. Masuk waitlist dulu.",
+        code: "TIER_FULL",
+        capacity,
+      },
+      { status: 409 }
+    );
   }
 
   try {

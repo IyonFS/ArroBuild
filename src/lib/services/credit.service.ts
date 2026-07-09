@@ -240,6 +240,111 @@ export const CreditService = {
     }
   },
 
+  async commitRevision(
+    userId: string,
+    reservationId: string,
+    projectId: string,
+    actualCreditsUsed: number,
+    metadata?: Record<string, unknown>
+  ): Promise<CreditCommit> {
+    try {
+      return await prisma.$transaction(
+        async (tx) => {
+          const reservation = await tx.creditLedger.findUniqueOrThrow({
+            where: { id: reservationId },
+          });
+
+          if (reservation.type !== "RESERVATION_HOLD") {
+            throw new CreditServiceError(
+              "INVALID_RESERVATION",
+              `Reservation ${reservationId} bukan RESERVATION_HOLD`,
+              400
+            );
+          }
+
+          if (reservation.userId !== userId) {
+            throw new CreditServiceError(
+              "RESERVATION_MISMATCH",
+              `Reservation ${reservationId} bukan milik user ${userId}`,
+              403
+            );
+          }
+
+          const holdedCredits = Math.abs(reservation.amount);
+          const used = Math.min(Math.max(actualCreditsUsed, 1), holdedCredits);
+          const sumBalance = await sumLedgerBalance(userId, tx);
+
+          const revisionEntry = await tx.creditLedger.create({
+            data: {
+              userId,
+              type: "REVISION" as CreditLedgerType,
+              amount: -used,
+              projectId,
+              balanceAfter: sumBalance - used,
+              metadata: {
+                ...metadata,
+                reservationId,
+                holdedCredits,
+              },
+            },
+          });
+
+          const surplus = holdedCredits - used;
+          let finalBalance = revisionEntry.balanceAfter;
+
+          if (surplus > 0) {
+            const releaseEntry = await tx.creditLedger.create({
+              data: {
+                userId,
+                type: "RESERVATION_RELEASE" as CreditLedgerType,
+                amount: surplus,
+                projectId,
+                balanceAfter: revisionEntry.balanceAfter + surplus,
+                metadata: {
+                  reservationId,
+                  reason: "revision_surplus_release",
+                },
+              },
+            });
+            finalBalance = releaseEntry.balanceAfter;
+          }
+
+          await tx.user.update({
+            where: { id: userId },
+            data: { creditBalance: finalBalance },
+          });
+
+          logger.info("revision_credit_committed", {
+            userId,
+            projectId,
+            reservationId,
+            actualCreditsUsed: used,
+            finalBalance,
+          });
+
+          return {
+            transactionId: revisionEntry.id,
+            balanceAfter: finalBalance,
+            actualCreditsUsed: used,
+          };
+        },
+        {
+          isolationLevel: "Serializable",
+          maxWait: 5000,
+          timeout: 30000,
+        }
+      );
+    } catch (error) {
+      logger.error("revision_credit_commit_failed", {
+        userId,
+        reservationId,
+        projectId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  },
+
   async releaseReservation(
     userId: string,
     reservationId: string,

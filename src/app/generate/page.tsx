@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ProductTypeStep from "@/components/generate/ProductTypeStep";
 import ContextStep from "@/components/generate/ContextStep";
 import StackStep from "@/components/generate/StackStep";
@@ -8,6 +8,12 @@ import DocumentPickerStep from "@/components/generate/DocumentPickerStep";
 import ConfirmScreen from "@/components/generate/ConfirmScreen";
 import GenerationProgress from "@/components/generate/GenerationProgress";
 import DocPreview from "@/components/generate/DocPreview";
+import ModeSelectStep, {
+  type IntakeMode,
+} from "@/components/generate/ModeSelectStep";
+import InterviewStep, {
+  type InterviewResult,
+} from "@/components/generate/InterviewStep";
 import type {
   ProductType,
   ProjectStage,
@@ -22,14 +28,22 @@ import type {
 import {
   getModelsForTier,
   STAGE_PRESETS,
-  featuresToString,
   resolvePreviewTier,
   calcTotalCredits,
   isSubscribed,
 } from "@/components/generate/types";
 import AppShell from "@/components/layout/AppShell";
+import {
+  clearGenerateDraft,
+  draftHasContent,
+  readGenerateDraft,
+  writeGenerateDraft,
+  type GenerateDraft,
+} from "@/lib/generate-draft";
 
 type Step =
+  | "mode"
+  | "interview"
   | "product-type"
   | "context"
   | "stack"
@@ -38,20 +52,11 @@ type Step =
   | "generating"
   | "preview";
 
-const FLOW_STEPS: Step[] = [
-  "product-type",
-  "context",
-  "stack",
-  "docs",
-  "confirm",
-  "generating",
-  "preview",
-];
-
 const STEP_LABELS = ["Tipe", "Cerita", "Stack", "Dokumen"];
 
 export default function GeneratePage() {
-  const [step, setStep] = useState<Step>("product-type");
+  const [step, setStep] = useState<Step>("mode");
+  const [intakeMode, setIntakeMode] = useState<IntakeMode | null>(null);
 
   // Step 1
   const [productType, setProductType] = useState<ProductType | null>(null);
@@ -99,6 +104,10 @@ export default function GeneratePage() {
   const [projectCount, setProjectCount] = useState<number>(0);
   const [projectLimit, setProjectLimit] = useState<number | null>(null);
 
+  const [pendingDraft, setPendingDraft] = useState<GenerateDraft | null>(null);
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
+  const skipAutosave = useRef(true);
+
   useEffect(() => {
     fetch("/api/user/me")
       .then((res) => res.json())
@@ -130,7 +139,9 @@ export default function GeneratePage() {
     // Check for fork data
     const forkIdea = sessionStorage.getItem("arrobuild_fork_idea");
     const forkPresets = sessionStorage.getItem("arrobuild_fork_presets");
+    let usedFork = false;
     if (forkIdea) {
+      usedFork = true;
       try {
         if (forkIdea.startsWith("{")) {
           const parsed = JSON.parse(forkIdea);
@@ -140,17 +151,128 @@ export default function GeneratePage() {
           setProductType("saas");
           setContextData({ freeText: forkIdea });
         }
-      } catch (e) {}
+        setIntakeMode("cepat");
+        setStep("product-type");
+      } catch {
+        /* ignore bad fork payload */
+      }
       sessionStorage.removeItem("arrobuild_fork_idea");
     }
     if (forkPresets) {
       try {
         setPresets(JSON.parse(forkPresets));
-      } catch (e) {}
+      } catch {
+        /* ignore */
+      }
       sessionStorage.removeItem("arrobuild_fork_presets");
     }
+
+    if (!usedFork) {
+      const draft = readGenerateDraft();
+      if (draft && draftHasContent(draft)) {
+        setPendingDraft(draft);
+      }
+    }
+
+    skipAutosave.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Autosave form draft (debounce) — skip generating/preview
+  useEffect(() => {
+    if (skipAutosave.current) return;
+    if (step === "generating" || step === "preview" || step === "interview") return;
+    if (pendingDraft) return; // wait until user accepts/discards
+
+    const timer = window.setTimeout(() => {
+      writeGenerateDraft({
+        step,
+        intakeMode,
+        productType,
+        stage,
+        contextData,
+        features,
+        presets,
+        selectedDocs,
+        selectedModelId,
+        perDocModelClass,
+      });
+      setDraftSavedAt(Date.now());
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    step,
+    intakeMode,
+    productType,
+    stage,
+    contextData,
+    features,
+    presets,
+    selectedDocs,
+    selectedModelId,
+    perDocModelClass,
+    pendingDraft,
+  ]);
+
+  const applyDraft = (draft: GenerateDraft) => {
+    if (draft.intakeMode) setIntakeMode(draft.intakeMode);
+    if (draft.productType) setProductType(draft.productType);
+    if (draft.stage) setStage(draft.stage);
+    if (draft.contextData) setContextData(draft.contextData);
+    if (draft.features) setFeatures(draft.features);
+    if (draft.presets) setPresets(draft.presets);
+    if (draft.selectedDocs) setSelectedDocs(draft.selectedDocs);
+    if (draft.selectedModelId) setSelectedModelId(draft.selectedModelId);
+    if (draft.perDocModelClass) setPerDocModelClass(draft.perDocModelClass);
+
+    const restoreStep = draft.step as Step | undefined;
+    const allowed: Step[] = [
+      "mode",
+      "product-type",
+      "context",
+      "stack",
+      "docs",
+      "confirm",
+    ];
+    if (restoreStep && allowed.includes(restoreStep)) {
+      setStep(restoreStep);
+    } else if (draft.productType) {
+      setStep("context");
+    }
+    setPendingDraft(null);
+  };
+
+  const discardDraft = () => {
+    clearGenerateDraft();
+    setPendingDraft(null);
+  };
+
+  const refreshCredits = () => {
+    fetch("/api/user/me")
+      .then((res) => res.json())
+      .then(
+        (data: {
+          tier?: UserPlanStatus;
+          plan?: UserPlanStatus;
+          user?: { creditBalance?: number; hasActiveSubscription?: boolean };
+        }) => {
+          if (data.plan || data.tier) setPlan(data.plan ?? data.tier ?? "none");
+          if (typeof data.user?.creditBalance === "number") {
+            setCreditBalance(data.user.creditBalance);
+          }
+          if (typeof data.user?.hasActiveSubscription === "boolean") {
+            setHasActiveSubscription(data.user.hasActiveSubscription);
+          }
+        }
+      )
+      .catch(() => {});
+  };
+
+  // Refresh balance when entering review so paywall isn't stale after interview spend
+  useEffect(() => {
+    if (step === "confirm" || step === "docs") refreshCredits();
+  }, [step]);
 
   // When stage changes, auto-apply smart preset for docs
   const handleStageChange = (s: ProjectStage) => {
@@ -158,7 +280,38 @@ export default function GeneratePage() {
     setSelectedDocs([...STAGE_PRESETS[s]]);
   };
 
-  // Step index for the 4-step indicator (exclude confirm/generating/preview)
+  const handleModeSelect = (mode: IntakeMode) => {
+    setIntakeMode(mode);
+    if (mode === "cepat") setStep("product-type");
+    else setStep("interview");
+  };
+
+  const handleInterviewFinished = (result: InterviewResult) => {
+    if (result.productType) setProductType(result.productType);
+    if (result.stage) {
+      setStage(result.stage);
+      setSelectedDocs([...STAGE_PRESETS[result.stage]]);
+    }
+    setContextData(result.contextData);
+    setFeatures(result.features);
+    refreshCredits();
+
+    const hasMinimum =
+      Boolean(result.productType) &&
+      Boolean(result.contextData.targetUser) &&
+      Boolean(result.contextData.mainProblem) &&
+      result.features.length >= 1;
+
+    if (result.incomplete || !hasMinimum) {
+      if (result.productType) setStep("context");
+      else setStep("product-type");
+      return;
+    }
+
+    setStep("stack");
+  };
+
+  // Step index for the 4-step indicator (exclude mode/interview/confirm/generating/preview)
   const stepIndex = ["product-type", "context", "stack", "docs"].indexOf(step);
 
   // Build structured Knowledge Model JSON from all form state
@@ -252,7 +405,11 @@ export default function GeneratePage() {
     setPerDocModelClass({});
     setProjectId(null);
     setGeneratedFiles({});
-    setStep("product-type");
+    setIntakeMode(null);
+    setPendingDraft(null);
+    setDraftSavedAt(null);
+    clearGenerateDraft();
+    setStep("mode");
   };
 
   const isFormStep = stepIndex >= 0;
@@ -399,7 +556,23 @@ export default function GeneratePage() {
               </div>
             )}
 
-            {/* Confirm/Generate status */}
+            {/* Mode / interview / confirm status */}
+            {step === "mode" && (
+              <span
+                className="text-xs flex-1 text-center"
+                style={{ color: "var(--color-text-secondary)", fontFamily: "var(--font-inter), system-ui, sans-serif" }}
+              >
+                Pilih mode isi plan
+              </span>
+            )}
+            {step === "interview" && (
+              <span
+                className="text-xs flex-1 text-center"
+                style={{ color: "var(--color-lime)", fontFamily: "var(--font-inter), system-ui, sans-serif" }}
+              >
+                Mode Dipandu AI
+              </span>
+            )}
             {step === "confirm" && (
               <span
                 className="text-xs flex-1 text-center"
@@ -425,40 +598,124 @@ export default function GeneratePage() {
               </span>
             )}
 
-            {/* Progress % */}
-            {showStepIndicator && (
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <div
-                  className="w-16 h-1 rounded-full overflow-hidden"
-                  style={{ background: "rgba(255,255,255,0.08)" }}
-                >
-                  <div
-                    className="h-full transition-all duration-500 rounded-full"
+            {/* Progress % + autosave hint */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {draftSavedAt &&
+                step !== "generating" &&
+                step !== "preview" &&
+                !pendingDraft && (
+                  <span
+                    className="hidden sm:inline text-[10px]"
                     style={{
-                      width: `${((stepIndex + 1) / 4) * 100}%`,
-                      background: "var(--color-lime)",
+                      color: "rgba(204,255,0,0.55)",
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
                     }}
-                  />
-                </div>
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "rgba(255,255,255,0.3)",
-                    fontFamily: "var(--font-jetbrains-mono), monospace",
-                    minWidth: 28,
-                    textAlign: "right",
-                  }}
-                >
-                  {Math.round(((stepIndex + 1) / 4) * 100)}%
-                </span>
-              </div>
-            )}
+                  >
+                    Draft tersimpan
+                  </span>
+                )}
+              {showStepIndicator && (
+                <>
+                  <div
+                    className="w-16 h-1 rounded-full overflow-hidden"
+                    style={{ background: "rgba(255,255,255,0.08)" }}
+                  >
+                    <div
+                      className="h-full transition-all duration-500 rounded-full"
+                      style={{
+                        width: `${((stepIndex + 1) / 4) * 100}%`,
+                        background: "var(--color-lime)",
+                      }}
+                    />
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "rgba(255,255,255,0.3)",
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                      minWidth: 28,
+                      textAlign: "right",
+                    }}
+                  >
+                    {Math.round(((stepIndex + 1) / 4) * 100)}%
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </header>
+
+        {/* Draft restore banner */}
+        {pendingDraft && (
+          <div
+            className="sticky top-[124px] z-30 px-4 py-3"
+            style={{
+              background: "rgba(204,255,0,0.08)",
+              borderBottom: "1px solid rgba(204,255,0,0.25)",
+            }}
+          >
+            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--color-lime)" }}
+                >
+                  Draft tersimpan ditemukan
+                </p>
+                <p
+                  className="text-xs mt-0.5"
+                  style={{ color: "rgba(255,255,255,0.5)" }}
+                >
+                  Disimpan{" "}
+                  {new Date(pendingDraft.savedAt).toLocaleString("id-ID")} · lanjut
+                  dari step sebelumnya?
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={discardDraft}
+                  className="px-4 py-2 text-sm font-medium"
+                  style={{
+                    borderRadius: 10,
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: "rgba(255,255,255,0.6)",
+                  }}
+                >
+                  Buang
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyDraft(pendingDraft)}
+                  className="px-4 py-2 text-sm font-bold"
+                  style={{
+                    borderRadius: 10,
+                    background: "var(--color-lime)",
+                    color: "#0A0A0A",
+                  }}
+                >
+                  Lanjutkan draft
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
 
         {/* ── Main content ── */}
         <main className="relative z-10">
+          {step === "mode" && <ModeSelectStep onSelect={handleModeSelect} />}
+
+          {step === "interview" && (
+            <InterviewStep
+              onFinished={handleInterviewFinished}
+              onBack={() => {
+                setIntakeMode(null);
+                setStep("mode");
+              }}
+            />
+          )}
+
           {step === "product-type" && (
             <ProductTypeStep
               value={productType}
@@ -477,7 +734,9 @@ export default function GeneratePage() {
               features={features}
               onFeaturesChange={setFeatures}
               onNext={() => setStep("stack")}
-              onBack={() => setStep("product-type")}
+              onBack={() =>
+                setStep(intakeMode === "dipandu" ? "mode" : "product-type")
+              }
             />
           )}
 
@@ -517,7 +776,10 @@ export default function GeneratePage() {
               hasActiveSubscription={hasActiveSubscription}
               limitReached={projectLimit !== null && projectCount >= projectLimit}
               onEdit={(s) => setStep(s)}
-              onGenerate={() => setStep("generating")}
+              onGenerate={() => {
+                refreshCredits();
+                setStep("generating");
+              }}
             />
           )}
 
@@ -540,6 +802,8 @@ export default function GeneratePage() {
               features={features}
               onProjectCreated={setProjectId}
               onComplete={(files) => {
+                clearGenerateDraft();
+                setDraftSavedAt(null);
                 setGeneratedFiles(files);
                 setStep("preview");
               }}

@@ -209,9 +209,16 @@ export default function ConfirmScreen({
   const totalCredits = calcTotalCredits(selectedDocs, previewTier, perDocModelClass);
   const creditPool = TIER_CREDIT_POOL[previewTier];
   const needsSubscription = !hasActiveSubscription;
+  // Include balance 0 — previously `creditBalance > 0` hid the warning while
+  // still disabling the button, so users saw a grey Generate with no reason.
   const insufficientCredits =
-    hasActiveSubscription && creditBalance > 0 && creditBalance < totalCredits;
-  const canGenerate = hasActiveSubscription && !limitReached && creditBalance >= totalCredits;
+    hasActiveSubscription && creditBalance < totalCredits;
+  const canGenerate =
+    hasActiveSubscription && !limitReached && creditBalance >= totalCredits;
+  const balanceAfter = creditBalance - totalCredits;
+  const planLabel = isSubscribed(plan)
+    ? TIER_LABELS[plan]
+    : PLAN_STATUS_LABELS.none;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
@@ -486,7 +493,7 @@ export default function ConfirmScreen({
               className="font-mono text-xs font-semibold"
               style={{ color: "var(--color-text-primary)" }}
             >
-              Total kredit
+              Biaya batch ini
             </span>
             <span
               className="font-mono text-sm font-bold"
@@ -496,37 +503,69 @@ export default function ConfirmScreen({
             </span>
           </div>
 
-          {/* Pool usage mini bar */}
-          <div className="mt-2">
+          {/* Actual balance vs cost — not pool max disguised as balance */}
+          <div
+            className="mt-3 rounded-lg px-3 py-2.5 space-y-1.5"
+            style={{
+              background: insufficientCredits
+                ? "rgba(239,68,68,0.08)"
+                : "rgba(204,255,0,0.05)",
+              border: insufficientCredits
+                ? "0.5px solid rgba(239,68,68,0.25)"
+                : "0.5px solid rgba(204,255,0,0.18)",
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className="font-mono text-[11px]"
+                style={{ color: "rgba(255,255,255,0.45)" }}
+              >
+                Saldo kamu · {planLabel}
+              </span>
+              <span
+                className="font-mono text-xs font-bold"
+                style={{
+                  color: insufficientCredits ? "#EF4444" : "var(--color-text-primary)",
+                }}
+              >
+                {creditBalance.toLocaleString()} kredit
+              </span>
+            </div>
             <div
-              className="w-full h-1 rounded-full overflow-hidden"
-              style={{ background: "rgba(255,255,255,0.06)" }}
+              className="w-full h-1.5 rounded-full overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.08)" }}
             >
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{
-                  width: `${Math.min((totalCredits / creditPool) * 100, 100)}%`,
-                  background:
-                    totalCredits / creditPool > 0.8
-                      ? "#EF4444"
-                      : totalCredits / creditPool > 0.5
-                      ? "#F59E0B"
-                      : "var(--color-lime)",
+                  width: `${Math.min(
+                    (Math.max(creditBalance, 0) / Math.max(creditPool, 1)) * 100,
+                    100
+                  )}%`,
+                  background: insufficientCredits ? "#EF4444" : "var(--color-lime)",
                 }}
               />
             </div>
-            <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center justify-between">
               <span
                 className="font-mono text-[10px]"
-                style={{ color: "rgba(255,255,255,0.25)" }}
+                style={{ color: "rgba(255,255,255,0.3)" }}
               >
-                {isSubscribed(plan) ? TIER_LABELS[plan] : PLAN_STATUS_LABELS.none}
+                Pool {planLabel}: {creditPool.toLocaleString()}/bulan
               </span>
               <span
                 className="font-mono text-[10px]"
-                style={{ color: "rgba(255,255,255,0.25)" }}
+                style={{
+                  color: canGenerate
+                    ? "rgba(204,255,0,0.7)"
+                    : "rgba(255,255,255,0.3)",
+                }}
               >
-                {totalCredits}/{creditPool.toLocaleString()} kredit
+                {canGenerate
+                  ? `Sisa setelah generate: ${balanceAfter.toLocaleString()}`
+                  : insufficientCredits
+                    ? `Kurang ${Math.max(totalCredits - creditBalance, 0)} kredit`
+                    : "—"}
               </span>
             </div>
           </div>
@@ -675,7 +714,9 @@ export default function ConfirmScreen({
             {needsSubscription
               ? "Upgrade untuk generate"
               : insufficientCredits
-              ? "Kredit tidak cukup"
+              ? `Kredit kurang (${creditBalance}/${totalCredits})`
+              : limitReached
+              ? "Limit proyek habis"
               : `Generate sekarang (${totalCredits} kredit) →`}
           </span>
         </button>
