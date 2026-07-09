@@ -209,12 +209,26 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
               Siap dipakai di AI agent kamu.
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+            {projectId && (
+              <a
+                id="preview-workspace-btn"
+                href={`/project/${projectId}`}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-mono font-bold text-sm transition-all"
+                style={{ background: "var(--color-lime)", color: "#0A0A0A" }}
+              >
+                Buka di workspace
+              </a>
+            )}
             <button
               id="preview-download-btn"
               onClick={handleDownloadClick}
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-mono font-bold text-sm transition-all"
-              style={{ background: "var(--color-lime)", color: "#0A0A0A" }}
+              style={{
+                background: projectId ? "var(--color-bg-elevated)" : "var(--color-lime)",
+                color: projectId ? "var(--color-text-primary)" : "#0A0A0A",
+                border: projectId ? "0.5px solid var(--color-border-default)" : "none",
+              }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />

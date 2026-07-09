@@ -19,9 +19,17 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  subscription Subscription?
-  projects     Project[]
-  payments     Payment[]
+  // v2: cached tier & credit balance (ledger is source of truth)
+  tier          SubscriptionTier @default(STARTER)
+  creditBalance Int              @default(0)
+
+  subscription      Subscription?
+  projects          Project[]
+  payments          Payment[]
+  creditLedger      CreditLedger[]
+  whatsappChat      WhatsappChat[]
+  interviewSessions InterviewSession[]
+  waitlistEntries   WaitlistEntry[]
 
   @@map("users")
 }
@@ -30,12 +38,16 @@ model Subscription {
   id        String             @id @default(cuid())
   userId    String             @unique
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tier      SubscriptionTier   @default(FREE)
+  tier      SubscriptionTier   @default(STARTER)
   status    SubscriptionStatus @default(ACTIVE)
+  startDate DateTime?
+  renewalDate DateTime?
   expiresAt DateTime?
+  midtransSubscriptionId String?
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 
+  @@index([expiresAt, status])
   @@map("subscriptions")
 }
 
@@ -44,23 +56,19 @@ model Project {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Owner (optional — anonymous free tier allowed)
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  // Input
   idea           String @db.Text
-  clarifications Json // { platform, monetization, scope }
-  presets        Json // { framework, design, agentTool }
+  clarifications Json
+  presets        Json
+  planData       Json?
 
-  // User info (captured at download)
   email      String?
   emailOptIn Boolean @default(false)
 
-  // Status
   status ProjectStatus @default(PENDING)
 
-  // Relations
   files GeneratedFile[]
 
   @@index([userId])
@@ -70,30 +78,49 @@ model Project {
 model GeneratedFile {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
-  // File info
-  fileKey  String // e.g. "context", "prd", "tech-stack"
-  fileName String // e.g. "context.md"
-  label    String // e.g. "Project Context"
+  fileKey  String
+  fileName String
+  label    String
   content  String @db.Text
 
-  // Relations
+  modelClass String?
+  tokensUsed Int?
+  version    Int     @default(1)
+
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  revisions DocumentRevision[]
 
   @@unique([projectId, fileKey])
   @@map("generated_files")
 }
 
+model DocumentRevision {
+  id           String        @id @default(cuid())
+  documentId   String
+  document     GeneratedFile @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version      Int
+  content      String        @db.Text
+  revisionType String
+  sectionName  String?
+  createdAt    DateTime      @default(now())
+
+  @@index([documentId, version])
+  @@map("document_revisions")
+}
+
 enum SubscriptionTier {
-  FREE
   STARTER
   PRO
-  UNLIMITED
+  PRO_MAX
 }
 
 enum SubscriptionStatus {
   ACTIVE
+  PAUSED
   CANCELLED
   EXPIRED
   PENDING
@@ -107,24 +134,172 @@ enum ProjectStatus {
 }
 
 model Payment {
-  id        String             @id @default(cuid())
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  orderId   String             @unique
+  id        String        @id @default(cuid())
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  orderId   String        @unique
   userId    String
-  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   tier      SubscriptionTier
   amount    Int
-  status    PaymentStatus      @default(PENDING)
+  status    PaymentStatus @default(PENDING)
   snapToken String?
+  midtransId String?
+  settledAt DateTime?
+
+  events PaymentEvent[]
 
   @@index([userId])
+  @@index([status])
   @@map("payments")
+}
+
+model PaymentEvent {
+  id             String   @id @default(cuid())
+  paymentId      String
+  payment        Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  orderId        String   @unique
+  rawPayload     Json
+  signatureValid Boolean  @default(false)
+  signature      String?
+  receivedAt     DateTime @default(now())
+  processedAt    DateTime?
+
+  @@index([paymentId])
+  @@map("payment_events")
 }
 
 enum PaymentStatus {
   PENDING
-  PAID
+  SETTLEMENT
+  CAPTURE
+  DENY
+  CANCEL
+  EXPIRE
   FAILED
-  EXPIRED
+  PAID
+}
+
+model CreditLedger {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         CreditLedgerType
+  amount       Int
+  projectId    String?
+  paymentId    String?
+  documentType String?
+  toolId       String?
+  metadata     Json?
+  balanceAfter Int
+  createdAt    DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type])
+  @@map("credit_ledger")
+}
+
+enum CreditLedgerType {
+  MONTHLY_REFRESH
+  ROLLOVER
+  TOPUP
+  MANUAL_ADJUSTMENT
+  GENERATE_DOCUMENT
+  REVISION
+  TOOL_USAGE
+  RESERVATION_HOLD
+  RESERVATION_RELEASE
+}
+
+model SystemConfig {
+  id         String   @id @default("tier_config")
+  tierConfig Json
+  version    Int      @default(1)
+  updatedAt  DateTime @updatedAt
+  updatedBy  String?
+
+  @@map("system_config")
+}
+
+model WhatsappChat {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  status    ChatStatus @default(OPEN)
+  month     Int
+  year      Int
+  createdAt DateTime   @default(now())
+  closedAt  DateTime?
+
+  @@index([userId, month, year])
+  @@map("whatsapp_chats")
+}
+
+enum ChatStatus {
+  OPEN
+  WAITING_FOUNDER_RESPONSE
+  WAITING_USER_RESPONSE
+  CLOSED
+}
+
+model RateLimitEvent {
+  id         String   @id @default(cuid())
+  userId     String?
+  ipAddress  String
+  endpoint   String
+  limitType  String
+  rejectedAt DateTime @default(now())
+
+  @@index([userId, rejectedAt])
+  @@map("rate_limit_events")
+}
+
+enum InterviewSessionStatus {
+  ACTIVE
+  COMPLETED
+  FALLBACK
+  ABANDONED
+}
+
+model InterviewSession {
+  id             String                 @id @default(cuid())
+  userId         String
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status         InterviewSessionStatus @default(ACTIVE)
+  turnCount      Int                    @default(0)
+  filledFields   Json                   @default("{}")
+  messages       Json                   @default("[]")
+  credited       Boolean                @default(false)
+  creditsCharged Int                    @default(0)
+  reservationId  String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@map("interview_sessions")
+}
+
+enum WaitlistStatus {
+  PENDING
+  NOTIFIED
+  CONVERTED
+  CANCELLED
+}
+
+model WaitlistEntry {
+  id        String             @id @default(cuid())
+  userId    String?
+  user      User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email     String
+  tier      SubscriptionTier
+  status    WaitlistStatus     @default(PENDING)
+  note      String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([email, tier])
+  @@index([tier, status])
+  @@map("waitlist_entries")
 }

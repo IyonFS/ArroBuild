@@ -1,4 +1,12 @@
-export type PricingTierId = "free" | "starter" | "pro" | "unlimited";
+import {
+  TIER,
+  TIER_CONFIG,
+  getTierConfig,
+  pricingSlugFromTierId,
+  type TierId,
+} from "@/lib/config/tiers";
+
+export type PricingTierId = "starter" | "pro" | "pro_max";
 
 export interface PricingTier {
   id: PricingTierId;
@@ -14,42 +22,39 @@ export interface PricingTier {
   badge?: string;
 }
 
-export const PAID_TIER_IDS: Exclude<PricingTierId, "free">[] = [
-  "pro",
-  "unlimited",
-];
+export const PAID_TIER_IDS: PricingTierId[] = ["starter", "pro", "pro_max"];
 
 export const PRICING_TIERS: PricingTier[] = [
   {
-    id: "free",
-    name: "Free",
-    price: "Rp 0",
-    priceAmount: 0,
-    period: "selamanya",
-    description: "Coba ArroBuild tanpa login — cocok untuk eksplorasi pertama.",
+    id: "starter",
+    name: "Starter",
+    price: "Rp 65K",
+    priceAmount: TIER_CONFIG[TIER.STARTER].priceIdr,
+    period: "/bulan",
+    description: "3 dokumen inti — PRD, Architecture, Plan/Task untuk mulai bangun dengan AI.",
     features: [
-      "5 project / bulan",
-      "3 file (Context, PRD, Plan)",
-      "Model: Gemini Flash & DeepSeek",
-      "2000 token / file",
-      "Download .zip",
+      "3 dokumen inti/proyek",
+      "Model AI kelas Hemat",
+      "Hingga 10 proyek/bulan",
+      "3.000 kredit/bulan",
+      "Download Markdown",
     ],
-    cta: "Mulai gratis",
-    ctaHref: "/generate",
+    cta: "Mulai Starter",
+    ctaHref: "/signup?plan=starter",
   },
   {
     id: "pro",
     name: "Pro",
-    price: "Rp 99K",
-    priceAmount: 99000,
+    price: "Rp 145K",
+    priceAmount: TIER_CONFIG[TIER.PRO].priceIdr,
     period: "/bulan",
-    description: "Bundle fondasi lengkap untuk vibe coder yang serius.",
+    description: "Bundle fondasi lengkap + Design System & Agent Rules.",
     features: [
-      "30 project / bulan",
-      "5 file (termasuk Design & Agents)",
-      "Model: Gemini Pro & GPT-4o",
-      "4000 token / file",
-      "Custom presets",
+      "5 dokumen inti/proyek",
+      "Model Hemat s/d Flagship",
+      "Hingga 30 proyek/bulan",
+      "7.000 kredit/bulan",
+      "Chat WA founder 2x/bulan",
     ],
     cta: "Upgrade ke Pro",
     ctaHref: "/signup?plan=pro",
@@ -57,25 +62,49 @@ export const PRICING_TIERS: PricingTier[] = [
     badge: "Paling populer",
   },
   {
-    id: "unlimited",
+    id: "pro_max",
     name: "Pro Max",
     price: "Rp 199K",
-    priceAmount: 199000,
+    priceAmount: TIER_CONFIG[TIER.PRO_MAX].priceIdr,
     period: "/bulan",
-    description: "Production-ready dari hari pertama — 8 file lengkap.",
+    description: "Production-ready — 6 dokumen inti + modul opsional.",
     features: [
-      "Unlimited projects",
-      "8 file lengkap (Production, Scale, Growth)",
-      "Model: Claude Sonnet 4 & GPT-4o",
-      "8000 token / file",
-      "Context management pintar",
+      "6 dokumen inti + modul opsional",
+      "Semua kelas model termasuk Ultra",
+      "Hingga 60 proyek/bulan",
+      "14.000 kredit/bulan",
+      "Revisi unlimited + semua mini tools",
     ],
     cta: "Upgrade ke Pro Max",
-    ctaHref: "/signup?plan=unlimited",
+    ctaHref: "/signup?plan=pro_max",
     badge: "Terlengkap",
   },
 ];
 
 export function getPaidTier(id: string) {
-  return PRICING_TIERS.find((t) => t.id === id && t.id !== "free");
+  return PRICING_TIERS.find((t) => t.id === id);
 }
+
+export function getTierConfigByPricingId(id: PricingTierId) {
+  switch (id) {
+    case "starter":
+      return getTierConfig(TIER.STARTER);
+    case "pro":
+      return getTierConfig(TIER.PRO);
+    case "pro_max":
+      return getTierConfig(TIER.PRO_MAX);
+  }
+}
+
+export function pricingIdToTierId(id: PricingTierId): TierId {
+  switch (id) {
+    case "starter":
+      return TIER.STARTER;
+    case "pro":
+      return TIER.PRO;
+    case "pro_max":
+      return TIER.PRO_MAX;
+  }
+}
+
+export { pricingSlugFromTierId };

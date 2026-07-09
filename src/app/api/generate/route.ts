@@ -1,74 +1,83 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { orchestrateGeneration, ALL_FILES } from "@/lib/ai/orchestrator";
+import { orchestrateGeneration } from "@/lib/ai/orchestrator";
 import { prisma } from "@/lib/db/prisma";
-import type { GenerationInput, FileKey } from "@/lib/ai/prompts/shared";
+import type { GenerationInput } from "@/lib/ai/prompts/shared";
 import type { Prisma } from "@prisma/client";
 import {
   getSupabaseUser,
   getEffectiveTier,
   assertCanGenerate,
+  syncDbUser,
 } from "@/lib/auth";
+import { CreditService, CreditServiceError } from "@/lib/services/credit.service";
+import { checkGenerateRateLimit } from "@/lib/rate-limit";
+import {
+  FRAMEWORKS,
+  DESIGN_PRESETS,
+  AGENT_TOOLS,
+  DATABASES,
+  DEPLOYMENTS,
+  PROGRAMMING_LANGUAGES,
+  ANIMATION_LIBRARIES,
+  STACK_BUNDLES,
+  VERSION_CONTROLS,
+  DESIGN_HANDOFF_TOOLS,
+  PROJECT_MANAGEMENT_TOOLS,
+  DOCUMENT_FILE_KEYS,
+  PRODUCT_TYPES,
+  PROJECT_STAGES,
+  MODEL_CLASS_SLUGS,
+  FEATURE_PRIORITIES,
+  FRONTEND_TIER_SLUGS,
+} from "@/lib/config/options";
+import { MODEL_CLASS, type ModelClassId } from "@/lib/config/tiers";
+import { capFormInput } from "@/lib/ai-gateway/context-builder";
 
-
-// ─── Input validation schema ────────────────────────────────────────────────
+const FeatureSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  priority: z.enum(FEATURE_PRIORITIES),
+});
 
 const GenerationInputSchema = z.object({
-  idea: z
-    .string()
-    .min(50, "Idea must be at least 50 characters")
-    .max(2000, "Idea must not exceed 2000 characters"),
+  idea: z.string().min(50).max(12000),
   clarifications: z.object({
     platform: z.enum(["web", "mobile", "desktop", "api"]).optional(),
-    monetization: z
-      .enum(["free", "paid", "freemium", "open-source"])
-      .optional(),
+    monetization: z.enum(["free", "paid", "freemium", "open-source"]).optional(),
     scope: z.enum(["mvp", "full-product", "experiment"]).optional(),
   }),
   presets: z.object({
-    framework: z.enum(["nextjs", "laravel", "django", "rails", "fastapi"]),
-    design: z.enum([
-      "neo-brutalist",
-      "minimal",
-      "corporate",
-      "bold",
-      "apple",
-      "linear",
-      "stripe",
-      "notion",
-      "vercel",
-    ]),
-    agentTool: z.enum([
-      "cursor",
-      "claude-code",
-      "windsurf",
-      "cline",
-      "opencode",
-    ]),
+    framework: z.enum(FRAMEWORKS),
+    design: z.enum(DESIGN_PRESETS),
+    agentTool: z.enum(AGENT_TOOLS),
+    database: z.enum(DATABASES).optional(),
+    deployment: z.enum(DEPLOYMENTS).optional(),
+    programmingLanguage: z.enum(PROGRAMMING_LANGUAGES).optional(),
+    animationLibrary: z.enum(ANIMATION_LIBRARIES).optional(),
+    stackBundle: z.enum(STACK_BUNDLES).optional(),
+    designReferenceNote: z.string().max(200).optional(),
+    versionControl: z.enum(VERSION_CONTROLS).optional(),
+    designHandoffTool: z.enum(DESIGN_HANDOFF_TOOLS).optional(),
+    projectManagementTool: z.enum(PROJECT_MANAGEMENT_TOOLS).optional(),
   }),
-  tier: z.enum(["free", "paid", "unlimited"]).optional().default("free"),
+  productType: z.enum(PRODUCT_TYPES).optional(),
+  projectStage: z.enum(PROJECT_STAGES).optional(),
+  features: z.array(FeatureSchema).optional(),
+  perDocumentModelClass: z
+    .record(z.enum(DOCUMENT_FILE_KEYS), z.enum(MODEL_CLASS_SLUGS))
+    .optional(),
+  tier: z.enum(FRONTEND_TIER_SLUGS).optional(),
   modelId: z.string().optional(),
-  selectedDocs: z.array(
-    z.enum([
-      "prd",
-      "context",
-      "plan",
-      "design-system",
-      "agents",
-      "production-hardening",
-      "scale-performance",
-      "growth-quality",
-    ])
-  ).optional(),
+  selectedDocs: z.array(z.enum(DOCUMENT_FILE_KEYS)).optional(),
+  estimatedCredits: z.number().int().positive().optional().default(8),
 });
 
-// ─── Route Handler ────────────────────────────────────────────────────────────
-
 export const runtime = "nodejs";
-export const maxDuration = 180; // Increased for unlimited tier (8 files)
+export const maxDuration = 180;
 
 export async function POST(req: NextRequest) {
-  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await req.json();
@@ -91,13 +100,23 @@ export async function POST(req: NextRequest) {
   }
 
   const supabaseUser = await getSupabaseUser();
-  const userId = supabaseUser?.id ?? null;
+  if (!supabaseUser) {
+    return new Response(
+      JSON.stringify({ error: "Login wajib untuk generate dokumen." }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  await syncDbUser(supabaseUser);
+  const userId = supabaseUser.id;
   const effectiveTier = await getEffectiveTier(userId);
+  const estimatedCredits = parsed.data.estimatedCredits ?? 8;
 
   const gate = await assertCanGenerate(
     userId,
     effectiveTier,
-    parsed.data.modelId
+    parsed.data.modelId,
+    estimatedCredits
   );
   if (!gate.ok) {
     return new Response(JSON.stringify({ error: gate.error }), {
@@ -106,62 +125,142 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const rateCheck = await checkGenerateRateLimit(userId, gate.tierId);
+  if (!rateCheck.ok) {
+    return new Response(
+      JSON.stringify({
+        error: `Limit harian tercapai (${rateCheck.limit} proyek/hari).`,
+      }),
+      { status: 429, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   const input: GenerationInput = {
     ...parsed.data,
+    idea: capFormInput(parsed.data.idea, gate.tierId),
     tier: effectiveTier,
   };
 
-  // 2. Create Project record in database
   let projectId: string;
+  let reservationId: string | null = null;
+
   try {
     const project = await prisma.project.create({
       data: {
         idea: input.idea,
         clarifications: input.clarifications as unknown as Prisma.InputJsonValue,
         presets: input.presets as unknown as Prisma.InputJsonValue,
+        planData: {
+          productType: parsed.data.productType,
+          projectStage: parsed.data.projectStage,
+          features: parsed.data.features,
+          selectedDocs: parsed.data.selectedDocs,
+          perDocumentModelClass: parsed.data.perDocumentModelClass,
+          estimatedCredits: parsed.data.estimatedCredits,
+        },
         status: "GENERATING",
         userId,
       },
     });
     projectId = project.id;
-  } catch (dbError) {
-    console.error("Failed to create project in database:", dbError);
-    return new Response(
-      JSON.stringify({ error: "Database error — failed to create project" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+
+    const reservation = await CreditService.reserveCredit(
+      userId,
+      estimatedCredits,
+      projectId,
+      { selectedDocs: parsed.data.selectedDocs }
     );
+    reservationId = reservation.reservationId;
+  } catch (err) {
+    if (err instanceof CreditServiceError) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: err.statusCode,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    console.error("Failed to create project:", err);
+    return new Response(JSON.stringify({ error: "Database error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  // 3. Create SSE stream
   const encoder = new TextEncoder();
-
   const stream = new ReadableStream({
     async start(controller) {
       function send(data: object) {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-        );
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       }
 
-      // Send projectId immediately so client can reference it
       send({ type: "project_created", projectId });
+      let generationSucceeded = false;
+      const generatedDocs: Array<{
+        fileKey: string;
+        modelClass: ModelClassId;
+        tokensUsed: number;
+      }> = [];
 
       try {
-        // Pass projectId to orchestrator so it can handle DB writes internally
         for await (const event of orchestrateGeneration(input, projectId)) {
           send(event);
+          if (event.type === "all_done") {
+            generationSucceeded = event.success !== false;
+            if (generatedDocs.length === 0) {
+              const docs = event.documentsGenerated ?? [];
+              for (const doc of docs) {
+                generatedDocs.push({
+                  fileKey: doc.fileKey,
+                  modelClass: doc.modelClass,
+                  tokensUsed: doc.tokensUsed,
+                });
+              }
+            }
+          }
+
+          if (
+            event.type === "file_done" &&
+            event.fileKey &&
+            event.modelClass &&
+            typeof event.tokensUsed === "number"
+          ) {
+            generatedDocs.push({
+              fileKey: event.fileKey,
+              modelClass: event.modelClass as ModelClassId,
+              tokensUsed: event.tokensUsed,
+            });
+          }
+        }
+
+        if (generationSucceeded && reservationId) {
+          const documentsGenerated =
+            generatedDocs.length > 0
+              ? generatedDocs
+              : (parsed.data.selectedDocs ?? ["prd", "context", "plan"]).map(
+                  (fileKey) => ({
+                    fileKey,
+                    modelClass: MODEL_CLASS.HEMAT,
+                    tokensUsed: Math.max(1, Math.ceil(input.idea.length / 6)),
+                  })
+                );
+          await CreditService.commitCredit(
+            userId,
+            reservationId,
+            projectId,
+            documentsGenerated
+          );
         }
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Unexpected server error";
+        const message = err instanceof Error ? err.message : "Unexpected server error";
         send({ type: "error", error: message });
 
-        // Backup plan if orchestrator totally crashes
+        if (reservationId) {
+          await CreditService.releaseReservation(userId, reservationId, "generation_failed").catch(
+            () => {}
+          );
+        }
+
         await prisma.project
-          .update({
-            where: { id: projectId },
-            data: { status: "FAILED" },
-          })
+          .update({ where: { id: projectId }, data: { status: "FAILED" } })
           .catch(() => {});
       } finally {
         controller.close();

@@ -29,22 +29,32 @@ export const PATH_THEMES: Record<
   string,
   { accent: string; tint: string; border: string }
 > = {
-  "vibe-coding-101": {
+  "vibe-coding-fundamentals": {
     accent: "var(--color-orange)",
     tint: "rgba(255,92,26,0.07)",
     border: "rgba(255,92,26,0.28)",
   },
-  "prd-dan-dokumentasi": {
+  "setup-tooling": {
     accent: "var(--color-orange)",
     tint: "rgba(255,92,26,0.06)",
     border: "rgba(255,92,26,0.24)",
   },
-  "agent-engineering": {
+  "product-planning-for-ai": {
+    accent: "var(--color-orange)",
+    tint: "rgba(255,92,26,0.06)",
+    border: "rgba(255,92,26,0.24)",
+  },
+  "implementation-workflow": {
     accent: "var(--color-orange)",
     tint: "rgba(255,92,26,0.05)",
     border: "rgba(255,92,26,0.22)",
   },
-  "tools-dan-integrasi": {
+  "multi-agent-orchestration": {
+    accent: "var(--color-orange)",
+    tint: "rgba(255,92,26,0.05)",
+    border: "rgba(255,92,26,0.22)",
+  },
+  "reliability-deployment": {
     accent: "var(--color-orange)",
     tint: "rgba(255,92,26,0.04)",
     border: "rgba(255,92,26,0.2)",
@@ -84,37 +94,37 @@ export const LEARN_TUTORIAL_ITEMS = LEARNING_PATHS.map((path) => ({
 export const LEARN_REFERENCE_ITEMS = [
   {
     title: "Vibe Coding",
-    href: "/learn/vibe-coding-101/apa-itu-vibe-coding",
+    href: "/learn/vibe-coding-fundamentals/apa-itu-vibe-coding",
     description: "Konsep dasar membangun dengan AI agent",
   },
   {
-    title: "PRD (Product Requirements)",
-    href: "/learn/prd-dan-dokumentasi/anatomi-prd",
+    title: "PRD untuk AI",
+    href: "/learn/product-planning-for-ai/anatomi-prd-untuk-ai",
     description: "Struktur dokumen kebutuhan produk",
   },
   {
     title: "context.md",
-    href: "/learn/prd-dan-dokumentasi/context-md",
+    href: "/learn/product-planning-for-ai/context-md-living-doc",
     description: "Master reference project untuk AI",
   },
   {
     title: "design-system.md",
-    href: "/learn/prd-dan-dokumentasi/design-system-md",
+    href: "/learn/product-planning-for-ai/design-system-md",
     description: "Panduan konsistensi visual",
   },
   {
     title: "agents.md",
-    href: "/learn/prd-dan-dokumentasi/agents-md",
+    href: "/learn/product-planning-for-ai/agents-md-dan-scope-control",
     description: "Konfigurasi perilaku AI agent",
   },
   {
     title: ".cursorrules",
-    href: "/learn/tools-dan-integrasi/cursorrules-explained",
+    href: "/learn/setup-tooling/cursorrules-dasar",
     description: "Instruksi permanen untuk Cursor",
   },
   {
     title: "CLAUDE.md",
-    href: "/learn/tools-dan-integrasi/claude-md-best-practices",
+    href: "/learn/setup-tooling/claude-code-dan-claude-md",
     description: "Konfigurasi untuk Claude Code",
   },
 ];

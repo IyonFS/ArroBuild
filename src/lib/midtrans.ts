@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import type { PricingTierId } from "./pricing";
-import { getPaidTier } from "./pricing";
+import { getPaidTier, pricingIdToTierId } from "./pricing";
+import type { SubscriptionTier } from "@prisma/client";
 
 export type MidtransMode = "sandbox" | "production";
 
@@ -71,7 +72,7 @@ function getAuthHeader() {
 export async function createSnapToken(params: {
   orderId: string;
   amount: number;
-  tierId: Exclude<PricingTierId, "free">;
+  tierId: PricingTierId;
   customer: { email: string; name?: string | null };
 }) {
   const hint = getMidtransConfigHint();
@@ -170,17 +171,8 @@ export function verifyWebhookSignature(payload: {
   return expected === payload.signature_key;
 }
 
-export function tierIdToSubscriptionTier(
-  tierId: Exclude<PricingTierId, "free">
-): "STARTER" | "PRO" | "UNLIMITED" {
-  switch (tierId) {
-    case "starter":
-      return "STARTER";
-    case "pro":
-      return "PRO";
-    case "unlimited":
-      return "UNLIMITED";
-  }
+export function tierIdToSubscriptionTier(tierId: PricingTierId): SubscriptionTier {
+  return pricingIdToTierId(tierId);
 }
 
 export function isSuccessfulTransactionStatus(status: string) {

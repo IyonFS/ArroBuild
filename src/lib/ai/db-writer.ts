@@ -49,17 +49,33 @@ export function queueFileWrite(params: {
   fileName: string;
   label: string;
   content: string;
-  modelUsed?: string;
+  modelClass?: string;
   tokenCount?: number;
 }): void {
   enqueue(async () => {
-    await prisma.generatedFile.create({
-      data: {
+    await prisma.generatedFile.upsert({
+      where: {
+        projectId_fileKey: {
+          projectId: params.projectId,
+          fileKey: params.fileKey,
+        },
+      },
+      create: {
         projectId: params.projectId,
         fileKey: params.fileKey,
         fileName: params.fileName,
         label: params.label,
         content: params.content,
+        modelClass: params.modelClass,
+        tokensUsed: params.tokenCount,
+      },
+      update: {
+        fileName: params.fileName,
+        label: params.label,
+        content: params.content,
+        modelClass: params.modelClass,
+        tokensUsed: params.tokenCount,
+        updatedAt: new Date(),
       },
     });
   });

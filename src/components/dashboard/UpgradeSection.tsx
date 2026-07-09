@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PRICING_TIERS } from "@/lib/pricing";
 import type { PricingTierId } from "@/lib/pricing";
-import type { UserTier } from "@/components/generate/types";
+import type { UserPlanStatus } from "@/components/generate/types";
+import { TIER_LABELS, isSubscribed } from "@/components/generate/types";
 
 declare global {
   interface Window {
@@ -60,8 +61,16 @@ async function confirmPayment(orderId: string, retries = 5): Promise<boolean> {
   return false;
 }
 
+interface CapacityInfo {
+  tier: string;
+  activeSeats: number;
+  maxActiveSeats: number;
+  remaining: number;
+  isFull: boolean;
+}
+
 interface UpgradeSectionProps {
-  currentTier: UserTier;
+  currentTier: UserPlanStatus;
   highlightPlan?: string | null;
   onPaymentSuccess: () => void;
 }
@@ -76,6 +85,8 @@ export default function UpgradeSection({
   const [configHint, setConfigHint] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
   const [expanded, setExpanded] = useState(Boolean(highlightPlan));
+  const [capacities, setCapacities] = useState<Record<string, CapacityInfo>>({});
+  const [waitlistMsg, setWaitlistMsg] = useState("");
 
   useEffect(() => {
     fetch("/api/payment/config")
@@ -84,19 +95,71 @@ export default function UpgradeSection({
         if (d.hint) setConfigHint(d.hint);
       })
       .catch(() => {});
+
+    fetch("/api/waitlist")
+      .then((r) => r.json())
+      .then((d: { capacities?: CapacityInfo[] }) => {
+        if (!d.capacities) return;
+        const map: Record<string, CapacityInfo> = {};
+        for (const c of d.capacities) {
+          const slug = c.tier.toLowerCase().replace("_", "_");
+          // STARTER → starter, PRO_MAX → pro_max
+          const key =
+            c.tier === "PRO_MAX"
+              ? "pro_max"
+              : c.tier === "PRO"
+                ? "pro"
+                : "starter";
+          map[key] = c;
+          void slug;
+        }
+        setCapacities(map);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     if (highlightPlan) setExpanded(true);
   }, [highlightPlan]);
 
-  const paidTiers = PRICING_TIERS.filter((t) => t.id !== "free");
+  const paidTiers = PRICING_TIERS;
+
+  async function joinWaitlist(tierId: PricingTierId) {
+    setLoadingTier(tierId);
+    setError("");
+    setWaitlistMsg("");
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tierId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Gagal masuk waitlist");
+      } else if (data.waitlisted) {
+        setWaitlistMsg(data.message ?? "Berhasil masuk waitlist.");
+      } else {
+        setWaitlistMsg(data.message ?? "Slot masih tersedia — coba upgrade.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error waitlist");
+    } finally {
+      setLoadingTier(null);
+    }
+  }
 
   async function handleUpgrade(tierId: PricingTierId) {
-    if (tierId === "free") return;
+    const cap = capacities[tierId];
+    if (cap?.isFull) {
+      await joinWaitlist(tierId);
+      return;
+    }
+
     setLoadingTier(tierId);
     setError("");
     setSuccessMsg("");
+    setWaitlistMsg("");
 
     try {
       const res = await fetch("/api/payment/create", {
@@ -105,6 +168,31 @@ export default function UpgradeSection({
         body: JSON.stringify({ tierId }),
       });
       const data = await res.json();
+
+      if (res.status === 409 || data.code === "TIER_FULL") {
+        setCapacities((prev) =>
+          data.capacity
+            ? {
+                ...prev,
+                [tierId]: {
+                  ...data.capacity,
+                  isFull: true,
+                },
+              }
+            : {
+                ...prev,
+                [tierId]: {
+                  tier: tierId,
+                  activeSeats: 0,
+                  maxActiveSeats: 0,
+                  remaining: 0,
+                  isFull: true,
+                },
+              }
+        );
+        await joinWaitlist(tierId);
+        return;
+      }
 
       if (!res.ok) {
         setError(data.error ?? "Gagal memulai pembayaran");
@@ -153,12 +241,12 @@ export default function UpgradeSection({
     }
   }
 
-  if (currentTier !== "free") {
+  if (isSubscribed(currentTier)) {
     return (
       <div className="app-panel px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <p className="text-[14px] font-medium text-white">
-            Paket {currentTier === "unlimited" ? "Pro Max" : "Pro"} aktif
+            Paket {TIER_LABELS[currentTier]} aktif
           </p>
           <p className="text-[13px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
             Semua model AI dan bundle file tersedia.
@@ -215,6 +303,19 @@ export default function UpgradeSection({
             </div>
           )}
 
+          {waitlistMsg && (
+            <div
+              className="px-3 py-2 rounded-lg text-[13px] border"
+              style={{
+                color: "var(--color-lime)",
+                background: "rgba(204,255,0,0.06)",
+                borderColor: "rgba(204,255,0,0.25)",
+              }}
+            >
+              {waitlistMsg}
+            </div>
+          )}
+
           {error && (
             <div
               className="px-3 py-2 rounded-lg text-[13px] border"
@@ -231,6 +332,8 @@ export default function UpgradeSection({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {paidTiers.map((tier) => {
               const highlighted = tier.highlighted || highlightPlan === tier.id;
+              const cap = capacities[tier.id];
+              const full = Boolean(cap?.isFull);
               return (
                 <div
                   key={tier.id}
@@ -240,11 +343,15 @@ export default function UpgradeSection({
                 >
                   <div className="flex items-baseline justify-between gap-2 mb-3">
                     <p className="text-[14px] font-medium text-white">{tier.name}</p>
-                    {tier.badge && (
+                    {full ? (
+                      <span className="text-[11px]" style={{ color: "#FB923C" }}>
+                        Slot penuh
+                      </span>
+                    ) : tier.badge ? (
                       <span className="text-[11px]" style={{ color: "var(--color-lime)" }}>
                         {tier.badge}
                       </span>
-                    )}
+                    ) : null}
                   </div>
                   <p className="text-[1.375rem] font-medium text-white tracking-tight">
                     {tier.price}
@@ -252,6 +359,18 @@ export default function UpgradeSection({
                       {tier.period}
                     </span>
                   </p>
+                  {cap && (
+                    <p
+                      className="text-[11px] mt-1"
+                      style={{
+                        color: full ? "#FB923C" : "var(--text-tertiary)",
+                        fontFamily: "var(--font-jetbrains-mono), monospace",
+                      }}
+                    >
+                      Slot {cap.activeSeats}/{cap.maxActiveSeats}
+                      {!full ? ` · sisa ${cap.remaining}` : ""}
+                    </p>
+                  )}
                   <ul className="my-4 space-y-1.5 flex-1">
                     {tier.features.slice(0, 3).map((f) => (
                       <li
@@ -267,9 +386,19 @@ export default function UpgradeSection({
                     type="button"
                     onClick={() => handleUpgrade(tier.id)}
                     disabled={loadingTier !== null}
-                    className={`btn btn-sm w-full ${highlighted ? "btn-primary" : "btn-secondary"}`}
+                    className={`btn btn-sm w-full ${
+                      full
+                        ? "btn-secondary"
+                        : highlighted
+                          ? "btn-primary"
+                          : "btn-secondary"
+                    }`}
                   >
-                    {loadingTier === tier.id ? "Memproses..." : tier.name}
+                    {loadingTier === tier.id
+                      ? "Memproses..."
+                      : full
+                        ? "Masuk waitlist"
+                        : tier.name}
                   </button>
                 </div>
               );

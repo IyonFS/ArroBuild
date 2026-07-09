@@ -1,0 +1,312 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db/prisma";
+import { getSupabaseUser, syncDbUser } from "@/lib/auth";
+import {
+  CreditService,
+  CreditServiceError,
+} from "@/lib/services/credit.service";
+import { generate } from "@/lib/ai/generator";
+import {
+  buildSectionRevisePrompt,
+  estimateRevisionCredits,
+  findSection,
+  parseMarkdownSections,
+  replaceSection,
+  summarizeDocForPrompt,
+  unifiedDiff,
+} from "@/lib/ai/section-revise";
+import { DOCUMENT_FILE_KEYS } from "@/lib/config/options";
+import { FILE_META, type FileKey } from "@/components/generate/types";
+import { logger } from "@/lib/logger";
+
+export const runtime = "nodejs";
+export const maxDuration = 90;
+
+const PreviewSchema = z.object({
+  action: z.literal("preview"),
+  fileKey: z.enum(DOCUMENT_FILE_KEYS),
+  sectionName: z.string().min(1).max(200),
+  instruction: z.string().min(3).max(800),
+});
+
+const AcceptSchema = z.object({
+  action: z.literal("accept"),
+  fileKey: z.enum(DOCUMENT_FILE_KEYS),
+  reservationId: z.string().min(1),
+  newContent: z.string().min(1).max(200_000),
+  sectionName: z.string().min(1).max(200),
+  estimatedCredits: z.number().int().min(1).max(12).optional(),
+});
+
+const CancelSchema = z.object({
+  action: z.literal("cancel"),
+  reservationId: z.string().min(1),
+});
+
+const BodySchema = z.discriminatedUnion("action", [
+  PreviewSchema,
+  AcceptSchema,
+  CancelSchema,
+]);
+
+function errorResponse(error: unknown) {
+  if (error instanceof CreditServiceError) {
+    return NextResponse.json(
+      { error: error.message, code: error.code },
+      { status: error.statusCode }
+    );
+  }
+  logger.error("project_revise_error", {
+    error: error instanceof Error ? error.message : String(error),
+  });
+  return NextResponse.json(
+    { error: "Gagal memproses revisi dokumen" },
+    { status: 500 }
+  );
+}
+
+async function requireOwnedProject(projectId: string) {
+  const supabaseUser = await getSupabaseUser();
+  if (!supabaseUser) {
+    return {
+      error: NextResponse.json(
+        { error: "Login wajib", code: "UNAUTHORIZED" },
+        { status: 401 }
+      ),
+    } as const;
+  }
+  const dbUser = await syncDbUser(supabaseUser);
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { id: true, userId: true, status: true },
+  });
+  if (!project) {
+    return {
+      error: NextResponse.json({ error: "Project tidak ditemukan" }, { status: 404 }),
+    } as const;
+  }
+  if (project.userId !== dbUser.id) {
+    return {
+      error: NextResponse.json(
+        { error: "Akses ditolak", code: "FORBIDDEN" },
+        { status: 403 }
+      ),
+    } as const;
+  }
+  return { dbUser, project } as const;
+}
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id: projectId } = await params;
+  if (!projectId) {
+    return NextResponse.json({ error: "Project ID required" }, { status: 400 });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const parsed = BodySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: "Validation failed",
+        details: parsed.error.flatten().fieldErrors,
+      },
+      { status: 422 }
+    );
+  }
+
+  try {
+    const owned = await requireOwnedProject(projectId);
+    if ("error" in owned) return owned.error;
+    const { dbUser } = owned;
+    const data = parsed.data;
+
+    if (data.action === "cancel") {
+      await CreditService.releaseReservation(
+        dbUser.id,
+        data.reservationId,
+        "revision_cancelled"
+      );
+      return NextResponse.json({ ok: true });
+    }
+
+    if (data.action === "preview") {
+      const file = await prisma.generatedFile.findUnique({
+        where: {
+          projectId_fileKey: { projectId, fileKey: data.fileKey },
+        },
+      });
+      if (!file) {
+        return NextResponse.json(
+          { error: "File dokumen tidak ditemukan" },
+          { status: 404 }
+        );
+      }
+
+      const sections = parseMarkdownSections(file.content);
+      const section = findSection(sections, data.sectionName);
+      if (!section) {
+        return NextResponse.json(
+          {
+            error: "Section tidak ditemukan",
+            availableSections: sections.map((s) => s.title),
+          },
+          { status: 404 }
+        );
+      }
+
+      const estimatedCredits = estimateRevisionCredits(section.content);
+      const reservation = await CreditService.reserveCredit(
+        dbUser.id,
+        estimatedCredits,
+        projectId,
+        {
+          reason: "section_revise_preview",
+          fileKey: data.fileKey,
+          sectionName: section.title,
+        }
+      );
+
+      const fileLabel =
+        FILE_META[data.fileKey as FileKey]?.label ?? data.fileKey;
+      const prompt = buildSectionRevisePrompt({
+        fileLabel,
+        sectionTitle: section.title,
+        sectionContent: section.content,
+        instruction: data.instruction,
+        documentContextSummary: summarizeDocForPrompt(file.content),
+      });
+
+      let afterSection: string;
+      try {
+        afterSection = await generate(prompt, {
+          model: process.env.GEMINI_API_KEY
+            ? "gemini-2.5-flash"
+            : process.env.DEEPSEEK_API_KEY
+              ? "deepseek-chat"
+              : "gemini-2.5-flash",
+          maxOutputTokens: 4096,
+          temperature: 0.35,
+        });
+      } catch (err) {
+        await CreditService.releaseReservation(
+          dbUser.id,
+          reservation.reservationId,
+          "revision_ai_failed"
+        );
+        throw err;
+      }
+
+      afterSection = afterSection
+        .replace(/^```(?:markdown|md)?\s*/i, "")
+        .replace(/\s*```$/i, "")
+        .trim();
+
+      // Ensure heading preserved if original had one
+      if (
+        section.headingLine &&
+        !afterSection.startsWith("#") &&
+        section.title !== "(Seluruh dokumen)"
+      ) {
+        afterSection = `${section.headingLine}\n\n${afterSection}`;
+      }
+
+      const fullProposed = replaceSection(file.content, section, afterSection);
+      const diff = unifiedDiff(section.content, afterSection);
+
+      return NextResponse.json({
+        reservationId: reservation.reservationId,
+        estimatedCredits,
+        balanceAfterReserve: reservation.balanceAfter,
+        fileKey: data.fileKey,
+        sectionName: section.title,
+        beforeSection: section.content,
+        afterSection,
+        fullProposed,
+        diff,
+        currentVersion: file.version,
+      });
+    }
+
+    // accept
+    const file = await prisma.generatedFile.findUnique({
+      where: {
+        projectId_fileKey: { projectId, fileKey: data.fileKey },
+      },
+    });
+    if (!file) {
+      await CreditService.releaseReservation(
+        dbUser.id,
+        data.reservationId,
+        "revision_file_missing"
+      );
+      return NextResponse.json(
+        { error: "File dokumen tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    const nextVersion = file.version + 1;
+    const credits = data.estimatedCredits ?? estimateRevisionCredits(data.newContent);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.documentRevision.create({
+        data: {
+          documentId: file.id,
+          version: nextVersion,
+          content: data.newContent,
+          revisionType: "section",
+          sectionName: data.sectionName,
+        },
+      });
+
+      await tx.generatedFile.update({
+        where: { id: file.id },
+        data: {
+          content: data.newContent,
+          version: nextVersion,
+        },
+      });
+    });
+
+    const commit = await CreditService.commitRevision(
+      dbUser.id,
+      data.reservationId,
+      projectId,
+      credits,
+      {
+        fileKey: data.fileKey,
+        sectionName: data.sectionName,
+        version: nextVersion,
+      }
+    );
+
+    logger.info("section_revision_accepted", {
+      userId: dbUser.id,
+      projectId,
+      fileKey: data.fileKey,
+      sectionName: data.sectionName,
+      version: nextVersion,
+      credits: commit.actualCreditsUsed,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      version: nextVersion,
+      creditsUsed: commit.actualCreditsUsed,
+      balanceAfter: commit.balanceAfter,
+      content: data.newContent,
+    });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}

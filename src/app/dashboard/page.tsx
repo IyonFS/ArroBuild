@@ -8,7 +8,8 @@ import AppShell from "@/components/layout/AppShell";
 import UpgradeSection from "@/components/dashboard/UpgradeSection";
 import { getDisplayName } from "@/lib/display-name";
 import { OPEN_LEARN_IN_NEW_TAB } from "@/lib/learn-links";
-import type { UserTier } from "@/components/generate/types";
+import type { UserPlanStatus } from "@/components/generate/types";
+import { TIER_LABELS } from "@/components/generate/types";
 
 interface ProjectSummary {
   id: string;
@@ -29,7 +30,8 @@ interface MeResponse {
     subscriptionTier: string;
     subscriptionStatus: string;
   } | null;
-  tier: UserTier;
+  tier: UserPlanStatus;
+  plan?: UserPlanStatus;
   projectCount: number;
   projectLimit: number | null;
   projects: ProjectSummary[];
@@ -42,10 +44,11 @@ const STATUS_STYLES: Record<string, { label: string; className: string }> = {
   FAILED: { label: "Gagal", className: "badge-danger" },
 };
 
-const TIER_LABEL: Record<UserTier, string> = {
-  free: "Gratis",
-  paid: "Starter / Pro",
-  unlimited: "Unlimited",
+const TIER_LABEL: Record<UserPlanStatus, string> = {
+  none: "Belum berlangganan",
+  starter: "Starter",
+  pro: "Pro",
+  pro_max: "Pro Max",
 };
 
 function LoadingSkeleton() {
@@ -270,6 +273,14 @@ function DashboardContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-3 sm:mt-0 w-full sm:w-auto shrink-0">
+                    {project.status === "DONE" && project._count.files > 0 && (
+                      <Link
+                        href={`/project/${project.id}`}
+                        className="btn btn-primary btn-sm flex-1 sm:flex-none"
+                      >
+                        Buka
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={() => {

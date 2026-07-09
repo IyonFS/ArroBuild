@@ -18,6 +18,7 @@ const PRODUCT_TYPES: {
   icon: string;
   fit: string;
   popular?: boolean;
+  color: string;
 }[] = [
   {
     id: "saas",
@@ -26,20 +27,23 @@ const PRODUCT_TYPES: {
     icon: "▲",
     fit: "Ada fitur yang dibayar per bulan",
     popular: true,
+    color: "#CCFF00",
   },
   {
     id: "marketplace",
     label: "Marketplace",
     desc: "Platform dua sisi (buyer & seller)",
-    icon: "🛒",
+    icon: "⊞",
     fit: "Ada dua tipe user yang saling transaksi",
+    color: "#FF9500",
   },
   {
     id: "mobile",
     label: "Mobile App",
     desc: "iOS, Android, atau keduanya",
-    icon: "📱",
+    icon: "◈",
     fit: "Output utama adalah app di smartphone",
+    color: "#5E9FFF",
   },
   {
     id: "api",
@@ -47,59 +51,77 @@ const PRODUCT_TYPES: {
     desc: "Headless service, SDK, atau CLI",
     icon: "⚡",
     fit: "User utama adalah developer lain",
+    color: "#A78BFA",
   },
   {
     id: "ai-app",
     label: "AI-Powered App",
     desc: "App dengan AI sebagai core feature",
-    icon: "🤖",
+    icon: "✦",
     fit: "AI bukan fitur tambahan, tapi inti produk",
+    color: "#34D399",
   },
   {
     id: "ecommerce",
     label: "E-Commerce",
     desc: "Toko online, produk fisik atau digital",
-    icon: "🛍️",
+    icon: "◎",
     fit: "Jual produk langsung ke konsumen",
+    color: "#FB923C",
   },
   {
     id: "internal",
     label: "Internal Tool",
     desc: "Dashboard, admin, atau ops tool",
-    icon: "🔧",
+    icon: "⊟",
     fit: "Dipakai internal tim atau perusahaan",
+    color: "#60A5FA",
   },
   {
     id: "portfolio",
-    label: "Portfolio / Personal Site",
+    label: "Portfolio / Site",
     desc: "Showcase project & skills",
-    icon: "🎨",
+    icon: "◑",
     fit: "Ingin tampil profesional online",
+    color: "#F472B6",
   },
   {
     id: "other",
     label: "Lainnya",
     desc: "Tipe di luar kategori di atas",
-    icon: "✦",
-    fit: "—",
+    icon: "○",
+    fit: "Ceritakan idenya, AI yang bantu klasifikasikan",
+    color: "#94A3B8",
   },
 ];
 
-const STAGES: { id: ProjectStage; label: string; desc: string }[] = [
+const STAGES: {
+  id: ProjectStage;
+  label: string;
+  desc: string;
+  icon: string;
+  note: string;
+}[] = [
   {
     id: "idea",
     label: "Ide baru",
     desc: "Belum mulai coding",
+    icon: "💡",
+    note: "Saya akan generate docs dari nol",
   },
   {
     id: "prototype",
-    label: "Ada prototype / MVP",
+    label: "Ada prototype",
     desc: "Sudah mulai, belum production",
+    icon: "🔧",
+    note: "Saya sesuaikan docs dengan progress yang ada",
   },
   {
     id: "production",
     label: "Sudah production",
-    desc: "Butuh docs lebih lengkap",
+    desc: "Punya user nyata",
+    icon: "🚀",
+    note: "Fokus ke docs untuk scale & hardening",
   },
 ];
 
@@ -110,167 +132,199 @@ export default function ProductTypeStep({
   onStageChange,
   onNext,
 }: Props) {
-  const [showStagePicker, setShowStagePicker] = useState(!!value);
+  const [hoveredId, setHoveredId] = useState<ProductType | null>(null);
 
-  const handleTypeSelect = (id: ProductType) => {
-    onChange(id);
-    setShowStagePicker(true);
-    // scroll stage into view after a tick
-    setTimeout(() => {
-      document.getElementById("stage-picker")?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-      });
-    }, 100);
-  };
-
-  const canNext = !!value && !!stage;
+  const canProceed = value !== null && stage !== null;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="font-inter max-w-3xl mx-auto px-6 py-14">
       {/* Header */}
-      <div className="mb-8">
-        <span
-          className="font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full mb-4 inline-block"
+      <div className="mb-10">
+        <div
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-5"
           style={{
             background: "rgba(204,255,0,0.08)",
             color: "var(--color-lime)",
-            border: "0.5px solid rgba(204,255,0,0.25)",
+            border: "0.5px solid rgba(204,255,0,0.2)",
+            fontFamily: "var(--font-jetbrains-mono), monospace",
           }}
         >
-          Step 1 of 4 — Tipe Produk
-        </span>
-
-        <h2
-          className="font-unbounded font-bold text-xl sm:text-2xl mb-2"
-          style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: "var(--color-lime)" }}
+          />
+          Step 1 of 4
+        </div>
+        <h1
+          className="font-unbounded font-bold mb-3"
+          style={{
+            fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
+            letterSpacing: "-0.03em",
+            color: "var(--color-text-primary)",
+            lineHeight: 1.15,
+          }}
         >
           Kamu lagi build apa?
-        </h2>
-        <p className="font-mono text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          Pilih yang paling dekat. Ini menentukan pertanyaan di step berikutnya.
+        </h1>
+        <p
+          className="text-base"
+          style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}
+        >
+          Pilih tipe yang paling dekat — ini menentukan pertanyaan di step berikutnya.
         </p>
       </div>
 
-      {/* First-time tip banner */}
+      {/* First-timer hint */}
       <div
-        className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6"
+        className="flex items-start gap-3 px-4 py-3 rounded-xl mb-8 text-sm"
         style={{
-          background: "rgba(204,255,0,0.04)",
-          border: "0.5px solid rgba(204,255,0,0.15)",
+          background: "rgba(255,255,255,0.03)",
+          border: "0.5px solid rgba(255,255,255,0.08)",
         }}
       >
-        <span style={{ color: "var(--color-lime)", fontSize: 14 }}>💡</span>
-        <p className="font-mono text-xs" style={{ color: "var(--color-text-secondary)" }}>
+        <span className="text-base mt-0.5">💡</span>
+        <p style={{ color: "var(--color-text-secondary)" }}>
           Baru pertama kali?{" "}
-          <button
-            onClick={() => handleTypeSelect("saas")}
-            className="font-bold underline underline-offset-2 transition-colors"
+          <span
+            className="font-semibold cursor-pointer hover:underline underline-offset-2"
             style={{ color: "var(--color-lime)" }}
+            onClick={() => onChange("saas")}
           >
             Mulai dengan SaaS →
-          </button>{" "}
+          </span>{" "}
           paling banyak dipakai di ArroBuild.
         </p>
       </div>
 
-      {/* Product Type Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-8">
+      {/* Product type grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
         {PRODUCT_TYPES.map((pt) => {
-          const active = value === pt.id;
+          const isSelected = value === pt.id;
+          const isHovered = hoveredId === pt.id;
+
           return (
             <button
               key={pt.id}
-              onClick={() => handleTypeSelect(pt.id)}
-              className="text-left rounded-xl p-4 transition-all duration-150 focus:outline-none group relative"
+              onClick={() => onChange(pt.id)}
+              onMouseEnter={() => setHoveredId(pt.id)}
+              onMouseLeave={() => setHoveredId(null)}
+              className="relative text-left rounded-2xl transition-all duration-200 group"
               style={{
-                background: active
-                  ? "rgba(204,255,0,0.07)"
+                padding: "20px 20px 18px",
+                background: isSelected
+                  ? "rgba(204,255,0,0.05)"
+                  : isHovered
+                  ? "rgba(255,255,255,0.04)"
                   : "var(--color-bg-elevated)",
-                border: active
-                  ? "1px solid rgba(204,255,0,0.45)"
-                  : "0.5px solid var(--color-border-default)",
+                border: isSelected
+                  ? `1.5px solid rgba(204,255,0,0.5)`
+                  : `0.5px solid rgba(255,255,255,${isHovered ? "0.14" : "0.08"})`,
+                transform: isSelected
+                  ? "translateY(-2px)"
+                  : isHovered
+                  ? "translateY(-1px)"
+                  : "none",
+                boxShadow: isSelected
+                  ? "0 0 0 1px rgba(204,255,0,0.15), 0 8px 24px rgba(0,0,0,0.3)"
+                  : isHovered
+                  ? "0 4px 16px rgba(0,0,0,0.2)"
+                  : "none",
               }}
             >
               {/* Popular badge */}
-              {pt.popular && (
+              {pt.popular && !isSelected && (
                 <span
-                  className="absolute top-3 right-3 font-mono text-[9px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded"
+                  className="absolute top-3 right-3 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full"
                   style={{
                     background: "rgba(204,255,0,0.12)",
                     color: "var(--color-lime)",
-                    border: "0.5px solid rgba(204,255,0,0.3)",
+                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                    border: "0.5px solid rgba(204,255,0,0.25)",
                   }}
                 >
                   Populer
                 </span>
               )}
 
-              {/* Icon + label */}
-              <div className="flex items-center gap-3 mb-2">
-                <span
-                  className="text-base w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0 font-mono"
-                  style={{
-                    background: active
-                      ? "rgba(204,255,0,0.12)"
-                      : "var(--color-bg-surface)",
-                    color: active
-                      ? "var(--color-lime)"
-                      : "var(--color-text-secondary)",
-                  }}
+              {/* Selected checkmark */}
+              {isSelected && (
+                <div
+                  className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: "var(--color-lime)" }}
                 >
-                  {pt.icon}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <span
-                    className="font-mono font-bold text-sm block"
-                    style={{
-                      color: active
-                        ? "var(--color-lime)"
-                        : "var(--color-text-primary)",
-                    }}
-                  >
-                    {pt.label}
-                  </span>
-                  <span
-                    className="font-mono text-[11px]"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                  >
-                    {pt.desc}
-                  </span>
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path
+                      d="M1 4L3.5 6.5L9 1"
+                      stroke="#0A0A0A"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </div>
-                {active && (
-                  <div
-                    className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: "var(--color-lime)" }}
-                  >
-                    <svg width="7" height="7" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6l3 3 5-5"
-                        stroke="#0A0A0A"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                )}
+              )}
+
+              {/* Icon */}
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-lg mb-3"
+                style={{
+                  background: isSelected
+                    ? `${pt.color}18`
+                    : "rgba(255,255,255,0.06)",
+                  border: `0.5px solid ${isSelected ? pt.color + "30" : "rgba(255,255,255,0.08)"}`,
+                  color: isSelected ? pt.color : "rgba(255,255,255,0.4)",
+                  transition: "all 0.2s",
+                }}
+              >
+                {pt.icon}
               </div>
 
-              {/* "Cocok jika..." */}
+              {/* Label */}
               <div
-                className="flex items-start gap-1.5 mt-2 pt-2"
-                style={{ borderTop: "0.5px solid var(--color-border-default)" }}
+                className="font-semibold text-base mb-1"
+                style={{
+                  color: isSelected
+                    ? "var(--color-text-primary)"
+                    : "rgba(255,255,255,0.85)",
+                }}
+              >
+                {pt.label}
+              </div>
+
+              {/* Description */}
+              <div
+                className="text-sm mb-3"
+                style={{ color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}
+              >
+                {pt.desc}
+              </div>
+
+              {/* Fit hint */}
+              <div
+                className="flex items-start gap-1.5 pt-3"
+                style={{
+                  borderTop: "0.5px solid rgba(255,255,255,0.06)",
+                }}
               >
                 <span
-                  className="font-mono text-[10px] font-bold tracking-wide uppercase mt-0.5 flex-shrink-0"
-                  style={{ color: active ? "rgba(204,255,0,0.6)" : "var(--color-text-tertiary)" }}
+                  className="text-[10px] font-bold tracking-wider uppercase flex-shrink-0 mt-0.5"
+                  style={{
+                    color: isSelected
+                      ? "rgba(204,255,0,0.5)"
+                      : "rgba(255,255,255,0.2)",
+                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                  }}
                 >
                   Cocok:
                 </span>
                 <span
-                  className="font-mono text-[11px]"
-                  style={{ color: "var(--color-text-secondary)" }}
+                  className="text-xs"
+                  style={{
+                    color: isSelected
+                      ? "rgba(204,255,0,0.7)"
+                      : "rgba(255,255,255,0.3)",
+                    lineHeight: 1.5,
+                  }}
                 >
                   {pt.fit}
                 </span>
@@ -280,81 +334,96 @@ export default function ProductTypeStep({
         })}
       </div>
 
-      {/* Stage picker — appears after type is selected */}
-      {showStagePicker && (
+      {/* Stage selector — animated in after product selected */}
+      {value && (
         <div
-          id="stage-picker"
-          className="mb-8 rounded-xl overflow-hidden"
-          style={{
-            border: "0.5px solid var(--color-border-default)",
-            background: "var(--color-bg-elevated)",
-          }}
+          className="animate-fade-slide-up mb-10"
+          style={{ animationDelay: "0.05s" }}
         >
-          <div
-            className="px-4 py-3"
-            style={{ borderBottom: "0.5px solid var(--color-border-default)" }}
-          >
-            <p
-              className="font-mono font-bold text-sm"
+          <div className="mb-4">
+            <h2
+              className="font-semibold text-lg mb-1"
               style={{ color: "var(--color-text-primary)" }}
             >
-              Di fase mana proyekmu sekarang?
+              Di fase mana proyekmu?
+            </h2>
+            <p
+              className="text-sm"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Ini menentukan rekomendasi dokumen yang paling relevan.
             </p>
           </div>
-          <div className="p-3 flex flex-col gap-2">
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {STAGES.map((s) => {
-              const active = stage === s.id;
+              const isActive = stage === s.id;
               return (
                 <button
                   key={s.id}
                   onClick={() => onStageChange(s.id)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all"
+                  className="text-left rounded-2xl transition-all duration-200 group"
                   style={{
-                    background: active
-                      ? "rgba(204,255,0,0.07)"
-                      : "transparent",
-                    border: active
-                      ? "0.5px solid rgba(204,255,0,0.3)"
-                      : "0.5px solid transparent",
+                    padding: "18px 20px",
+                    background: isActive
+                      ? "rgba(204,255,0,0.05)"
+                      : "var(--color-bg-elevated)",
+                    border: isActive
+                      ? "1.5px solid rgba(204,255,0,0.45)"
+                      : "0.5px solid rgba(255,255,255,0.08)",
+                    transform: isActive ? "translateY(-1px)" : "none",
+                    boxShadow: isActive
+                      ? "0 4px 16px rgba(0,0,0,0.25)"
+                      : "none",
                   }}
                 >
-                  {/* Radio */}
-                  <div
-                    className="w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0"
-                    style={{
-                      borderColor: active
-                        ? "var(--color-lime)"
-                        : "var(--color-border-strong)",
-                      background: active
-                        ? "var(--color-lime)"
-                        : "transparent",
-                    }}
-                  >
-                    {active && (
-                      <div
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: "#0A0A0A" }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <p
-                      className="font-mono font-semibold text-sm"
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">{s.icon}</span>
+                    <span
+                      className="font-semibold text-sm"
                       style={{
-                        color: active
+                        color: isActive
                           ? "var(--color-lime)"
                           : "var(--color-text-primary)",
                       }}
                     >
                       {s.label}
-                    </p>
-                    <p
-                      className="font-mono text-[11px]"
-                      style={{ color: "var(--color-text-tertiary)" }}
-                    >
-                      {s.desc}
-                    </p>
+                    </span>
+                    {isActive && (
+                      <div
+                        className="ml-auto w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: "var(--color-lime)" }}
+                      >
+                        <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                          <path
+                            d="M1 3L3 5L7 1"
+                            stroke="#0A0A0A"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    )}
                   </div>
+                  <p
+                    className="text-xs mb-2"
+                    style={{ color: "rgba(255,255,255,0.4)" }}
+                  >
+                    {s.desc}
+                  </p>
+                  <p
+                    className="text-xs italic"
+                    style={{
+                      color: isActive
+                        ? "rgba(204,255,0,0.6)"
+                        : "rgba(255,255,255,0.25)",
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                      fontSize: "10px",
+                    }}
+                  >
+                    {s.note}
+                  </p>
                 </button>
               );
             })}
@@ -362,23 +431,26 @@ export default function ProductTypeStep({
         </div>
       )}
 
-      {/* Next button */}
+      {/* CTA */}
       <button
         onClick={onNext}
-        disabled={!canNext}
-        className="w-full rounded-xl py-3 font-mono font-bold text-sm transition-all"
+        disabled={!canProceed}
+        className="w-full py-4 rounded-2xl font-semibold text-base transition-all duration-200"
         style={{
-          background: canNext ? "var(--color-lime)" : "var(--color-bg-elevated)",
-          color: canNext ? "#0A0A0A" : "var(--color-text-disabled)",
-          border: canNext ? "none" : "0.5px solid var(--color-border-default)",
-          cursor: canNext ? "pointer" : "not-allowed",
+          background: canProceed ? "var(--color-lime)" : "rgba(255,255,255,0.05)",
+          color: canProceed ? "#0A0A0A" : "rgba(255,255,255,0.2)",
+          cursor: canProceed ? "pointer" : "not-allowed",
+          border: canProceed ? "none" : "0.5px solid rgba(255,255,255,0.06)",
+          transform: canProceed ? "none" : "none",
+          boxShadow: canProceed ? "0 4px 24px rgba(204,255,0,0.2)" : "none",
+          letterSpacing: "-0.01em",
         }}
       >
         {!value
           ? "Pilih tipe produk dulu"
           : !stage
-          ? "Pilih fase proyekmu"
-          : "Lanjut →"}
+          ? "Pilih fase proyek dulu"
+          : "Lanjut ke step berikutnya →"}
       </button>
     </div>
   );

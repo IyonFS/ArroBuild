@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  isSuccessfulTransactionStatus,
-  verifyWebhookSignature,
-} from "@/lib/midtrans";
-import { activateSubscriptionForOrder } from "@/lib/payment/activate-subscription";
-import { prisma } from "@/lib/db/prisma";
+import { PaymentService } from "@/lib/services/payment.service";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   let payload: Record<string, unknown>;
@@ -14,46 +10,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const orderId = payload.order_id as string | undefined;
-  const transactionStatus = payload.transaction_status as string | undefined;
-  const statusCode = payload.status_code as string | undefined;
-  const grossAmount = payload.gross_amount as string | undefined;
-  const signatureKey = payload.signature_key as string | undefined;
-
-  if (!orderId) {
-    return NextResponse.json({ error: "Missing order_id" }, { status: 400 });
-  }
-
-  if (signatureKey && statusCode && grossAmount) {
-    const valid = verifyWebhookSignature({
-      order_id: orderId,
-      status_code: statusCode,
-      gross_amount: grossAmount,
-      signature_key: signatureKey,
+  try {
+    const result = await PaymentService.handleWebhook({
+      order_id: String(payload.order_id ?? ""),
+      transaction_id: payload.transaction_id as string | undefined,
+      gross_amount: String(payload.gross_amount ?? ""),
+      transaction_status: String(payload.transaction_status ?? ""),
+      status_code: payload.status_code as string | undefined,
+      signature_key: payload.signature_key as string | undefined,
     });
-    if (!valid) {
-      console.error("Midtrans webhook signature mismatch:", orderId);
-      return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
-    }
-  }
-
-  const payment = await prisma.payment.findUnique({ where: { orderId } });
-  if (!payment) {
-    return NextResponse.json({ error: "Payment not found" }, { status: 404 });
-  }
-
-  if (isSuccessfulTransactionStatus(transactionStatus ?? "")) {
-    await activateSubscriptionForOrder(orderId);
-  } else if (
-    transactionStatus === "deny" ||
-    transactionStatus === "cancel" ||
-    transactionStatus === "expire"
-  ) {
-    await prisma.payment.update({
-      where: { orderId },
-      data: { status: "FAILED" },
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    logger.error("webhook_processing_failed", {
+      orderId: payload.order_id,
+      error: error instanceof Error ? error.message : String(error),
     });
-  }
 
-  return NextResponse.json({ ok: true });
+    const statusCode =
+      error instanceof Error && "statusCode" in error
+        ? (error as { statusCode: number }).statusCode
+        : 500;
+
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: statusCode }
+    );
+  }
 }

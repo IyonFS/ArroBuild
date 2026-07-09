@@ -26,6 +26,8 @@ export type FrameworkPreset =
   | "react-native"
   | "flutter"
   | "expo"
+  | "native-ios"
+  | "native-android"
   | "ai-recommend";
 
 export type DesignPreset =
@@ -60,6 +62,16 @@ export interface Presets {
   framework: FrameworkPreset;
   design: DesignPreset;
   agentTool: AgentToolPreset;
+  // v2 fields — optional, used to enrich prompt context
+  database?: string;
+  deployment?: string;
+  programmingLanguage?: string;
+  animationLibrary?: string;
+  stackBundle?: string;
+  designReferenceNote?: string;
+  versionControl?: string;
+  designHandoffTool?: string;
+  projectManagementTool?: string;
 }
 
 export interface GenerationInput {
@@ -69,6 +81,18 @@ export interface GenerationInput {
   tier?: UserTier;
   modelId?: string;
   selectedDocs?: FileKey[];
+  productType?: string;
+  projectStage?: string;
+  features?: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    priority?: "must-have" | "nice-to-have";
+  }>;
+  perDocumentModelClass?: Partial<
+    Record<FileKey, "hemat" | "menengah" | "flagship" | "ultra">
+  >;
+  estimatedCredits?: number;
 }
 
 // ─── Tier System ────────────────────────────────────────────────────────────
@@ -99,7 +123,7 @@ export interface ModelOption {
 
 export const MODEL_OPTIONS: ModelOption[] = [
   { id: "gemini-2.5-flash", provider: "gemini", label: "Gemini 2.5 Flash", tier: "free" },
-  { id: "deepseek-chat", provider: "deepseek", label: "DeepSeek V3", tier: "free" },
+  { id: "deepseek-v4-flash", provider: "deepseek", label: "DeepSeek V4 Flash", tier: "free" },
   { id: "gemini-2.5-pro", provider: "gemini", label: "Gemini 2.5 Pro", tier: "pro" },
   { id: "gpt-4o", provider: "openai", label: "GPT-4o", tier: "pro" },
   { id: "claude-sonnet-4-20250514", provider: "anthropic", label: "Claude Sonnet 4", tier: "pro_max" },

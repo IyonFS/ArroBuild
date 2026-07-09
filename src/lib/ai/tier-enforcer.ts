@@ -19,8 +19,8 @@ export type V3Tier = "FREE" | "PRO" | "PRO_MAX";
 export type ModelId =
   | "gemini-2.5-flash"
   | "gemini-2.5-pro"
-  | "deepseek-chat"
-  | "gpt-4o"
+  | "deepseek-v4-flash"
+  | "gpt-5.4"
   | "claude-sonnet-4-20250514";
 
 export type ExportFormat =
@@ -53,7 +53,7 @@ export const V3_TIER_CONFIG: Record<V3Tier, V3TierConfig> = {
     maxDocuments: 3,
     allowedDocuments: ["context", "prd", "plan"],
     maxProjectsPerMonth: 5,
-    allowedModels: ["gemini-2.5-flash", "deepseek-chat"],
+    allowedModels: ["gemini-2.5-flash", "deepseek-v4-flash"],
     defaultModel: "gemini-2.5-flash",
     maxTokensPerDoc: 2000,
     streamingEnabled: true,
@@ -70,9 +70,9 @@ export const V3_TIER_CONFIG: Record<V3Tier, V3TierConfig> = {
     maxProjectsPerMonth: 30,
     allowedModels: [
       "gemini-2.5-flash",
-      "deepseek-chat",
+      "deepseek-v4-flash",
       "gemini-2.5-pro",
-      "gpt-4o",
+      "gpt-5.4",
     ],
     defaultModel: "gemini-2.5-pro",
     maxTokensPerDoc: 4000,
@@ -99,9 +99,9 @@ export const V3_TIER_CONFIG: Record<V3Tier, V3TierConfig> = {
     maxProjectsPerMonth: -1, // unlimited
     allowedModels: [
       "gemini-2.5-flash",
-      "deepseek-chat",
+      "deepseek-v4-flash",
       "gemini-2.5-pro",
-      "gpt-4o",
+      "gpt-5.4",
       "claude-sonnet-4-20250514",
     ],
     defaultModel: "claude-sonnet-4-20250514",
@@ -132,10 +132,14 @@ export function toV3Tier(tier: string | undefined | null): V3Tier {
   switch (tier) {
     case "unlimited":
     case "UNLIMITED":
+    case "PRO_MAX":
+    case "pro_max":
       return "PRO_MAX";
+    case "STARTER":
+    case "starter":
+      return "FREE";
     case "paid":
     case "PRO":
-    case "STARTER":
       return "PRO";
     case "free":
     case "FREE":

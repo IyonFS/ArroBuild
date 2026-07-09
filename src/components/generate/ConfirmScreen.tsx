@@ -1,7 +1,25 @@
 "use client";
 
-import type { ProductType, ProjectStage, Presets, FileKey, ModelOption } from "./types";
-import { FILE_META, MODEL_OPTIONS } from "./types";
+import type {
+  ProductType,
+  ProjectStage,
+  Presets,
+  FileKey,
+  UserPlanStatus,
+  PerDocumentModelClass,
+} from "./types";
+import {
+  FILE_META,
+  MODEL_CLASSES,
+  DOC_DEFAULT_MODEL_CLASS,
+  TIER_LABELS,
+  TIER_CREDIT_POOL,
+  PLAN_STATUS_LABELS,
+  calcDocCredits,
+  calcTotalCredits,
+  resolvePreviewTier,
+  isSubscribed,
+} from "./types";
 
 interface Props {
   productType: ProductType;
@@ -9,7 +27,10 @@ interface Props {
   contextSummary: string;
   presets: Presets;
   selectedDocs: FileKey[];
-  selectedModelId: string;
+  perDocModelClass: PerDocumentModelClass;
+  plan: UserPlanStatus;
+  creditBalance?: number;
+  hasActiveSubscription?: boolean;
   limitReached?: boolean;
   onEdit: (step: "product-type" | "context" | "stack" | "docs") => void;
   onGenerate: () => void;
@@ -53,6 +74,8 @@ const FRAMEWORK_LABELS: Record<string, string> = {
   "react-native": "React Native",
   flutter: "Flutter",
   expo: "Expo",
+  "native-ios": "Native iOS (Swift)",
+  "native-android": "Native Android (Kotlin)",
   "ai-recommend": "Biarkan AI rekomendasikan",
 };
 
@@ -80,12 +103,68 @@ const AGENT_LABELS: Record<string, string> = {
   custom: "Custom / Lainnya",
 };
 
-function formatTime(secs: number): string {
-  if (secs < 60) return `~${secs} detik`;
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return s > 0 ? `~${m} mnt ${s} dtk` : `~${m} menit`;
-}
+const DATABASE_LABELS: Record<string, string> = {
+  postgresql: "PostgreSQL",
+  mysql: "MySQL",
+  mongodb: "MongoDB",
+  sqlite: "SQLite",
+  redis: "Redis",
+  supabase: "Supabase",
+  firebase: "Firebase",
+  planetscale: "PlanetScale",
+  turso: "Turso",
+  pgvector: "pgvector",
+  pinecone: "Pinecone",
+  weaviate: "Weaviate",
+  qdrant: "Qdrant",
+  none: "Tidak pakai",
+};
+
+const ANIMATION_LABELS: Record<string, string> = {
+  "framer-motion": "Framer Motion",
+  gsap: "GSAP",
+  lottie: "Lottie",
+  rive: "Rive",
+  "css-only": "CSS-only",
+  "ai-recommend": "Biarkan AI",
+};
+
+const BUNDLE_LABELS: Record<string, string> = {
+  "modern-fullstack": "⚡ Modern Fullstack",
+  "classic-reliable": "🏛️ Classic Reliable",
+  "ai-native": "🤖 AI-Native Stack",
+  "mobile-crossplatform": "📱 Mobile Cross-platform",
+  "marketplace-ready": "🛍️ Marketplace Ready",
+  "portfolio-cepat": "🎨 Portfolio Cepat",
+  custom: "🛠️ Rakit Sendiri",
+};
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  "javascript-typescript": "JavaScript / TypeScript",
+  python: "Python",
+  php: "PHP",
+  ruby: "Ruby",
+  go: "Go",
+  dart: "Dart",
+  swift: "Swift",
+  kotlin: "Kotlin",
+};
+
+const VC_LABELS: Record<string, string> = {
+  github: "GitHub",
+  gitlab: "GitLab",
+  bitbucket: "Bitbucket",
+  undecided: "Belum tahu",
+};
+
+const PM_LABELS: Record<string, string> = {
+  notion: "Notion",
+  linear: "Linear",
+  trello: "Trello",
+  none: "Tidak pakai",
+};
+
+
 
 function SummaryRow({
   label,
@@ -118,13 +197,28 @@ export default function ConfirmScreen({
   contextSummary,
   presets,
   selectedDocs,
-  selectedModelId,
+  perDocModelClass,
+  plan,
+  creditBalance = 0,
+  hasActiveSubscription = false,
   limitReached,
   onEdit,
   onGenerate,
 }: Props) {
-  const model = MODEL_OPTIONS.find((m) => m.id === selectedModelId) ?? MODEL_OPTIONS[0];
-  const estimateSecs = selectedDocs.length * (model?.estimatePerDoc ?? 30);
+  const previewTier = resolvePreviewTier(plan);
+  const totalCredits = calcTotalCredits(selectedDocs, previewTier, perDocModelClass);
+  const creditPool = TIER_CREDIT_POOL[previewTier];
+  const needsSubscription = !hasActiveSubscription;
+  // Include balance 0 — previously `creditBalance > 0` hid the warning while
+  // still disabling the button, so users saw a grey Generate with no reason.
+  const insufficientCredits =
+    hasActiveSubscription && creditBalance < totalCredits;
+  const canGenerate =
+    hasActiveSubscription && !limitReached && creditBalance >= totalCredits;
+  const balanceAfter = creditBalance - totalCredits;
+  const planLabel = isSubscribed(plan)
+    ? TIER_LABELS[plan]
+    : PLAN_STATUS_LABELS.none;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
@@ -185,11 +279,10 @@ export default function ConfirmScreen({
           </div>
         </button>
 
-        {/* Context */}
+        {/* Context - Mini Brief Preview */}
         {contextSummary && (
-          <button
-            onClick={() => onEdit("context")}
-            className="text-left px-4 py-4 rounded-xl transition-all group w-full"
+          <div
+            className="text-left px-4 py-4 rounded-xl transition-all w-full relative overflow-hidden group"
             style={{
               background: "var(--color-bg-elevated)",
               border: "0.5px solid var(--color-border-default)",
@@ -200,29 +293,54 @@ export default function ConfirmScreen({
                 className="font-mono text-[10px] font-bold tracking-widest uppercase"
                 style={{ color: "var(--color-lime)" }}
               >
-                — Cerita Produk
+                — Mini Brief Preview
               </span>
-              <span
-                className="font-mono text-[11px] opacity-0 group-hover:opacity-100 transition-opacity"
+              <button
+                onClick={() => onEdit("context")}
+                className="font-mono text-[11px] opacity-0 group-hover:opacity-100 transition-opacity z-10 relative cursor-pointer hover:text-white"
                 style={{ color: "var(--color-text-tertiary)" }}
               >
                 Edit →
-              </span>
+              </button>
             </div>
-            <p
-              className="font-mono text-xs"
+            
+            {/* Outline document styling */}
+            <div 
+              className="p-3 rounded-lg relative text-xs"
               style={{
-                color: "var(--color-text-secondary)",
-                lineHeight: 1.6,
-                display: "-webkit-box",
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
+                background: "rgba(0,0,0,0.2)",
+                border: "1px solid rgba(255,255,255,0.04)",
+                fontFamily: "var(--font-jetbrains-mono), monospace",
               }}
             >
-              {contextSummary}
-            </p>
-          </button>
+              <div className="flex items-center gap-2 mb-2 pb-2" style={{ borderBottom: "1px dashed rgba(255,255,255,0.1)" }}>
+                <span className="w-2 h-2 rounded-full bg-red-500/50"></span>
+                <span className="w-2 h-2 rounded-full bg-yellow-500/50"></span>
+                <span className="w-2 h-2 rounded-full bg-green-500/50"></span>
+                <span className="ml-2 text-[9px] opacity-50 uppercase">knowledge_model.json</span>
+              </div>
+              <p
+                style={{
+                  color: "var(--color-text-secondary)",
+                  lineHeight: 1.6,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 4,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
+                {contextSummary}
+              </p>
+              
+              {/* Fade out effect at bottom */}
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-8 rounded-b-lg"
+                style={{
+                  background: "linear-gradient(to bottom, transparent, rgba(10,10,10,0.9))"
+                }}
+              />
+            </div>
+          </div>
         )}
 
         {/* Stack */}
@@ -249,6 +367,18 @@ export default function ConfirmScreen({
             </span>
           </div>
           <div className="flex flex-col gap-1.5">
+            {presets.stackBundle && (
+              <SummaryRow
+                label="Paket"
+                value={BUNDLE_LABELS[presets.stackBundle] ?? presets.stackBundle}
+              />
+            )}
+            {presets.programmingLanguage && (
+              <SummaryRow
+                label="Bahasa"
+                value={LANGUAGE_LABELS[presets.programmingLanguage] ?? presets.programmingLanguage}
+              />
+            )}
             <SummaryRow
               label="Framework"
               value={FRAMEWORK_LABELS[presets.framework] ?? presets.framework}
@@ -262,7 +392,19 @@ export default function ConfirmScreen({
               value={AGENT_LABELS[presets.agentTool] ?? presets.agentTool}
             />
             {presets.database && (
-              <SummaryRow label="Database" value={presets.database} />
+              <SummaryRow label="Database" value={DATABASE_LABELS[presets.database] ?? presets.database} />
+            )}
+            {presets.animationLibrary && (
+              <SummaryRow label="Animasi" value={ANIMATION_LABELS[presets.animationLibrary] ?? presets.animationLibrary} />
+            )}
+            {presets.versionControl && (
+              <SummaryRow label="VCS" value={VC_LABELS[presets.versionControl] ?? presets.versionControl} />
+            )}
+            {presets.projectManagementTool && presets.projectManagementTool !== "none" && (
+              <SummaryRow label="PM Tool" value={PM_LABELS[presets.projectManagementTool] ?? presets.projectManagementTool} />
+            )}
+            {presets.designReferenceNote && (
+              <SummaryRow label="Referensi" value={presets.designReferenceNote} />
             )}
           </div>
         </button>
@@ -290,43 +432,180 @@ export default function ConfirmScreen({
               Edit →
             </span>
           </div>
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {selectedDocs.map((key) => (
+
+          {/* Per-doc list with model class */}
+          <div className="flex flex-col gap-1.5 mb-3">
+            {selectedDocs.map((key) => {
+              const mc = perDocModelClass[key] ?? DOC_DEFAULT_MODEL_CLASS[key][previewTier];
+              const classInfo = MODEL_CLASSES.find((c) => c.id === mc);
+              const credits = calcDocCredits(key, previewTier, mc);
+              return (
+                <div key={key} className="flex items-center justify-between">
+                  <span
+                    className="font-mono text-[11px]"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    {FILE_META[key].icon} {FILE_META[key].label}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="font-mono text-[10px] px-1.5 py-0.5 rounded"
+                      style={{
+                        background:
+                          mc === "hemat"
+                            ? "rgba(34,197,94,0.1)"
+                            : mc === "menengah"
+                            ? "rgba(59,130,246,0.1)"
+                            : mc === "flagship"
+                            ? "rgba(168,85,247,0.1)"
+                            : "rgba(255,199,0,0.1)",
+                        color:
+                          mc === "hemat"
+                            ? "#22C55E"
+                            : mc === "menengah"
+                            ? "#60A5FA"
+                            : mc === "flagship"
+                            ? "#A855F7"
+                            : "#FFC700",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {classInfo?.icon} {classInfo?.label}
+                    </span>
+                    <span
+                      className="font-mono text-[10px] font-bold"
+                      style={{ color: "rgba(255,255,255,0.35)" }}
+                    >
+                      {credits} kr
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Total credits */}
+          <div
+            className="flex items-center justify-between pt-2"
+            style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}
+          >
+            <span
+              className="font-mono text-xs font-semibold"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Biaya batch ini
+            </span>
+            <span
+              className="font-mono text-sm font-bold"
+              style={{ color: "var(--color-lime)" }}
+            >
+              {totalCredits} kredit
+            </span>
+          </div>
+
+          {/* Actual balance vs cost — not pool max disguised as balance */}
+          <div
+            className="mt-3 rounded-lg px-3 py-2.5 space-y-1.5"
+            style={{
+              background: insufficientCredits
+                ? "rgba(239,68,68,0.08)"
+                : "rgba(204,255,0,0.05)",
+              border: insufficientCredits
+                ? "0.5px solid rgba(239,68,68,0.25)"
+                : "0.5px solid rgba(204,255,0,0.18)",
+            }}
+          >
+            <div className="flex items-center justify-between">
               <span
-                key={key}
-                className="font-mono text-[10px] px-2 py-1 rounded"
+                className="font-mono text-[11px]"
+                style={{ color: "rgba(255,255,255,0.45)" }}
+              >
+                Saldo kamu · {planLabel}
+              </span>
+              <span
+                className="font-mono text-xs font-bold"
                 style={{
-                  background: "rgba(204,255,0,0.08)",
-                  color: "var(--color-lime)",
-                  border: "0.5px solid rgba(204,255,0,0.2)",
+                  color: insufficientCredits ? "#EF4444" : "var(--color-text-primary)",
                 }}
               >
-                {FILE_META[key].icon} {FILE_META[key].label}
+                {creditBalance.toLocaleString()} kredit
               </span>
-            ))}
-          </div>
-          <div className="flex items-center gap-4">
-            <span
-              className="font-mono text-xs"
-              style={{ color: "var(--color-text-tertiary)" }}
+            </div>
+            <div
+              className="w-full h-1.5 rounded-full overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.08)" }}
             >
-              Model: <strong style={{ color: "var(--color-text-secondary)" }}>{model?.label}</strong>
-            </span>
-            <span
-              className="font-mono text-xs"
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              Estimasi:{" "}
-              <strong style={{ color: "var(--color-lime)" }}>
-                {formatTime(estimateSecs)}
-              </strong>
-            </span>
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${Math.min(
+                    (Math.max(creditBalance, 0) / Math.max(creditPool, 1)) * 100,
+                    100
+                  )}%`,
+                  background: insufficientCredits ? "#EF4444" : "var(--color-lime)",
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span
+                className="font-mono text-[10px]"
+                style={{ color: "rgba(255,255,255,0.3)" }}
+              >
+                Pool {planLabel}: {creditPool.toLocaleString()}/bulan
+              </span>
+              <span
+                className="font-mono text-[10px]"
+                style={{
+                  color: canGenerate
+                    ? "rgba(204,255,0,0.7)"
+                    : "rgba(255,255,255,0.3)",
+                }}
+              >
+                {canGenerate
+                  ? `Sisa setelah generate: ${balanceAfter.toLocaleString()}`
+                  : insufficientCredits
+                    ? `Kurang ${Math.max(totalCredits - creditBalance, 0)} kredit`
+                    : "—"}
+              </span>
+            </div>
           </div>
         </button>
       </div>
 
-      {/* Tip / Warning */}
-      {limitReached ? (
+      {/* Paywall / warnings */}
+      {needsSubscription ? (
+        <div
+          className="flex flex-col gap-2 px-4 py-3 rounded-xl mb-6"
+          style={{
+            background: "rgba(204,255,0,0.06)",
+            border: "0.5px solid rgba(204,255,0,0.25)",
+          }}
+        >
+          <div className="flex items-start gap-2">
+            <span style={{ color: "var(--color-lime)", fontSize: 13, marginTop: 1 }}>🔒</span>
+            <p
+              className="font-mono text-xs font-bold"
+              style={{ color: "var(--color-lime)", lineHeight: 1.6 }}
+            >
+              Paket berlangganan diperlukan untuk generate
+            </p>
+          </div>
+          <p
+            className="font-mono text-[11px]"
+            style={{ color: "var(--color-text-secondary)", marginLeft: 22 }}
+          >
+            Isi form gratis — bayar hanya saat kamu siap generate dokumen. Estimasi batch ini:{" "}
+            <strong>{totalCredits} kredit</strong>.
+          </p>
+          <a
+            href="/dashboard?upgrade=true"
+            className="font-mono text-[11px] underline mt-1"
+            style={{ color: "var(--color-lime)", marginLeft: 22 }}
+          >
+            Pilih paket Starter, Pro, atau Pro Max →
+          </a>
+        </div>
+      ) : insufficientCredits ? (
         <div
           className="flex flex-col gap-2 px-4 py-3 rounded-xl mb-6"
           style={{
@@ -340,7 +619,38 @@ export default function ConfirmScreen({
               className="font-mono text-xs font-bold"
               style={{ color: "#EF4444", lineHeight: 1.6 }}
             >
-              Limit paket gratis telah habis
+              Kredit tidak cukup
+            </p>
+          </div>
+          <p
+            className="font-mono text-[11px]"
+            style={{ color: "var(--color-text-secondary)", marginLeft: 22 }}
+          >
+            Dibutuhkan {totalCredits} kredit, saldo kamu {creditBalance.toLocaleString()} kredit.
+          </p>
+          <a
+            href="/dashboard?upgrade=true"
+            className="font-mono text-[11px] underline mt-1"
+            style={{ color: "var(--color-lime)", marginLeft: 22 }}
+          >
+            Upgrade paket untuk tambah kredit →
+          </a>
+        </div>
+      ) : limitReached ? (
+        <div
+          className="flex flex-col gap-2 px-4 py-3 rounded-xl mb-6"
+          style={{
+            background: "rgba(239, 68, 68, 0.06)",
+            border: "0.5px solid rgba(239, 68, 68, 0.2)",
+          }}
+        >
+          <div className="flex items-start gap-2">
+            <span style={{ color: "#EF4444", fontSize: 13, marginTop: 1 }}>⚠</span>
+            <p
+              className="font-mono text-xs font-bold"
+              style={{ color: "#EF4444", lineHeight: 1.6 }}
+            >
+              Limit paket telah habis
             </p>
           </div>
           <p
@@ -389,18 +699,26 @@ export default function ConfirmScreen({
           ← Ubah pilihan
         </button>
         <button
-          onClick={onGenerate}
-          disabled={limitReached}
+          onClick={canGenerate ? onGenerate : undefined}
+          disabled={!canGenerate}
           className="flex-1 py-3 rounded-xl font-mono font-bold text-sm transition-all flex items-center justify-center gap-2"
           style={{
-            background: limitReached ? "var(--color-bg-elevated)" : "var(--color-lime)",
-            color: limitReached ? "var(--color-text-tertiary)" : "#0A0A0A",
-            cursor: limitReached ? "not-allowed" : "pointer",
-            border: limitReached ? "0.5px solid var(--color-border-default)" : "none",
+            background: canGenerate ? "var(--color-lime)" : "var(--color-bg-elevated)",
+            color: canGenerate ? "#0A0A0A" : "var(--color-text-tertiary)",
+            cursor: canGenerate ? "pointer" : "not-allowed",
+            border: canGenerate ? "none" : "0.5px solid var(--color-border-default)",
           }}
         >
           <span>✦</span>
-          <span>Generate sekarang →</span>
+          <span>
+            {needsSubscription
+              ? "Upgrade untuk generate"
+              : insufficientCredits
+              ? `Kredit kurang (${creditBalance}/${totalCredits})`
+              : limitReached
+              ? "Limit proyek habis"
+              : `Generate sekarang (${totalCredits} kredit) →`}
+          </span>
         </button>
       </div>
     </div>

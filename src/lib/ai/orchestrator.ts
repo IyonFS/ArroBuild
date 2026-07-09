@@ -31,6 +31,7 @@ import {
 import { validateGeneratedContent, buildContinuationPrompt } from "./validation";
 import { formatGenerationError } from "./errors";
 import type { FileKey, GenerationInput } from "./prompts/shared";
+import { legacyModelIdToClass } from "@/lib/ai-gateway/model-router";
 
 // ─── Public Re-exports (backward compat) ───────────────────────────────────
 
@@ -97,6 +98,14 @@ export interface GenerationEvent {
   label?: string;
   chunk?: string;
   content?: string;
+  usedModel?: string;
+  modelClass?: string;
+  tokensUsed?: number;
+  documentsGenerated?: Array<{
+    fileKey: FileKey;
+    modelClass: "HEMAT" | "MENENGAH" | "FLAGSHIP" | "ULTRA";
+    tokensUsed: number;
+  }>;
   files?: Record<string, string>;
   error?: string;
   attempt?: number;
@@ -206,6 +215,11 @@ export async function* orchestrateGeneration(
 
   const contextManager = new ContextManager();
   const generatedFiles: Partial<Record<FileKey, string>> = {};
+  const generatedMeta: Array<{
+    fileKey: FileKey;
+    modelClass: "HEMAT" | "MENENGAH" | "FLAGSHIP" | "ULTRA";
+    tokensUsed: number;
+  }> = [];
   const failedFiles: Partial<Record<FileKey, string>> = {};
 
   for (const fileKey of docsToGenerate) {
@@ -295,6 +309,9 @@ export async function* orchestrateGeneration(
     // Update accumulated context for next documents
     contextManager.addDocument(fileKey, fullContent);
     generatedFiles[fileKey] = fullContent;
+    const tokensUsed = Math.max(1, Math.ceil(fullContent.length / 4));
+    const modelClass = legacyModelIdToClass(usedModel);
+    generatedMeta.push({ fileKey, modelClass, tokensUsed });
 
       // Non-blocking DB write
       if (projectId) {
@@ -304,11 +321,21 @@ export async function* orchestrateGeneration(
           fileName,
           label,
           content: fullContent,
-          modelUsed: usedModel,
+          modelClass,
+          tokenCount: tokensUsed,
         });
       }
 
-      yield { type: "file_done", fileKey, fileName, label, content: fullContent };
+      yield {
+        type: "file_done",
+        fileKey,
+        fileName,
+        label,
+        content: fullContent,
+        usedModel,
+        modelClass,
+        tokensUsed,
+      };
   }
 
   const successCount = Object.keys(generatedFiles).length;
@@ -333,6 +360,7 @@ export async function* orchestrateGeneration(
     type: "all_done",
     success,
     files: successCount > 0 ? (generatedFiles as Record<string, string>) : undefined,
+    documentsGenerated: generatedMeta,
     failedFiles: Object.keys(failedFiles).length > 0 ? failedFiles : undefined,
     error: success ? undefined : primaryError,
   };
