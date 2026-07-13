@@ -36,6 +36,19 @@ yarn-error.log*
 # misc dev
 /scratch
 
+# Local documentation (keep on disk, do not publish to GitHub)
+/docs/
+/docs-v2/
+/analysis.md
+/arrobuild_analysis.md
+/visi-Saas.md
+/form-plan.md
+/implementation_plan.md
+/task-saya.md
+/walkthrough.md
+/catatan.md
+/completed_tasks.md
+
 # vercel
 .vercel
 
