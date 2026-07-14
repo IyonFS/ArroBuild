@@ -15,7 +15,9 @@ export default function DraftRestoreDialog({
   onDiscard,
 }: DraftRestoreDialogProps) {
   const onDiscardRef = useRef(onDiscard);
-  onDiscardRef.current = onDiscard;
+  useEffect(() => {
+    onDiscardRef.current = onDiscard;
+  }, [onDiscard]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

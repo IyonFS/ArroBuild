@@ -130,7 +130,6 @@ function DashboardContent() {
 
   useEffect(() => {
     if (upgrade) {
-      setLoading(false);
       router.replace("/dashboard/upgrade");
       return;
     }

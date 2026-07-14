@@ -237,7 +237,9 @@ export default function PricingSectionV3() {
                       textTransform: "uppercase" as const,
                       color: tier.badge.color,
                       background: tier.badge.bg,
-                      border: (tier.badge as any).borderColor ? `1px solid ${(tier.badge as any).borderColor}` : "none",
+                      border: (tier.badge as { borderColor?: string }).borderColor
+                        ? `1px solid ${(tier.badge as { borderColor?: string }).borderColor}`
+                        : "none",
                       borderRadius: 999,
                       padding: "4px 12px",
                     }}

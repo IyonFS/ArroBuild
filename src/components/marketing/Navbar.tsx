@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getNavLabel } from "@/lib/display-name";
 import { OPEN_LEARN_IN_NEW_TAB, LEARN_HUB_PATH } from "@/lib/learn-links";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { SparklesIcon, MenuIcon, CloseIcon } from "./icons";
 
 const NAV_LINKS = [
@@ -31,11 +32,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -138,7 +135,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
           }}
         >
           {/* Logo */}
-          <a
+          <Link
             href="/"
             style={{
               display: "flex",
@@ -172,7 +169,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
             >
               Build
             </span>
-          </a>
+          </Link>
 
           {/* Desktop nav links */}
           <div

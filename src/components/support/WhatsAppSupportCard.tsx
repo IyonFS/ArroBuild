@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { parseApiErrorMessage } from "@/lib/parse-api-error";
 import type { UserPlanStatus } from "@/components/generate/types";
@@ -64,9 +64,12 @@ export default function WhatsAppSupportCard({
   const [error, setError] = useState<string | null>(null);
   const [waLink, setWaLink] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Sync quota from props (adjust state during render, not in an effect).
+  const [prevInitialQuota, setPrevInitialQuota] = useState(initialQuota);
+  if (initialQuota !== prevInitialQuota) {
+    setPrevInitialQuota(initialQuota);
     setQuota(initialQuota);
-  }, [initialQuota]);
+  }
 
   const hasAccess = tier === "pro" || tier === "pro_max";
   const atLimit = quota != null && quota.limit > 0 && !quota.available;

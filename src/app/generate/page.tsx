@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState, useEffect, useRef, useCallback } from "react";
 import ProductTypeStep from "@/components/generate/ProductTypeStep";
 import ContextStep from "@/components/generate/ContextStep";
@@ -159,52 +160,65 @@ export default function GeneratePage() {
       .then((data) => applyUserMe(data))
       .catch(() => {});
 
-    // Check for fork data
-    const forkIdea = sessionStorage.getItem("arrobuild_fork_idea");
-    const forkPresets = sessionStorage.getItem("arrobuild_fork_presets");
-    let usedFork = false;
-    if (forkIdea) {
-      usedFork = true;
-      try {
-        if (forkIdea.startsWith("{")) {
-          const parsed = JSON.parse(forkIdea);
-          setProductType(parsed.type);
-          setContextData(parsed.data || {});
-        } else {
-          setProductType("saas");
-          setContextData({ freeText: forkIdea });
+    // Initialize from browser storage after mount (deferred so state updates
+    // don't run synchronously inside the effect body / during hydration).
+    queueMicrotask(() => {
+      const forkIdea = sessionStorage.getItem("arrobuild_fork_idea");
+      const forkPresets = sessionStorage.getItem("arrobuild_fork_presets");
+      let usedFork = false;
+      if (forkIdea) {
+        usedFork = true;
+        try {
+          if (forkIdea.startsWith("{")) {
+            const parsed = JSON.parse(forkIdea);
+            setProductType(parsed.type);
+            setContextData(parsed.data || {});
+          } else {
+            setProductType("saas");
+            setContextData({ freeText: forkIdea });
+          }
+          setIntakeMode("cepat");
+          setStep("product-type");
+        } catch {
+          /* ignore bad fork payload */
         }
-        setIntakeMode("cepat");
-        setStep("product-type");
-      } catch {
-        /* ignore bad fork payload */
+        sessionStorage.removeItem("arrobuild_fork_idea");
       }
-      sessionStorage.removeItem("arrobuild_fork_idea");
-    }
-    if (forkPresets) {
-      try {
-        setPresets(JSON.parse(forkPresets));
-      } catch {
-        /* ignore */
+      if (forkPresets) {
+        try {
+          setPresets(JSON.parse(forkPresets));
+        } catch {
+          /* ignore */
+        }
+        sessionStorage.removeItem("arrobuild_fork_presets");
       }
-      sessionStorage.removeItem("arrobuild_fork_presets");
-    }
 
-    if (!usedFork) {
-      const draft = readGenerateDraft();
-      if (draft && draftHasContent(draft)) {
-        setPendingDraft(draft);
+      if (!usedFork) {
+        const draft = readGenerateDraft();
+        if (draft && draftHasContent(draft)) {
+          setPendingDraft(draft);
+        }
       }
-    }
 
-    skipAutosave.current = false;
+      skipAutosave.current = false;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
+  // Sanitize tier-locked selections when the plan changes (adjust state during
+  // render instead of in an effect to avoid cascading renders).
+  const [prevPlan, setPrevPlan] = useState(plan);
+  if (plan !== prevPlan) {
+    setPrevPlan(plan);
     const previewTier = resolvePreviewTier(plan);
     setPerDocModelClass((prev) => sanitizePerDocumentModelClass(prev, previewTier));
-  }, [plan]);
+    setSelectedDocs((prev) => {
+      const next = sanitizeSelectedDocs(prev, previewTier);
+      return next.length === prev.length && next.every((k, i) => k === prev[i])
+        ? prev
+        : next;
+    });
+  }
 
   const handlePerDocModelClassChange = useCallback(
     (doc: FileKey, mc: ModelClass) => {
@@ -318,17 +332,6 @@ export default function GeneratePage() {
   useEffect(() => {
     refreshCredits();
   }, []);
-
-  // Drop tier-locked docs when plan loads or changes (e.g. security-launch on Pro)
-  useEffect(() => {
-    const tier = resolvePreviewTier(plan);
-    setSelectedDocs((prev) => {
-      const next = sanitizeSelectedDocs(prev, tier);
-      return next.length === prev.length && next.every((k, i) => k === prev[i])
-        ? prev
-        : next;
-    });
-  }, [plan]);
 
   // When stage changes, auto-apply smart preset for docs
   const handleSelectedDocsChange = useCallback(
@@ -564,7 +567,7 @@ export default function GeneratePage() {
         >
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
             {/* Back to home */}
-            <a
+            <Link
               href="/"
               className="flex items-center gap-1.5 text-sm flex-shrink-0 transition-colors hover:opacity-70"
               style={{ color: "rgba(255,255,255,0.35)", fontFamily: "var(--font-inter), system-ui, sans-serif" }}
@@ -573,7 +576,7 @@ export default function GeneratePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
               <span className="hidden sm:inline">ArroBuild</span>
-            </a>
+            </Link>
 
             {/* Step indicator — only during form steps */}
             {showStepIndicator && (

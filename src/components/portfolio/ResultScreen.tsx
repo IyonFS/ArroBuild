@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { PortfolioFormState } from "./types";
 import { buildPortfolioPrompt } from "./buildPrompt";
 import { OPEN_LEARN_IN_NEW_TAB } from "@/lib/learn-links";
@@ -294,14 +295,14 @@ export default function ResultScreen({ state, onEdit, onReset }: Props) {
         <p className="font-mono text-xs mb-3" style={{ color: "var(--color-text-tertiary)" }}>
           Semua ada di Learn Hub ArroBuild — gratis.
         </p>
-        <a
+        <Link
           href="/learn"
           {...OPEN_LEARN_IN_NEW_TAB}
           className="inline-flex items-center gap-2 font-mono text-sm font-bold px-4 py-2.5 rounded-lg transition-all"
           style={{ background: "var(--color-lime)", color: "#0D1321" }}
         >
           Mulai belajar →
-        </a>
+        </Link>
       </div>
     </div>
   );

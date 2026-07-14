@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import type { ProductType, ContextData, Feature } from "./types";
 import FeatureBuilder from "./FeatureBuilder";
 import LiveJsonPreview from "./LiveJsonPreview";
@@ -630,15 +630,16 @@ export default function ContextStep({ productType, value, onChange, features, on
     onChange({ ...value, [key]: val });
   };
 
-  // Progressive reveal: show next when current pair has at least one answer
-  useEffect(() => {
-    const answered = questions.filter((q) => {
-      const v = value[q.key];
-      return v && String(v).trim().length > 0;
-    }).length;
-    const newCount = Math.min(Math.max(2, answered + 1), questions.length);
-    setVisibleCount((prev) => Math.max(prev, newCount));
-  }, [value, questions]);
+  // Progressive reveal: show next when current pair has at least one answer.
+  // Derived during render (monotonically increasing) instead of in an effect.
+  const answered = questions.filter((q) => {
+    const v = value[q.key];
+    return v && String(v).trim().length > 0;
+  }).length;
+  const revealCount = Math.min(Math.max(2, answered + 1), questions.length);
+  if (revealCount > visibleCount) {
+    setVisibleCount(revealCount);
+  }
 
   const hasAnyAnswer = questions.some((q) => {
     const v = value[q.key];

@@ -73,26 +73,24 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
+  // Reset per-file state and keep the selected section valid. Adjust state
+  // during render instead of in effects to avoid cascading renders.
+  const fileKey = `${file?.id ?? ""}:${file?.version ?? ""}`;
+  const [prevFileKey, setPrevFileKey] = useState(fileKey);
+  if (fileKey !== prevFileKey) {
+    setPrevFileKey(fileKey);
     setPreview(null);
     setError(null);
     setInstruction("");
-    if (sections[0]) {
-      setSectionName(sections[0].title);
-      setSectionStartLine(sections[0].startLine);
-    } else {
-      setSectionName("");
-      setSectionStartLine(null);
-    }
-  }, [file?.id, file?.version]);
-
-  // Re-sync default when sections list changes for same file
-  useEffect(() => {
-    if (!sectionName && sections[0]) setSectionName(sections[0].title);
-    if (sectionName && !sections.some((s) => s.title === sectionName) && sections[0]) {
-      setSectionName(sections[0].title);
-    }
-  }, [sections, sectionName]);
+    setSectionName(sections[0]?.title ?? "");
+    setSectionStartLine(sections[0]?.startLine ?? null);
+  } else if (
+    sections.length > 0 &&
+    (!sectionName || !sections.some((s) => s.title === sectionName))
+  ) {
+    setSectionName(sections[0].title);
+    setSectionStartLine(sections[0].startLine);
+  }
 
   const selected = sections.find((s) => s.title === sectionName);
   const estimate = selected ? estimateRevisionCredits(selected.content) : 0;
