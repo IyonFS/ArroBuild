@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { LearningPath, Lesson } from "@/lib/learn-content";
 import LearnSidebar from "@/components/learn/LearnSidebar";
+import { getPathOverviewHref } from "@/lib/learn-nav";
 import { MenuIcon, CloseIcon } from "@/components/marketing/icons";
 
 interface Props {
@@ -22,6 +23,7 @@ export default function LearnLessonDashboard({
   footer,
 }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const progress = ((index + 1) / path.lessons.length) * 100;
 
   return (
     <div className="learn-dashboard flex flex-1 min-h-0 flex-col lg:flex-row w-full">
@@ -42,7 +44,7 @@ export default function LearnLessonDashboard({
             backdropFilter: "blur(8px)",
           }}
         >
-          <div className="h-12 px-4 sm:px-6 flex items-center justify-between gap-3">
+          <div className="h-11 px-4 sm:px-6 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
@@ -62,11 +64,15 @@ export default function LearnLessonDashboard({
                 className="learn-nav-text text-xs min-w-0 truncate"
                 style={{ color: "var(--color-text-tertiary)" }}
               >
+                <Link href="/learn" className="learn-hover-link">
+                  Learn
+                </Link>
+                <span className="mx-1.5">/</span>
                 <Link
-                  href="/learn"
+                  href={getPathOverviewHref(path)}
                   className="learn-hover-link"
                 >
-                  Learn
+                  {path.title}
                 </Link>
                 <span className="mx-1.5">/</span>
                 <span style={{ color: "var(--color-text-secondary)" }}>
@@ -90,8 +96,9 @@ export default function LearnLessonDashboard({
             <div
               className="h-full transition-all duration-500"
               style={{
-                width: `${((index + 1) / path.lessons.length) * 100}%`,
-                background: "var(--color-orange)",
+                width: `${progress}%`,
+                background:
+                  "linear-gradient(90deg, var(--learn-accent), var(--learn-info))",
               }}
             />
           </div>
@@ -111,15 +118,15 @@ export default function LearnLessonDashboard({
                 <span>{lesson.estimasi}</span>
               </div>
               <h1
-                className="learn-hero-title text-2xl sm:text-3xl lg:text-4xl"
+                className="learn-hero-title text-2xl sm:text-3xl lg:text-[2rem]"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 {lesson.title}
               </h1>
               {lesson.outcome && (
                 <p
-                  className="learn-body-sm mt-4 max-w-2xl"
-                  style={{ color: "var(--learn-text-tertiary)" }}
+                  className="learn-body-sm mt-4"
+                  style={{ color: "var(--learn-text-tertiary)", maxWidth: "65ch" }}
                 >
                   {lesson.outcome}
                 </p>
@@ -135,7 +142,7 @@ export default function LearnLessonDashboard({
       {sidebarOpen && (
         <button
           type="button"
-          className="lg:hidden fixed top-[calc(var(--learn-nav-height,104px)+12px)] right-4 z-[71] w-9 h-9 rounded-lg flex items-center justify-center"
+          className="lg:hidden fixed top-[calc(var(--learn-nav-height,116px)+12px)] right-4 z-[71] w-9 h-9 rounded-lg flex items-center justify-center"
           style={{
             background: "var(--learn-bg-surface)",
             border: "0.5px solid var(--learn-border)",

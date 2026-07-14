@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import type { ContextData, Feature, ProductType, ProjectStage } from "./types";
 
 interface ChatMessage {
@@ -32,6 +33,13 @@ interface Props {
   onBack: () => void;
 }
 
+const STARTER_CHIPS = [
+  "SaaS buat freelancer",
+  "Marketplace lokal",
+  "Tools internal tim",
+  "AI app untuk edukasi",
+];
+
 function toInterviewResult(fields: FilledFields, incomplete: boolean): InterviewResult {
   const contextData: ContextData = {};
   if (fields.targetUser) contextData.targetUser = String(fields.targetUser);
@@ -47,7 +55,7 @@ function toInterviewResult(fields: FilledFields, incomplete: boolean): Interview
         id: f.id || `FEAT-${String(i + 1).padStart(3, "0")}`,
         title: f.title || `Fitur ${i + 1}`,
         description: f.description,
-        priority: f.priority === "nice-to-have" ? "nice-to-have" as const : "must-have" as const,
+        priority: f.priority === "nice-to-have" ? ("nice-to-have" as const) : ("must-have" as const),
       }))
     : [];
 
@@ -58,6 +66,56 @@ function toInterviewResult(fields: FilledFields, incomplete: boolean): Interview
     features,
     incomplete,
   };
+}
+
+function ProgressDots({ turnCount, maxTurns }: { turnCount: number; maxTurns: number }) {
+  return (
+    <div className="flex items-center gap-1.5" aria-label={`Progress ${turnCount} dari ${maxTurns}`}>
+      {Array.from({ length: maxTurns }, (_, i) => {
+        const filled = i < turnCount;
+        return (
+          <motion.span
+            key={i}
+            className="inline-block rounded-full"
+            style={{
+              width: filled ? 8 : 6,
+              height: filled ? 8 : 6,
+              background: filled ? "var(--app-amber)" : "var(--app-bg-hover)",
+              border: filled ? "none" : "1px solid var(--app-border-default)",
+            }}
+            initial={false}
+            animate={filled ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+            transition={filled ? { duration: 0.35, ease: "easeOut" } : undefined}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div className="flex justify-start">
+      <div
+        className="px-4 py-3 flex items-center gap-1"
+        style={{
+          borderRadius: "12px 12px 12px 2px",
+          background: "var(--app-bg-elevated)",
+          border: "0.5px solid var(--app-border-default)",
+        }}
+      >
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: "var(--app-sky)" }}
+            animate={{ y: [0, -4, 0] }}
+            transition={{ duration: 0.55, repeat: Infinity, delay: i * 0.12, ease: "easeInOut" }}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function InterviewStep({ onFinished, onBack }: Props) {
@@ -91,24 +149,18 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
         body: JSON.stringify({ action: "start" }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Gagal memulai sesi");
-      }
+      if (!res.ok) throw new Error(data.error || "Gagal memulai sesi");
       setSessionId(data.sessionId);
       setMessages(data.messages ?? [{ role: "assistant", content: data.greeting }]);
       setFilledFields(data.filledFields ?? {});
       setTurnCount(data.turnCount ?? 0);
       setMaxTurns(data.maxTurns ?? 8);
       if (data.quota) {
-        if (data.quota.isPaidSession) {
-          setQuotaNote(
-            `Sesi berbayar · ~${data.quota.estimatedCredits} kredit (saldo ${data.quota.creditBalance})`
-          );
-        } else {
-          setQuotaNote(
-            `Sesi gratis · sisa kuota ${data.quota.freeRemaining}/3 bulan ini`
-          );
-        }
+        setQuotaNote(
+          data.quota.isPaidSession
+            ? `Sesi berbayar · ~${data.quota.estimatedCredits} kredit (saldo ${data.quota.creditBalance})`
+            : `Sesi gratis · sisa kuota ${data.quota.freeRemaining}/3 bulan ini`
+        );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal memulai sesi");
@@ -124,9 +176,9 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
     void startSession();
   }, [startSession]);
 
-  const sendTurn = async () => {
-    if (!sessionId || !input.trim() || busy) return;
-    const userMessage = input.trim();
+  const sendTurn = async (messageOverride?: string) => {
+    const userMessage = (messageOverride ?? input).trim();
+    if (!sessionId || !userMessage || busy) return;
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setBusy(true);
@@ -136,16 +188,10 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
       const res = await fetch("/api/interview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "turn",
-          sessionId,
-          userMessage,
-        }),
+        body: JSON.stringify({ action: "turn", sessionId, userMessage }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Gagal memproses jawaban");
-      }
+      if (!res.ok) throw new Error(data.error || "Gagal memproses jawaban");
 
       setMessages(data.messages ?? []);
       setFilledFields(data.filledFields ?? {});
@@ -154,7 +200,6 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
       setShouldFallback(Boolean(data.shouldFallback));
 
       if (data.shouldFallback) {
-        // Auto-finish into manual form with prefilled data
         await finish("FALLBACK", data.filledFields ?? {});
       }
     } catch (err) {
@@ -166,15 +211,11 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
     }
   };
 
-  const finish = async (
-    status: "COMPLETED" | "FALLBACK",
-    fieldsOverride?: FilledFields
-  ) => {
+  const finish = async (status: "COMPLETED" | "FALLBACK", fieldsOverride?: FilledFields) => {
     if (!sessionId) {
       onFinished(toInterviewResult(fieldsOverride ?? filledFields, status === "FALLBACK"));
       return;
     }
-
     setBusy(true);
     try {
       const res = await fetch("/api/interview", {
@@ -183,9 +224,7 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
         body: JSON.stringify({ action: "complete", sessionId, status }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Gagal menyelesaikan sesi");
-      }
+      if (!res.ok) throw new Error(data.error || "Gagal menyelesaikan sesi");
       onFinished(
         toInterviewResult(
           data.filledFields ?? fieldsOverride ?? filledFields,
@@ -194,10 +233,7 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
-      // Still allow continuing with local fields
-      onFinished(
-        toInterviewResult(fieldsOverride ?? filledFields, status === "FALLBACK")
-      );
+      onFinished(toInterviewResult(fieldsOverride ?? filledFields, status === "FALLBACK"));
     } finally {
       setBusy(false);
     }
@@ -218,45 +254,40 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
     onBack();
   };
 
-  const fieldChips = [
-    filledFields.productType && `Tipe: ${filledFields.productType}`,
-    filledFields.targetUser && `Target: ${filledFields.targetUser}`,
-    filledFields.mainProblem && `Masalah: ${filledFields.mainProblem}`,
-    filledFields.features?.length
-      ? `Fitur: ${filledFields.features.length}`
-      : null,
-  ].filter(Boolean) as string[];
+  const showStarters =
+    !busy &&
+    !starting &&
+    messages.length === 1 &&
+    messages[0]?.role === "assistant" &&
+    turnCount === 0;
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8 sm:py-12 flex flex-col" style={{ minHeight: "70vh" }}>
+    <div
+      className="generate-app max-w-[640px] mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col"
+      style={{ minHeight: "70vh" }}
+    >
       <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <p
-            className="text-xs uppercase tracking-[0.18em] mb-2"
-            style={{
-              color: "rgba(204,255,0,0.7)",
-              fontFamily: "var(--font-jetbrains-mono), monospace",
-            }}
-          >
-            Mode Dipandu AI · {turnCount}/{maxTurns}
-          </p>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3 mb-3">
+            <span
+              className="font-mono text-[11px] font-bold uppercase tracking-widest"
+              style={{ color: "var(--app-sky)" }}
+            >
+              Mode Dipandu AI
+            </span>
+            <ProgressDots turnCount={turnCount} maxTurns={maxTurns} />
+            <span className="font-mono text-[11px]" style={{ color: "var(--app-text-tertiary)" }}>
+              {turnCount}/{maxTurns}
+            </span>
+          </div>
           <h1
-            className="text-2xl sm:text-3xl font-bold"
-            style={{
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              letterSpacing: "-0.03em",
-            }}
+            className="font-unbounded font-extrabold text-[clamp(22px,3vw,28px)]"
+            style={{ color: "var(--app-text-primary)", letterSpacing: "-0.02em" }}
           >
             Ceritakan idenya
           </h1>
           {quotaNote && (
-            <p
-              className="text-xs mt-2"
-              style={{
-                color: "rgba(255,255,255,0.4)",
-                fontFamily: "var(--font-jetbrains-mono), monospace",
-              }}
-            >
+            <p className="font-mono text-[12px] mt-2" style={{ color: "var(--app-text-secondary)", opacity: 0.7 }}>
               {quotaNote}
             </p>
           )}
@@ -264,94 +295,78 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
         <button
           type="button"
           onClick={() => void handleBack()}
-          className="text-sm px-3 py-1.5"
-          style={{
-            color: "rgba(255,255,255,0.4)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 8,
-          }}
+          className="font-mono text-[12px] px-3 py-1.5 rounded-lg shrink-0 transition-colors hover:bg-[var(--app-bg-hover)]"
+          style={{ color: "var(--app-text-tertiary)", border: "0.5px solid var(--app-border-default)" }}
         >
           Kembali
         </button>
       </div>
 
-      {fieldChips.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {fieldChips.map((chip) => (
-            <span
-              key={chip}
-              className="text-[11px] px-2.5 py-1"
-              style={{
-                borderRadius: 999,
-                background: "rgba(204,255,0,0.08)",
-                color: "rgba(204,255,0,0.85)",
-                border: "1px solid rgba(204,255,0,0.2)",
-                fontFamily: "var(--font-jetbrains-mono), monospace",
-              }}
-            >
-              {chip}
-            </span>
-          ))}
-        </div>
-      )}
-
       <div
         ref={listRef}
         className="flex-1 overflow-y-auto space-y-3 mb-4 p-4"
         style={{
-          borderRadius: 16,
-          border: "1px solid rgba(255,255,255,0.08)",
-          background: "rgba(255,255,255,0.02)",
-          maxHeight: "48vh",
+          borderRadius: 12,
+          border: "0.5px solid var(--app-border-default)",
+          background: "var(--app-bg-elevated)",
+          maxHeight: "52vh",
         }}
       >
         {starting && messages.length === 0 && (
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <p className="font-mono text-[13px]" style={{ color: "var(--app-text-tertiary)" }}>
             Menyiapkan sesi wawancara...
           </p>
         )}
 
         {messages.map((m, i) => (
-          <div
-            key={`${m.role}-${i}`}
+          <motion.div
+            key={`${m.role}-${i}-${m.content.slice(0, 24)}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] as const }}
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className="max-w-[85%] px-4 py-3 text-sm"
+              className="max-w-[88%] px-4 py-3 font-mono text-[13px] leading-relaxed"
               style={{
-                borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                borderRadius: m.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
                 background:
                   m.role === "user"
-                    ? "rgba(204,255,0,0.12)"
-                    : "rgba(255,255,255,0.05)",
-                color:
+                    ? "rgba(56,189,248,0.1)"
+                    : "var(--app-bg-hover)",
+                border:
                   m.role === "user"
-                    ? "var(--color-text-primary)"
-                    : "rgba(255,255,255,0.75)",
-                lineHeight: 1.55,
+                    ? "1px solid rgba(56,189,248,0.35)"
+                    : "0.5px solid var(--app-border-default)",
+                color: m.role === "user" ? "var(--app-text-primary)" : "var(--app-text-secondary)",
                 whiteSpace: "pre-wrap",
               }}
             >
               {m.content}
             </div>
-          </div>
+          </motion.div>
         ))}
 
-        {busy && !starting && (
-          <p
-            className="text-xs"
-            style={{
-              color: "rgba(255,255,255,0.3)",
-              fontFamily: "var(--font-jetbrains-mono), monospace",
-            }}
-          >
-            AI mengetik...
-          </p>
+        {showStarters && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {STARTER_CHIPS.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => void sendTurn(chip)}
+                className="generate-chip"
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
         )}
+
+        {busy && !starting && <TypingIndicator />}
       </div>
 
       {error && (
-        <p className="text-sm mb-3" style={{ color: "#FB923C" }}>
+        <p className="font-mono text-[13px] mb-3" style={{ color: "#EF4444" }}>
           {error}
         </p>
       )}
@@ -369,42 +384,33 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
             }}
             disabled={busy || !sessionId || isComplete}
             placeholder="Ketik jawabanmu..."
-            className="flex-1 px-4 py-3 text-sm outline-none"
+            className="flex-1 px-4 py-3 font-mono text-[13px] outline-none rounded-lg"
             style={{
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(0,0,0,0.35)",
-              color: "var(--color-text-primary)",
+              border: "0.5px solid var(--app-border-default)",
+              background: "var(--app-bg-elevated)",
+              color: "var(--app-text-primary)",
             }}
           />
           <button
             type="button"
             onClick={() => void sendTurn()}
             disabled={busy || !input.trim() || !sessionId || isComplete}
-            className="px-5 py-3 text-sm font-semibold disabled:opacity-40"
-            style={{
-              borderRadius: 12,
-              background: "var(--color-lime)",
-              color: "#0A0A0A",
-            }}
+            className="px-5 py-3 font-mono text-[13px] font-bold rounded-lg disabled:opacity-40 transition-opacity"
+            style={{ background: "var(--app-amber)", color: "#0D1321" }}
           >
             Kirim
           </button>
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         {(isComplete || (filledFields.productType && filledFields.targetUser)) && (
           <button
             type="button"
             onClick={() => void finish("COMPLETED")}
             disabled={busy}
-            className="px-5 py-2.5 text-sm font-semibold"
-            style={{
-              borderRadius: 10,
-              background: "var(--color-lime)",
-              color: "#0A0A0A",
-            }}
+            className="px-5 py-2.5 font-mono text-[13px] font-bold rounded-lg"
+            style={{ background: "var(--app-amber)", color: "#0D1321" }}
           >
             Lanjut ke stack
           </button>
@@ -413,12 +419,8 @@ export default function InterviewStep({ onFinished, onBack }: Props) {
           type="button"
           onClick={() => void finish("FALLBACK")}
           disabled={busy}
-          className="px-5 py-2.5 text-sm"
-          style={{
-            borderRadius: 10,
-            border: "1px solid rgba(255,255,255,0.15)",
-            color: "rgba(255,255,255,0.55)",
-          }}
+          className="font-mono text-[13px] px-2 py-2 underline-offset-2 hover:underline"
+          style={{ color: "var(--app-sky)", background: "transparent", border: "none" }}
         >
           Isi manual
         </button>

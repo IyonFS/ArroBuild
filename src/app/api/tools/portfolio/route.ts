@@ -1,5 +1,13 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { generateStream } from "@/lib/ai/generator";
+import { getSupabaseUser, syncDbUser } from "@/lib/auth";
+import { prisma } from "@/lib/db/prisma";
+import {
+  assertTierCapability,
+  TierCapabilityError,
+  getUserTierId,
+} from "@/lib/services/tier-capabilities";
+import { getTierConfig } from "@/lib/config/tiers";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -41,12 +49,60 @@ For each project described by the user, create a clean section with:
 - **Email:** [email@example.com](mailto:email@example.com)
 `;
 
+async function assertMiniToolAccess(userId: string) {
+  const { config } = await assertTierCapability(userId, "mini_tools");
+  const tierId = await getUserTierId(userId);
+  if (!tierId) return;
+
+  if (config.miniToolsIncluded === "all") return;
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const used = await prisma.creditLedger.count({
+    where: {
+      userId,
+      type: "TOOL_USAGE",
+      createdAt: { gte: startOfMonth },
+    },
+  });
+
+  const limit =
+    typeof config.miniToolsIncluded === "number"
+      ? config.miniToolsIncluded
+      : config.miniToolTrialLimit ?? 3;
+
+  if (used >= limit) {
+    throw new TierCapabilityError(
+      "MINI_TOOL_LIMIT",
+      `Kuota mini tool bulan ini habis (${used}/${limit}). Upgrade untuk akses lebih banyak.`,
+      429
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
+  const supabaseUser = await getSupabaseUser();
+  if (!supabaseUser) {
+    return NextResponse.json({ error: "Login diperlukan untuk mini tools." }, { status: 401 });
+  }
+
+  const dbUser = await syncDbUser(supabaseUser);
+
+  try {
+    await assertMiniToolAccess(dbUser.id);
+  } catch (err) {
+    if (err instanceof TierCapabilityError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
+    throw err;
+  }
+
   try {
     const body = await req.json();
     const { name, bio, skills, description } = body;
 
-    // Format prompt
     const prompt = `
 ${PORTFOLIO_SYSTEM_PROMPT}
 
@@ -58,9 +114,19 @@ ${description || "I have built various web applications."}
 `;
 
     const stream = await generateStream(prompt, {
-      model: "gemini-2.5-flash",
+      model: "gemini-3.1-flash-lite",
       temperature: 0.7,
       maxOutputTokens: 2000,
+    });
+
+    await prisma.creditLedger.create({
+      data: {
+        userId: dbUser.id,
+        type: "TOOL_USAGE",
+        amount: 0,
+        balanceAfter: dbUser.creditBalance,
+        metadata: { tool: "portfolio", name },
+      },
     });
 
     const readable = new ReadableStream({
@@ -81,7 +147,7 @@ ${description || "I have built various web applications."}
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
+        Connection: "keep-alive",
       },
     });
   } catch (error) {

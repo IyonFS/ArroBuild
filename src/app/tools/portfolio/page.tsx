@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import type { PortfolioFormState, Step } from "@/components/portfolio/types";
 import IdentitasStep from "@/components/portfolio/IdentitasStep";
@@ -86,83 +88,130 @@ export default function PortfolioToolPage() {
       : state.identitas.profesi;
 
   return (
-    <AppShell tone="marketing" showFooter>
-      <section
-        className="border-b relative overflow-hidden"
-        style={{ borderColor: "var(--color-border-default)" }}
-      >
-        <div className="absolute inset-0 bg-dot-pattern opacity-10" />
-        <div className="max-w-5xl mx-auto px-6 py-20 relative z-10">
-          <div
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono mb-6"
-            style={{
-              background: "rgba(204,255,0,0.08)",
-              border: "0.5px solid rgba(204,255,0,0.3)",
-              color: "var(--color-lime)",
-            }}
-          >
-            Mini Tools · Gratis
+    <AppShell tone="marketing" showFooter padded={false}>
+      <div className="tools-app min-h-screen">
+        <section
+          className="relative overflow-hidden border-b"
+          style={{
+            borderColor: "rgba(240,243,250,0.08)",
+            background: "var(--app-bg-blueprint, #131A2C)",
+            backgroundImage: "var(--app-blueprint-texture, var(--lp-blueprint-texture))",
+            backgroundSize: "var(--app-blueprint-size, 40px 40px)",
+          }}
+        >
+          <div className="relative z-10 mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: 16,
+                marginBottom: 20,
+              }}
+            >
+              <Link
+                href="/tools"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontFamily: "var(--font-jetbrains-mono), monospace",
+                  fontSize: 13,
+                  color: "rgba(240,243,250,0.45)",
+                  textDecoration: "none",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#38BDF8";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "rgba(240,243,250,0.45)";
+                }}
+              >
+                <ArrowLeft size={14} />
+                Semua mini tools
+              </Link>
+
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 12px",
+                  borderRadius: 6,
+                  fontFamily: "var(--font-jetbrains-mono), monospace",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  background: "rgba(56,189,248,0.1)",
+                  border: "0.5px solid rgba(56,189,248,0.35)",
+                  color: "#38BDF8",
+                }}
+              >
+                Mini Tools · Gratis
+              </span>
+            </div>
+
+            <h1
+              className="mb-4 font-unbounded text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl"
+              style={{ color: "var(--app-text-primary)", fontWeight: 800 }}
+            >
+              Portfolio Generator
+            </h1>
+            <p
+              className="max-w-xl font-mono text-sm leading-relaxed sm:text-[15px]"
+              style={{ color: "var(--app-text-secondary)", maxWidth: 480 }}
+            >
+              Generate prompt super lengkap untuk website portfoliomu. Bawa ke AI favoritmu dan mulai{" "}
+              <i>vibe coding</i> hari ini.
+            </p>
           </div>
+        </section>
 
-          <h1
-            className="font-unbounded font-black text-4xl sm:text-5xl leading-[1.1] tracking-tight mb-5"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Portfolio Generator
-          </h1>
-          <p
-            className="text-lg font-mono max-w-xl leading-relaxed"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            Generate prompt super lengkap untuk membuat website portfoliomu sendiri. Bawa prompt ini ke AI favoritmu dan mulai <i>vibe coding</i> pertamamu hari ini.
-          </p>
-        </div>
-      </section>
+        <section
+          className="min-h-[70vh] py-10 sm:py-12"
+          style={{ background: "var(--app-bg-base)" }}
+        >
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            <StepIndicator
+              currentStep={currentStep}
+              onGoTo={handleGoTo}
+              completedSteps={completedSteps}
+            />
 
-      <section className="py-12 bg-[var(--bg-base)] min-h-[70vh]">
-        <div className="max-w-4xl mx-auto px-4">
-          <StepIndicator
-            currentStep={currentStep}
-            onGoTo={handleGoTo}
-            completedSteps={completedSteps}
-          />
-
-          <div className="mt-8 transition-opacity duration-300">
-            {currentStep === 1 && (
-              <IdentitasStep
-                value={state.identitas}
-                onChange={(identitas) => setState({ ...state, identitas })}
-                onApplyDemo={handleApplyDemo}
-                onNext={() => handleNext(2, 1)}
-              />
-            )}
-            {currentStep === 2 && (
-              <KontenStep
-                profesi={resolvedProfesi}
-                value={state.konten}
-                onChange={(konten) => setState({ ...state, konten })}
-                onBack={() => handleBack(1)}
-                onNext={() => handleNext(3, 2)}
-              />
-            )}
-            {currentStep === 3 && (
-              <DesignStep
-                value={state.design}
-                onChange={(design) => setState({ ...state, design })}
-                onBack={() => handleBack(2)}
-                onNext={() => handleNext("result", 3)}
-              />
-            )}
-            {currentStep === "result" && (
-              <ResultScreen
-                state={state}
-                onEdit={handleGoTo}
-                onReset={handleReset}
-              />
-            )}
+            <div className="mt-8 transition-opacity duration-300">
+              {currentStep === 1 && (
+                <IdentitasStep
+                  value={state.identitas}
+                  onChange={(identitas) => setState({ ...state, identitas })}
+                  onApplyDemo={handleApplyDemo}
+                  onNext={() => handleNext(2, 1)}
+                />
+              )}
+              {currentStep === 2 && (
+                <KontenStep
+                  profesi={resolvedProfesi}
+                  value={state.konten}
+                  onChange={(konten) => setState({ ...state, konten })}
+                  onBack={() => handleBack(1)}
+                  onNext={() => handleNext(3, 2)}
+                />
+              )}
+              {currentStep === 3 && (
+                <DesignStep
+                  value={state.design}
+                  onChange={(design) => setState({ ...state, design })}
+                  onBack={() => handleBack(2)}
+                  onNext={() => handleNext("result", 3)}
+                />
+              )}
+              {currentStep === "result" && (
+                <ResultScreen state={state} onEdit={handleGoTo} onReset={handleReset} />
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </AppShell>
   );
 }

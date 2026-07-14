@@ -1,24 +1,11 @@
-import { Outfit } from "next/font/google";
+import type { ReactNode } from "react";
 import LearnShell from "@/components/learn/LearnShell";
 import LearnThemeProvider from "@/components/learn/LearnThemeProvider";
 
-const outfit = Outfit({
-  variable: "--font-learn",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-export default function LearnLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function LearnLayout({ children }: { children: ReactNode }) {
   return (
-    <div className={outfit.variable}>
-      <LearnThemeProvider>
-        <LearnShell>{children}</LearnShell>
-      </LearnThemeProvider>
-    </div>
+    <LearnThemeProvider>
+      <LearnShell>{children}</LearnShell>
+    </LearnThemeProvider>
   );
 }

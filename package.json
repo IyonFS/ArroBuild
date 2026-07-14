@@ -13,6 +13,8 @@
     "test:validation": "tsx scripts/test-validation.ts",
     "test:errors": "tsx scripts/test-errors.ts",
     "test:generate": "node scripts/test-generate-api.mjs",
+    "test:backend": "node scripts/test-backend-v2.mjs",
+    "test:production": "node scripts/test-production-automated.mjs",
     "test:midtrans": "node scripts/test-midtrans.mjs"
   },
   "dependencies": {
@@ -20,6 +22,7 @@
     "@google/genai": "^2.9.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@sentry/nextjs": "^10.65.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "@types/pg": "^8.20.0",
@@ -29,6 +32,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
+    "framer-motion": "^12.42.2",
     "jszip": "^3.10.1",
     "lucide-react": "^1.21.0",
     "next": "16.2.9",

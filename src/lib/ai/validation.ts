@@ -1,4 +1,19 @@
 import type { FileKey } from "./prompts/shared";
+import {
+  dedupeRepeatedDocument,
+  hasDuplicateDocumentStructure,
+  mergeContinuationContent,
+  sanitizeGeneratedContent,
+  stripOuterCodeFences,
+} from "./content-merge";
+
+export {
+  dedupeRepeatedDocument,
+  hasDuplicateDocumentStructure,
+  mergeContinuationContent,
+  sanitizeGeneratedContent,
+  stripOuterCodeFences,
+};
 
 export interface FileRequirements {
   minChars: number;
@@ -8,51 +23,89 @@ export interface FileRequirements {
 
 export const FILE_REQUIREMENTS: Record<FileKey, FileRequirements> = {
   prd: {
-    minChars: 2500,
-    minHeadings: 8,
+    minChars: 1800,
+    minHeadings: 5,
     requiredPatterns: [
-      /problem statement/i,
-      /solution/i,
-      /target users/i,
-      /mvp scope/i,
-      /user stories/i,
-      /open questions/i,
+      /masalah yang diselesaikan|problem statement/i,
+      /ringkasan produk|solution overview/i,
+      /target pengguna|target users/i,
+      /fitur utama|feat-\d{3}/i,
+      /cara kerja|alur pengguna/i,
+      /batasan|mvp scope/i,
+      /model harga|peran dua sisi|platform & fitur|pengguna api|katalog|model ai|pengguna internal|proyek unggulan|konteks produk/i,
     ],
   },
-  context: {
-    minChars: 1800,
-    minHeadings: 6,
-    requiredPatterns: [/vision/i, /goals/i, /tech stack/i],
+  architecture: {
+    minChars: 1500,
+    minHeadings: 4,
+    requiredPatterns: [
+      /vision|overview|keputusan teknis/i,
+      /tech stack|architecture|arsitektur|struktur folder/i,
+      /database|schema|skema/i,
+    ],
   },
-  plan: {
-    minChars: 2000,
-    minHeadings: 6,
-    requiredPatterns: [/roadmap/i, /tech stack/i, /tasks/i],
+  "plan-task": {
+    minChars: 1200,
+    minHeadings: 3,
+    requiredPatterns: [
+      /roadmap|phase|fase|pembagian fase/i,
+      /estimasi|task|tugas|\- \[ \]/i,
+    ],
   },
   "design-system": {
     minChars: 1800,
     minHeadings: 5,
     requiredPatterns: [/color/i, /typography/i, /component/i],
   },
-  agents: {
+  "agent-rules": {
     minChars: 1500,
     minHeadings: 4,
-    requiredPatterns: [/agent/i, /rules/i],
+    requiredPatterns: [/agent|role/i, /rules/i],
   },
-  "production-hardening": {
+  "adaptive-document": {
     minChars: 1500,
     minHeadings: 4,
-    requiredPatterns: [/security/i, /monitoring/i],
+    requiredPatterns: [/strategy|approach/i],
   },
-  "scale-performance": {
-    minChars: 1500,
+  "cost-infrastructure": {
+    minChars: 1200,
     minHeadings: 4,
-    requiredPatterns: [/scal/i, /performance/i],
+    requiredPatterns: [/cost|budget/i, /infrastructure|hosting/i],
   },
-  "growth-quality": {
+  "analytics-metrics": {
+    minChars: 1200,
+    minHeadings: 4,
+    requiredPatterns: [/metric|analytics/i, /event|tracking/i],
+  },
+  "testing-qa": {
+    minChars: 1200,
+    minHeadings: 4,
+    requiredPatterns: [/test/i, /qa|quality/i],
+  },
+  "onboarding-email": {
+    minChars: 1200,
+    minHeadings: 4,
+    requiredPatterns: [/onboarding/i, /email/i],
+  },
+  "competitive-analysis": {
+    minChars: 1200,
+    minHeadings: 4,
+    requiredPatterns: [/competitor|competitive/i],
+  },
+  "security-launch": {
     minChars: 1500,
     minHeadings: 4,
-    requiredPatterns: [/growth|go-to-market/i, /quality|testing/i],
+    requiredPatterns: [/security/i, /launch|checklist/i],
+  },
+  "database-deep-dive": {
+    minChars: 1500,
+    minHeadings: 4,
+    requiredPatterns: [/database|schema/i, /index|performance/i],
+  },
+  "compliance-legal": {
+    minChars: 1200,
+    minHeadings: 4,
+    requiredPatterns: [/privacy|compliance/i, /legal|terms/i],
   },
 };
 
@@ -69,7 +122,6 @@ const TRUNCATED_FINISH_REASONS = new Set([
   "model_length",
 ]);
 
-/** Detect if text ends mid-thought (common sign of token cutoff). */
 export function endsAbruptly(content: string): boolean {
   const trimmed = content.trimEnd();
   if (!trimmed) return true;
@@ -78,7 +130,6 @@ export function endsAbruptly(content: string): boolean {
   if (".!?*`)]}>\"'".includes(lastChar)) return false;
   if (trimmed.endsWith("---")) return false;
 
-  // Ends with list marker dash or open bracket/paren
   if (/[\(\[,;:]$/.test(trimmed)) return true;
 
   const lastLine = (trimmed.split("\n").pop() ?? "").trim();
@@ -105,40 +156,39 @@ export function validateGeneratedContent(
 ): ValidationResult {
   const reasons: string[] = [];
   const req = FILE_REQUIREMENTS[fileKey];
+  const cleaned = sanitizeGeneratedContent(content);
 
-  if (!content.trim()) {
+  if (!cleaned.trim()) {
     return { valid: false, truncated: true, reasons: ["empty content"] };
   }
 
-  if (content.trimStart().startsWith("```markdown")) {
+  if (cleaned.trimStart().startsWith("```markdown")) {
     reasons.push("wrapped in markdown code block");
   }
 
-  if (!/^#{1,6}\s+.+/m.test(content)) {
+  if (!/^#{1,6}\s+.+/m.test(cleaned)) {
     reasons.push("missing markdown headings");
   }
 
-  if (content.length < req.minChars) {
-    reasons.push(
-      `too short (${content.length} chars, need ${req.minChars}+)`
-    );
+  if (cleaned.length < req.minChars) {
+    reasons.push(`too short (${cleaned.length} chars, need ${req.minChars}+)`);
   }
 
-  const headings = countHeadings(content);
+  const headings = countHeadings(cleaned);
   if (headings < req.minHeadings) {
-    reasons.push(
-      `insufficient sections (${headings} headings, need ${req.minHeadings}+)`
-    );
+    reasons.push(`insufficient sections (${headings} headings, need ${req.minHeadings}+)`);
   }
 
   for (const pattern of req.requiredPatterns) {
-    if (!pattern.test(content)) {
+    if (!pattern.test(cleaned)) {
       reasons.push(`missing section matching ${pattern.source}`);
     }
   }
 
   const truncatedByFinish = isTruncatedFinishReason(finishReason);
-  const truncatedByEnding = endsAbruptly(content);
+  const truncatedByEnding =
+    endsAbruptly(cleaned) &&
+    (cleaned.length < req.minChars || countHeadings(cleaned) < req.minHeadings);
   const truncated = truncatedByFinish || truncatedByEnding;
 
   if (truncatedByFinish) {
@@ -155,19 +205,61 @@ export function validateGeneratedContent(
   };
 }
 
-export function buildContinuationPrompt(
-  originalPrompt: string,
-  partialContent: string
+const DOC_MAIN_HEADINGS: Partial<Record<FileKey, string>> = {
+  prd: "# Product Requirements Document",
+  architecture: "# Architecture & Technical Blueprint",
+  "plan-task": "# Plan / Task",
+};
+
+export function buildRepairPrompt(
+  _originalPrompt: string,
+  partialContent: string,
+  reasons: string[],
+  fileKey: FileKey = "prd"
 ): string {
-  const tail = partialContent.slice(-1200);
-  return `${originalPrompt}
+  const issues = reasons.filter((r) => !r.includes("token limit"));
+  const draft = sanitizeGeneratedContent(partialContent);
+  const draftForPrompt = draft.length > 14000 ? draft.slice(0, 14000) + "\n...[truncated]..." : draft;
+  const mainHeading = DOC_MAIN_HEADINGS[fileKey] ?? "# Document";
 
-IMPORTANT: Your previous response was cut off. Continue EXACTLY where you stopped.
-Do NOT repeat any content already written. Complete ALL remaining sections.
+  return `Fix and complete this ${fileKey} document. Output ONE single complete markdown file.
 
-<partial_output tail="true">
+ISSUES:
+${issues.length ? issues.map((r) => `- ${r}`).join("\n") : "- incomplete or missing sections"}
+
+RULES:
+- Output the FULL corrected document as a single replacement (not an addendum)
+- Keep ONE metadata block at the top if the document type requires it — never duplicate metadata
+- Keep ONE main heading (${mainHeading}) — never duplicate it
+- Preserve FEAT-XXX IDs and valid existing sections
+- Use Indonesian section titles where applicable
+- Be specific to the user's product idea — avoid generic filler
+- Raw markdown only — no outer code fences
+
+CURRENT DRAFT:
+${draftForPrompt}`;
+}
+
+export function buildContinuationPrompt(
+  partialContent: string,
+  fileKey: FileKey
+): string {
+  const cleaned = sanitizeGeneratedContent(partialContent);
+  const tail = cleaned.slice(-2800);
+
+  return `Continue the ${fileKey} document from the exact cut-off below.
+
+CRITICAL:
+- Output ONLY new content to append — do NOT repeat anything already written
+- Do NOT output YAML metadata again
+- Do NOT output "# Product Requirements Document" again
+- Do NOT restart section numbering from 1
+- Complete all remaining required sections
+
+END OF DOCUMENT SO FAR:
+<partial_output>
 ${tail}
 </partial_output>
 
-Continue from the exact cut-off point and finish the entire document.`;
+Continue from the cut-off point.`;
 }

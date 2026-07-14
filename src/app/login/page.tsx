@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import AuthLayout from "@/components/layout/AuthLayout";
 import AuthForm from "@/components/auth/AuthForm";
+import AuthRedirectIfLoggedIn from "@/components/auth/AuthRedirectIfLoggedIn";
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -15,9 +16,12 @@ function LoginContent() {
       : null;
 
   return (
-    <AuthLayout>
-      <AuthForm mode="login" plan={plan} error={error} />
-    </AuthLayout>
+    <>
+      <AuthRedirectIfLoggedIn />
+      <AuthLayout>
+        <AuthForm mode="login" plan={plan} error={error} />
+      </AuthLayout>
+    </>
   );
 }
 

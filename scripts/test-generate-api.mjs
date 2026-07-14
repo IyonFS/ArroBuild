@@ -11,7 +11,7 @@ const payload = {
   clarifications: { platform: "web", monetization: "freemium", scope: "mvp" },
   presets: { framework: "nextjs", design: "linear", agentTool: "cursor" },
   tier: "free",
-  modelId: "gemini-2.5-flash",
+  modelId: "gemini-3.1-flash-lite",
 };
 
 async function main() {

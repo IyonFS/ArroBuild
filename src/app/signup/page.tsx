@@ -5,15 +5,19 @@ import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import AuthLayout from "@/components/layout/AuthLayout";
 import AuthForm from "@/components/auth/AuthForm";
+import AuthRedirectIfLoggedIn from "@/components/auth/AuthRedirectIfLoggedIn";
 
 function SignupContent() {
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
 
   return (
-    <AuthLayout>
-      <AuthForm mode="signup" plan={plan} />
-    </AuthLayout>
+    <>
+      <AuthRedirectIfLoggedIn />
+      <AuthLayout>
+        <AuthForm mode="signup" plan={plan} />
+      </AuthLayout>
+    </>
   );
 }
 

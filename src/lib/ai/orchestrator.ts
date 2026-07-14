@@ -1,9 +1,5 @@
 /**
- * orchestrator.ts (v3 — slim version)
- * Hanya bertanggung jawab mengkoordinasikan urutan generate dokumen.
- * Semua concern lain didelegasikan ke modul spesialis.
- *
- * Backward-compatible: tetap mengekspos GenerationEvent, FileKey, ALL_FILES, dll.
+ * orchestrator.ts (v3) — v2 document keys
  */
 
 import { streamWithFinishReason, type GenerationConfig } from "./generator";
@@ -12,88 +8,59 @@ import { ContextManager } from "./context-manager";
 import {
   FALLBACK_CHAIN,
   getBackoffMs,
-  isFreeTierQuotaError,
   shouldFallback,
 } from "./retry-handler";
+import { queueFileWrite, queueProjectStatusUpdate } from "./db-writer";
 import {
-  queueFileWrite,
-  queueProjectStatusUpdate,
-} from "./db-writer";
-import { StreamWriter } from "./stream-writer";
-import {
-  toV3Tier,
   enforceTier,
-  V3_TIER_CONFIG,
   modelToProvider,
-  type V3Tier,
-  type ModelId,
+  toV3Tier,
 } from "./tier-enforcer";
-import { validateGeneratedContent, buildContinuationPrompt } from "./validation";
+import {
+  validateGeneratedContent,
+  buildContinuationPrompt,
+  buildRepairPrompt,
+  sanitizeGeneratedContent,
+  mergeContinuationContent,
+} from "./validation";
 import { formatGenerationError } from "./errors";
-import type { FileKey, GenerationInput } from "./prompts/shared";
-import { legacyModelIdToClass } from "@/lib/ai-gateway/model-router";
+import type { GenerationInput } from "./prompts/shared";
+import type { DocumentFileKey } from "@/lib/config/documents";
+import {
+  DOCUMENT_DEFINITIONS,
+  DOCUMENT_GENERATION_ORDER,
+  DEFAULT_CORE_DOCS_BY_TIER,
+  getDefaultModelClass,
+  legacyTierSlugToUserTier,
+} from "@/lib/config/documents";
+import {
+  modelClassSlugToId,
+  resolveModelForClass,
+  resolveModelsForClass,
+  routedModelToProvider,
+  isModelConfigured,
+} from "@/lib/ai-gateway/model-router";
+import { getTierConfig, validateModelClassForTier, type ModelClassId } from "@/lib/config/tiers";
 
-// ─── Public Re-exports (backward compat) ───────────────────────────────────
-
-export type { FileKey } from "./prompts/shared";
+export type { DocumentFileKey as FileKey } from "@/lib/config/documents";
 export type GenerationStatus = "pending" | "generating" | "done" | "error";
 
 export interface FileDefinition {
-  key: FileKey;
+  key: DocumentFileKey;
   fileName: string;
   label: string;
 }
 
-export const ALL_FILES: Record<FileKey, FileDefinition> = {
-  prd: { key: "prd", fileName: "prd.md", label: "Product Requirements" },
-  context: { key: "context", fileName: "context.md", label: "Project Context" },
-  plan: { key: "plan", fileName: "plan.md", label: "Development Plan" },
-  "design-system": {
-    key: "design-system",
-    fileName: "design-system.md",
-    label: "Design System",
-  },
-  agents: { key: "agents", fileName: "agents.md", label: "AI Agents & Rules" },
-  "production-hardening": {
-    key: "production-hardening",
-    fileName: "production-hardening.md",
-    label: "Production Hardening",
-  },
-  "scale-performance": {
-    key: "scale-performance",
-    fileName: "scale-performance.md",
-    label: "Scale & Performance",
-  },
-  "growth-quality": {
-    key: "growth-quality",
-    fileName: "growth-quality.md",
-    label: "Growth & Quality",
-  },
-};
-
-// Urutan dokumen yang canonical (context harus selalu paling awal)
-const DOC_ORDER: FileKey[] = [
-  "context",
-  "prd",
-  "plan",
-  "design-system",
-  "agents",
-  "production-hardening",
-  "scale-performance",
-  "growth-quality",
-];
-
-// ─── Legacy GenerationEvent (untuk backward-compat dengan route.ts & client) ──
+export const ALL_FILES: Record<DocumentFileKey, FileDefinition> = Object.fromEntries(
+  Object.values(DOCUMENT_DEFINITIONS).map((d) => [
+    d.key,
+    { key: d.key, fileName: d.fileName, label: d.label },
+  ])
+) as Record<DocumentFileKey, FileDefinition>;
 
 export interface GenerationEvent {
-  type:
-    | "progress"
-    | "chunk"
-    | "file_done"
-    | "all_done"
-    | "error"
-    | "retry";
-  fileKey?: FileKey;
+  type: "progress" | "chunk" | "file_done" | "all_done" | "error" | "retry";
+  fileKey?: DocumentFileKey;
   fileName?: string;
   label?: string;
   chunk?: string;
@@ -102,7 +69,7 @@ export interface GenerationEvent {
   modelClass?: string;
   tokensUsed?: number;
   documentsGenerated?: Array<{
-    fileKey: FileKey;
+    fileKey: DocumentFileKey;
     modelClass: "HEMAT" | "MENENGAH" | "FLAGSHIP" | "ULTRA";
     tokensUsed: number;
   }>;
@@ -110,26 +77,24 @@ export interface GenerationEvent {
   error?: string;
   attempt?: number;
   success?: boolean;
-  failedFiles?: Partial<Record<FileKey, string>>;
+  failedFiles?: Partial<Record<DocumentFileKey, string>>;
 }
 
 export function getFilesForTier(tier: string): FileDefinition[] {
-  const v3 = toV3Tier(tier);
-  const allowed = V3_TIER_CONFIG[v3].allowedDocuments;
-  return allowed.map((key) => ALL_FILES[key]);
+  const userTier = legacyTierSlugToUserTier(tier);
+  return DEFAULT_CORE_DOCS_BY_TIER[userTier].map((key) => ALL_FILES[key]);
 }
 
-// ─── Internal: stream-complete single file ─────────────────────────────────
-
-const MAX_CONTINUATIONS = 2;
+const MAX_CONTINUATIONS = 3;
 
 async function* streamCompleteFile(
   prompt: string,
-  fileKey: FileKey,
+  fileKey: DocumentFileKey,
   genConfig: GenerationConfig
 ): AsyncGenerator<string, string, undefined> {
   let content = "";
   let currentPrompt = prompt;
+  let passMode: "initial" | "continuation" | "repair" = "initial";
 
   for (let pass = 0; pass <= MAX_CONTINUATIONS; pass++) {
     let passText = "";
@@ -146,125 +111,151 @@ async function* streamCompleteFile(
       yield result.value;
     }
 
-    content = pass === 0 ? passText : content + passText;
-    // Strip markdown wrapper if model wrapped output
-    const trimmed = content.trim();
-    if (trimmed.startsWith("```markdown") || trimmed.startsWith("```md")) {
-      content = trimmed
-        .replace(/^```(?:markdown|md)\s*\n?/, "")
-        .replace(/\n?```\s*$/, "")
-        .trim();
+    const normalizedPass = sanitizeGeneratedContent(passText);
+
+    if (pass === 0) {
+      content = normalizedPass;
+    } else if (passMode === "continuation") {
+      content = sanitizeGeneratedContent(
+        mergeContinuationContent(content, normalizedPass)
+      );
+    } else {
+      content = normalizedPass;
     }
 
     const validation = validateGeneratedContent(content, fileKey, finishReason);
-    if (validation.valid) return content;
-
-    if (!validation.truncated || pass >= MAX_CONTINUATIONS) {
-      throw new Error(
-        `Generated content incomplete: ${validation.reasons.join("; ")}`
-      );
+    if (validation.valid) {
+      return sanitizeGeneratedContent(content);
     }
 
-    currentPrompt = buildContinuationPrompt(prompt, content);
+    if (pass >= MAX_CONTINUATIONS) {
+      const fallback = sanitizeGeneratedContent(content);
+      const headingCount = (fallback.match(/^#{1,3}\s+.+/gm) ?? []).length;
+      if (fallback.length >= 800 && headingCount >= 3) {
+        return fallback;
+      }
+      throw new Error(`Generated content incomplete: ${validation.reasons.join("; ")}`);
+    }
+
+    passMode = validation.truncated ? "continuation" : "repair";
+    currentPrompt = validation.truncated
+      ? buildContinuationPrompt(content, fileKey)
+      : buildRepairPrompt(prompt, content, validation.reasons, fileKey);
   }
 
-  return content;
+  return sanitizeGeneratedContent(content);
 }
 
-// ─── Main Orchestrator ─────────────────────────────────────────────────────
-
-export interface OrchestrateOptions {
-  input: GenerationInput;
-  projectId: string;
-  /** If provided, use StreamWriter for structured events. Otherwise use legacy generator. */
-  streamWriter?: StreamWriter;
-}
-
-/**
- * v3 Slim Orchestrator.
- * Yields GenerationEvent objects (legacy format) for SSE via route.ts.
- * Internally delegates all concerns to specialist modules.
- */
 export async function* orchestrateGeneration(
   input: GenerationInput,
   projectId?: string
 ): AsyncGenerator<GenerationEvent> {
-  const tier = input.tier ?? "free";
-  const v3Tier: V3Tier = toV3Tier(tier);
-  const tierConfig = V3_TIER_CONFIG[v3Tier];
+  const userTier = legacyTierSlugToUserTier(input.tier);
+  const promptDepth = toV3Tier(input.tier);
 
-  // Determine which docs to generate (tier-enforced)
-  const requestedDocs: FileKey[] = input.selectedDocs ??
-    DOC_ORDER.filter((k) => tierConfig.allowedDocuments.includes(k));
+  const requestedDocs: DocumentFileKey[] =
+    input.selectedDocs ??
+    DEFAULT_CORE_DOCS_BY_TIER[userTier];
 
-  const enforcement = enforceTier(requestedDocs, input.modelId, v3Tier);
+  const enforcement = enforceTier(requestedDocs, input.modelId, input.tier);
+  if (!enforcement.allowed && enforcement.reason) {
+    yield { type: "error", error: enforcement.reason };
+    yield { type: "all_done", success: false, error: enforcement.reason };
+    return;
+  }
+
   const primaryModel = enforcement.resolvedModel;
-  const provider = modelToProvider(primaryModel);
-
   const genConfig: GenerationConfig = {
-    maxOutputTokens: tierConfig.maxTokensPerDoc,
-    temperature: 0.7,
+    maxOutputTokens: enforcement.tokenLimit,
+    temperature: 0.55,
     model: primaryModel,
-    provider,
+    provider: modelToProvider(primaryModel),
   };
 
-  // Sort docs by canonical order
-  const docsToGenerate = DOC_ORDER.filter((k) =>
+  const tierId =
+    enforcement.userTier === "pro_max"
+      ? "PRO_MAX"
+      : enforcement.userTier === "pro"
+        ? "PRO"
+        : "STARTER";
+  const tierConfig = getTierConfig(tierId);
+
+  const docsToGenerate = DOCUMENT_GENERATION_ORDER.filter((k) =>
     enforcement.sanitizedDocs.includes(k)
   );
 
-  const contextManager = new ContextManager();
-  const generatedFiles: Partial<Record<FileKey, string>> = {};
+  const contextManager = new ContextManager(tierConfig.maxContextInjectionTokens);
+  const generatedFiles: Partial<Record<DocumentFileKey, string>> = {};
   const generatedMeta: Array<{
-    fileKey: FileKey;
+    fileKey: DocumentFileKey;
     modelClass: "HEMAT" | "MENENGAH" | "FLAGSHIP" | "ULTRA";
     tokensUsed: number;
   }> = [];
-  const failedFiles: Partial<Record<FileKey, string>> = {};
+  const failedFiles: Partial<Record<DocumentFileKey, string>> = {};
+
+  const tierAllowed = tierConfig.allowedModelClasses
+    .flatMap((mc) => resolveModelsForClass(mc))
+    .filter(isModelConfigured);
+
+  function resolveDocModelClass(fileKey: DocumentFileKey): ModelClassId {
+    const slug =
+      input.perDocumentModelClass?.[fileKey] ??
+      getDefaultModelClass(fileKey, enforcement.userTier);
+    const classId = modelClassSlugToId(slug);
+    if (!validateModelClassForTier(tierId, classId)) {
+      return "HEMAT";
+    }
+    return classId;
+  }
 
   for (const fileKey of docsToGenerate) {
     const fileDef = ALL_FILES[fileKey];
     const { fileName, label } = fileDef;
-
-    // Build prompt using accumulated context
     const contextString = contextManager.buildContextString(fileKey);
-    const prompt = buildPromptForTier(fileKey, input, v3Tier, contextString);
+    const prompt = buildPromptForTier(fileKey, input, promptDepth, contextString);
 
     yield { type: "progress", fileKey, fileName, label };
 
+    const docModelClass = resolveDocModelClass(fileKey);
+    const primaryRouted = resolveModelForClass(docModelClass);
+    const docPrimaryModel = primaryRouted.modelName;
+
     let fullContent = "";
-    let usedModel = primaryModel;
+    let usedModel = docPrimaryModel;
+    let usedModelClass: ModelClassId = docModelClass;
     let totalAttempts = 0;
     let lastError: unknown;
     let successGeneration = false;
 
-    const tierAllowed = V3_TIER_CONFIG[v3Tier].allowedModels;
     const chain = [
-      primaryModel,
-      ...(FALLBACK_CHAIN[primaryModel] ?? []),
-    ].filter((m) => tierAllowed.includes(m));
-
-    const maxRetriesPerModel = 2;
+      docPrimaryModel,
+      ...resolveModelsForClass(docModelClass).filter((m) => m !== docPrimaryModel),
+      ...(FALLBACK_CHAIN[docPrimaryModel as keyof typeof FALLBACK_CHAIN] ?? []),
+    ].filter(
+      (m, i, arr) =>
+        tierAllowed.includes(m) &&
+        isModelConfigured(m) &&
+        arr.indexOf(m) === i
+    );
 
     for (let modelIdx = 0; modelIdx < chain.length; modelIdx++) {
       const model = chain[modelIdx];
-
-      for (let attempt = 0; attempt < maxRetriesPerModel; attempt++) {
+      for (let attempt = 0; attempt < 2; attempt++) {
         totalAttempts++;
-        if (totalAttempts > 1) {
-          yield { type: "retry", fileKey, attempt: totalAttempts };
-        }
+        if (totalAttempts > 1) yield { type: "retry", fileKey, attempt: totalAttempts };
 
         try {
           const attemptConfig: GenerationConfig = {
             ...genConfig,
             model,
-            provider: modelToProvider(model),
+            provider: modelToProvider(model as import("./tier-enforcer").ModelId),
+            maxOutputTokens: Math.min(
+              tierConfig.maxOutputTokensPerDoc,
+              DOCUMENT_DEFINITIONS[fileKey].tokenBudget[enforcement.userTier] || tierConfig.maxOutputTokensPerDoc
+            ),
           };
-
           let fileContent = "";
           const fileStream = streamCompleteFile(prompt, fileKey, attemptConfig);
-
           while (true) {
             const result = await fileStream.next();
             if (result.done) {
@@ -273,28 +264,18 @@ export async function* orchestrateGeneration(
             }
             yield { type: "chunk", fileKey, chunk: result.value };
           }
-
           fullContent = fileContent;
           usedModel = model;
+          usedModelClass = docModelClass;
           successGeneration = true;
-          break; // success, break retry loop
+          break;
         } catch (err) {
           lastError = err;
-
-          if (isFreeTierQuotaError(err)) break; // Cannot recover, will break model loop too later
-
-          const canRetry = attempt < maxRetriesPerModel - 1;
-          const canFallback = shouldFallback(err);
-
-          if (!canRetry && !canFallback) break;
-
-          if (canRetry) {
-            const delay = getBackoffMs(err, attempt);
-            await new Promise((r) => setTimeout(r, delay));
+          if (attempt < 1 && shouldFallback(err)) {
+            await new Promise((r) => setTimeout(r, getBackoffMs(err, attempt)));
           }
         }
       }
-
       if (successGeneration) break;
       if (!shouldFallback(lastError)) break;
     }
@@ -306,55 +287,41 @@ export async function* orchestrateGeneration(
       continue;
     }
 
-    // Update accumulated context for next documents
     contextManager.addDocument(fileKey, fullContent);
     generatedFiles[fileKey] = fullContent;
     const tokensUsed = Math.max(1, Math.ceil(fullContent.length / 4));
-    const modelClass = legacyModelIdToClass(usedModel);
-    generatedMeta.push({ fileKey, modelClass, tokensUsed });
+    generatedMeta.push({ fileKey, modelClass: usedModelClass, tokensUsed });
 
-      // Non-blocking DB write
-      if (projectId) {
-        queueFileWrite({
-          projectId,
-          fileKey,
-          fileName,
-          label,
-          content: fullContent,
-          modelClass,
-          tokenCount: tokensUsed,
-        });
-      }
-
-      yield {
-        type: "file_done",
+    if (projectId) {
+      queueFileWrite({
+        projectId,
         fileKey,
         fileName,
         label,
         content: fullContent,
-        usedModel,
-        modelClass,
-        tokensUsed,
-      };
+        modelClass: usedModelClass,
+        tokenCount: tokensUsed,
+      });
+    }
+
+    yield {
+      type: "file_done",
+      fileKey,
+      fileName,
+      label,
+      content: fullContent,
+      usedModel,
+      modelClass: usedModelClass,
+      tokensUsed,
+    };
   }
 
   const successCount = Object.keys(generatedFiles).length;
-  const success =
-    successCount > 0 && Object.keys(failedFiles).length === 0;
+  const success = successCount > 0 && Object.keys(failedFiles).length === 0;
 
-  // Non-blocking project status update
   if (projectId) {
-    const status = success
-      ? "DONE"
-      : successCount > 0
-      ? "DONE" // partial success still DONE — failed files recorded separately
-      : "FAILED";
-    queueProjectStatusUpdate(projectId, status);
+    queueProjectStatusUpdate(projectId, successCount > 0 ? "DONE" : "FAILED");
   }
-
-  const primaryError =
-    Object.values(failedFiles)[0] ??
-    (successCount === 0 ? "No files were generated." : undefined);
 
   yield {
     type: "all_done",
@@ -362,6 +329,6 @@ export async function* orchestrateGeneration(
     files: successCount > 0 ? (generatedFiles as Record<string, string>) : undefined,
     documentsGenerated: generatedMeta,
     failedFiles: Object.keys(failedFiles).length > 0 ? failedFiles : undefined,
-    error: success ? undefined : primaryError,
+    error: success ? undefined : Object.values(failedFiles)[0],
   };
 }

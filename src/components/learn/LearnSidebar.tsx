@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { LearningPath } from "@/lib/learn-content";
+import { getPathOverviewHref } from "@/lib/learn-nav";
 
 interface Props {
   path: LearningPath;
@@ -21,12 +22,12 @@ export default function LearnSidebar({
   const nav = (
     <>
       <Link
-        href="/learn"
+        href={getPathOverviewHref(path)}
         onClick={onCloseMobile}
         className="learn-nav-text learn-hover-link flex items-center gap-2 text-xs mb-5"
         style={{ color: "var(--learn-text-tertiary)" }}
       >
-        ← Semua topik
+        ← Overview path
       </Link>
 
       <p
@@ -46,29 +47,25 @@ export default function LearnSidebar({
               key={lesson.slug}
               href={`/learn/${path.slug}/${lesson.slug}`}
               onClick={onCloseMobile}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg learn-nav-text learn-hover-link text-xs"
+              className={`learn-sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-r-lg learn-nav-text text-xs ${
+                isActive ? "is-active" : ""
+              }`}
               style={{
-                background: isActive
-                  ? "rgba(255,92,26,0.12)"
-                  : "transparent",
                 color: isActive
-                  ? "var(--color-orange)"
+                  ? "var(--learn-accent)"
                   : isDone
-                  ? "var(--learn-text-secondary)"
-                  : "var(--learn-text-tertiary)",
-                border: isActive
-                  ? "0.5px solid rgba(255,92,26,0.35)"
-                  : "0.5px solid transparent",
+                    ? "var(--learn-text-secondary)"
+                    : "var(--learn-text-tertiary)",
               }}
             >
               <span
                 className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 tabular-nums"
                 style={{
                   background: isActive
-                    ? "var(--color-orange)"
+                    ? "var(--learn-accent)"
                     : isDone
-                    ? "var(--learn-bg-elevated)"
-                    : "transparent",
+                      ? "var(--learn-bg-elevated)"
+                      : "transparent",
                   color: isActive ? "#FFFFFF" : "inherit",
                   border: isActive
                     ? "none"
@@ -101,7 +98,7 @@ export default function LearnSidebar({
         <div className="lg:hidden fixed inset-0 z-[70]">
           <div
             className="learn-mobile-overlay absolute inset-0"
-            style={{ background: "rgba(10,10,10,0.85)" }}
+            style={{ background: "rgba(13,19,33,0.85)" }}
             onClick={onCloseMobile}
             aria-hidden
           />
@@ -110,7 +107,7 @@ export default function LearnSidebar({
             style={{
               background: "var(--learn-bg-surface)",
               borderRight: "0.5px solid var(--learn-border)",
-              paddingTop: "var(--learn-nav-height, 104px)",
+              paddingTop: "var(--learn-nav-height, 116px)",
             }}
           >
             <div className="p-4">{nav}</div>

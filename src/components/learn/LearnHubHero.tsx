@@ -1,35 +1,59 @@
-import { getLearnStats } from "@/lib/learn-nav";
+import Link from "next/link";
+import { getFirstLessonHref, getLearnStats } from "@/lib/learn-nav";
+import { LEARNING_PATHS } from "@/lib/learn-content";
 
 export default function LearnHubHero() {
   const { pathCount, lessonCount } = getLearnStats();
+  const starterPath = LEARNING_PATHS.find((p) => p.level === "pemula") ?? LEARNING_PATHS[0];
 
   return (
-    <section className="relative overflow-hidden">
-      <div
-        className="learn-hero-glow absolute inset-0 pointer-events-none"
-        aria-hidden
-      />
+    <section className="relative overflow-hidden" style={{ background: "var(--app-bg-base)" }}>
+      <div className="learn-hero-glow absolute inset-0 pointer-events-none" aria-hidden />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-16 sm:py-24">
-        <p className="learn-brand-badge inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full mb-7">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-16 sm:py-20">
+        <p className="learn-brand-badge inline-flex items-center gap-2 px-3 py-1 rounded mb-6">
           <span className="learn-stat-dot" />
           Gratis · Tanpa login
         </p>
 
         <h1
-          className="learn-hero-title text-[2.35rem] sm:text-5xl lg:text-[3.5rem] mb-6 max-w-4xl"
+          className="learn-hero-title text-[2.1rem] sm:text-4xl lg:text-[2.75rem] mb-5 max-w-3xl"
           style={{ color: "var(--color-text-primary)" }}
         >
           Belajar agent engineering, langkah demi langkah.
         </h1>
 
-        <p className="learn-body max-w-2xl mb-9">
-          Learn Hub ArroBuild adalah ruang belajar terpisah untuk vibe coding,
-          dokumentasi proyek, dan workflow AI agent. Pilih topik, ikuti lesson
-          berurutan, dan bangun fondasi sebelum menulis kode.
+        <p className="learn-body mb-8" style={{ maxWidth: 480 }}>
+          Kursus vibe coding dan workflow AI agent. Pilih path, baca overview,
+          lalu ikuti lesson berurutan sebelum masuk ke editor.
         </p>
 
-        <ul className="flex flex-wrap gap-x-10 gap-y-3">
+        <div className="flex flex-wrap items-center gap-3 mb-10">
+          <a
+            href="#path-katalog"
+            className="learn-cta learn-nav-text text-sm font-semibold inline-flex items-center gap-2 px-5 py-2.5 rounded-md"
+          >
+            Lihat path
+            <span className="learn-cta-arrow" aria-hidden>
+              →
+            </span>
+          </a>
+          {starterPath && (
+            <Link
+              href={getFirstLessonHref(starterPath)}
+              className="learn-hover-btn learn-nav-text text-sm inline-flex items-center gap-2 px-5 py-2.5 rounded-md"
+              style={{
+                color: "var(--color-text-primary)",
+                border: "0.5px solid var(--learn-border)",
+                background: "var(--learn-bg-elevated)",
+              }}
+            >
+              Mulai path pemula
+            </Link>
+          )}
+        </div>
+
+        <ul className="flex flex-wrap gap-x-8 gap-y-2">
           {[
             `${pathCount} learning path`,
             `${lessonCount} lesson terstruktur`,
@@ -38,11 +62,11 @@ export default function LearnHubHero() {
             <li
               key={label}
               className="learn-body-sm flex items-center gap-2.5"
-              style={{ color: "var(--learn-text-tertiary)" }}
+              style={{ color: "var(--learn-text-tertiary)", maxWidth: "none" }}
             >
               <span
                 className="w-1.5 h-1.5 rounded-full"
-                style={{ background: "var(--color-orange)" }}
+                style={{ background: "var(--learn-info)" }}
               />
               {label}
             </li>

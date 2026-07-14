@@ -102,7 +102,7 @@ export interface ColorTheme {
 }
 
 export const COLOR_THEMES: ColorTheme[] = [
-  { id: "midnight-pro", name: "Midnight Pro", bg: "#0A0A0A", primary: "#CCFF00", text: "#FFFFFF", vibe: "Dark, hacker, techy" },
+  { id: "midnight-pro", name: "Midnight Pro", bg: "#0D1321", primary: "#FFB020", text: "#FFFFFF", vibe: "Dark, hacker, techy" },
   { id: "ocean-depth", name: "Ocean Depth", bg: "#0D1B2A", primary: "#00D4FF", text: "#FFFFFF", vibe: "Professional, calm" },
   { id: "warm-studio", name: "Warm Studio", bg: "#1C1410", primary: "#FF6B35", text: "#FFF8F0", vibe: "Creative, warm" },
   { id: "soft-minimal", name: "Soft Minimal", bg: "#FAFAF5", primary: "#1A1A1A", text: "#6B6B6B", vibe: "Clean, minimal" },

@@ -1,8 +1,10 @@
 import type { PaymentStatus, CreditLedgerType, SubscriptionTier } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import { getTierConfig } from "@/lib/config/tiers";
+import { getTierConfig, parseBillingMonthsFromOrderId, PRO_MAX_FIRST_MONTH_BONUS } from "@/lib/config/tiers";
 import { createSnapToken, isSuccessfulTransactionStatus, getTransactionStatus, verifyWebhookSignature } from "@/lib/midtrans";
 import { logger } from "@/lib/logger";
+import { CreditService } from "@/lib/services/credit.service";
+import { getCreditTopupPack } from "@/lib/config/tiers";
 
 export interface MidtransWebhookPayload {
   order_id: string;
@@ -53,8 +55,11 @@ export const PaymentService = {
     tierSlug: string;
     amount: number;
     subscriptionTier: SubscriptionTier;
+    billingMonths?: number;
   }) {
-    const orderId = `arro-${params.userId.slice(0, 8)}-${params.tierSlug}-${Date.now()}`;
+    const months = params.billingMonths ?? 1;
+    const monthTag = months > 1 ? `m${months}-` : "";
+    const orderId = `arro-${params.userId.slice(0, 8)}-${params.tierSlug}-${monthTag}${Date.now()}`;
 
     const { token: snapToken, redirectUrl } = await createSnapToken({
       orderId,
@@ -82,6 +87,56 @@ export const PaymentService = {
     });
 
     return { snapToken, orderId, redirectUrl };
+  },
+
+  async createTopupSnap(params: {
+    userId: string;
+    email: string;
+    name?: string | null;
+    packId: string;
+    subscriptionTier: SubscriptionTier;
+  }) {
+    const pack = getCreditTopupPack(params.packId);
+    if (!pack) {
+      throw new PaymentServiceError("INVALID_PACK", "Paket top-up tidak valid", 422);
+    }
+
+    const orderId = `arro-topup-${params.userId.slice(0, 8)}-${pack.credits}-${Date.now()}`;
+
+    const { token: snapToken, redirectUrl } = await createSnapToken({
+      orderId,
+      amount: pack.priceIdr,
+      tierId: "starter",
+      customer: { email: params.email, name: params.name },
+      itemName: pack.label,
+    });
+
+    await prisma.payment.create({
+      data: {
+        orderId,
+        userId: params.userId,
+        tier: params.subscriptionTier,
+        amount: pack.priceIdr,
+        snapToken,
+        status: "PENDING",
+      },
+    });
+
+    logger.info("topup_snap_created", {
+      userId: params.userId,
+      packId: params.packId,
+      credits: pack.credits,
+      orderId,
+    });
+
+    return { snapToken, orderId, redirectUrl, credits: pack.credits };
+  },
+
+  parseTopupCreditsFromOrderId(orderId: string): number | null {
+    if (!orderId.startsWith("arro-topup-")) return null;
+    const parts = orderId.split("-");
+    const credits = parseInt(parts[3] ?? "", 10);
+    return Number.isFinite(credits) && credits > 0 ? credits : null;
   },
 
   async handleWebhook(payload: MidtransWebhookPayload): Promise<{ status: string; message: string }> {
@@ -163,10 +218,40 @@ export const PaymentService = {
       });
 
       if (isSuccessfulTransactionStatus(transactionStatus)) {
+        const topupCredits = PaymentService.parseTopupCreditsFromOrderId(orderId);
+
+        if (topupCredits) {
+          await CreditService.topupCredits(payment.userId, topupCredits, payment.id, {
+            paymentEventId: paymentEvent.id,
+            orderId,
+            reason: "topup_settlement",
+          });
+
+          logger.info("webhook_topup_processed", {
+            orderId,
+            userId: payment.userId,
+            creditsAdded: topupCredits,
+          });
+        } else {
         const now = new Date();
+        const billingMonths = parseBillingMonthsFromOrderId(orderId);
         const expiresAt = new Date(now);
-        expiresAt.setDate(expiresAt.getDate() + SUBSCRIPTION_DAYS);
+        expiresAt.setDate(expiresAt.getDate() + SUBSCRIPTION_DAYS * billingMonths);
         const config = getTierConfig(payment.tier);
+
+        const priorProMaxPayments = await tx.payment.count({
+          where: {
+            userId: payment.userId,
+            tier: "PRO_MAX",
+            status: { in: ["SETTLEMENT", "PAID"] },
+            id: { not: payment.id },
+          },
+        });
+        const firstProMaxBonus =
+          payment.tier === "PRO_MAX" && priorProMaxPayments === 0
+            ? PRO_MAX_FIRST_MONTH_BONUS
+            : 0;
+        const creditsToAdd = config.creditsPerMonth + firstProMaxBonus;
 
         await tx.subscription.upsert({
           where: { userId: payment.userId },
@@ -197,13 +282,15 @@ export const PaymentService = {
           data: {
             userId: payment.userId,
             type: "MONTHLY_REFRESH" as CreditLedgerType,
-            amount: config.creditsPerMonth,
+            amount: creditsToAdd,
             paymentId: payment.id,
-            balanceAfter: balance + config.creditsPerMonth,
+            balanceAfter: balance + creditsToAdd,
             metadata: {
               paymentEventId: paymentEvent.id,
               tier: payment.tier,
               reason: "payment_settlement",
+              billingMonths,
+              firstProMaxBonus,
             },
           },
         });
@@ -212,7 +299,7 @@ export const PaymentService = {
           where: { id: payment.userId },
           data: {
             tier: payment.tier,
-            creditBalance: balance + config.creditsPerMonth,
+            creditBalance: balance + creditsToAdd,
           },
         });
 
@@ -220,8 +307,11 @@ export const PaymentService = {
           orderId,
           userId: payment.userId,
           tier: payment.tier,
-          creditsAdded: config.creditsPerMonth,
+          creditsAdded: creditsToAdd,
+          billingMonths,
+          firstProMaxBonus,
         });
+        }
       } else if (["deny", "cancel", "expire", "failure"].includes(transactionStatus)) {
         await tx.payment.update({
           where: { id: payment.id },
@@ -256,6 +346,46 @@ export const PaymentService = {
     }
 
     return count;
+  },
+
+  async processMonthlyCreditRenewals(): Promise<number> {
+    const now = new Date();
+    const activeSubs = await prisma.subscription.findMany({
+      where: {
+        status: "ACTIVE",
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      include: { user: true },
+    });
+
+    let refreshed = 0;
+    for (const sub of activeSubs) {
+      const lastRefresh = await prisma.creditLedger.findFirst({
+        where: { userId: sub.userId, type: "MONTHLY_REFRESH" },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const daysSince = lastRefresh
+        ? (now.getTime() - lastRefresh.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+        : 999;
+
+      if (daysSince < 28) continue;
+
+      await CreditService.applyRollover(sub.userId);
+      await CreditService.refreshMonthlyCredits(sub.userId);
+
+      const nextRenewal = new Date(now);
+      nextRenewal.setDate(nextRenewal.getDate() + SUBSCRIPTION_DAYS);
+      await prisma.subscription.update({
+        where: { id: sub.id },
+        data: { renewalDate: nextRenewal },
+      });
+
+      refreshed++;
+      logger.info("subscription_monthly_refresh", { userId: sub.userId, tier: sub.tier });
+    }
+
+    return refreshed;
   },
 };
 

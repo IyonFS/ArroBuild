@@ -53,13 +53,19 @@ export const PROJECT_MANAGEMENT_TOOLS = ["notion", "linear", "trello", "none"] a
 
 export const DOCUMENT_FILE_KEYS = [
   "prd",
-  "context",
-  "plan",
+  "architecture",
+  "plan-task",
   "design-system",
-  "agents",
-  "production-hardening",
-  "scale-performance",
-  "growth-quality",
+  "agent-rules",
+  "adaptive-document",
+  "cost-infrastructure",
+  "analytics-metrics",
+  "testing-qa",
+  "onboarding-email",
+  "competitive-analysis",
+  "security-launch",
+  "database-deep-dive",
+  "compliance-legal",
 ] as const;
 
 export const PRODUCT_TYPES = [

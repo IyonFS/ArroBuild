@@ -21,8 +21,8 @@ function uid() {
 function inputStyle(focused: boolean): React.CSSProperties {
   return {
     background: "var(--color-bg-elevated)",
-    border: focused ? "0.5px solid rgba(204,255,0,0.5)" : "0.5px solid var(--color-border-default)",
-    boxShadow: focused ? "0 0 0 3px rgba(204,255,0,0.06)" : "none",
+    border: focused ? "0.5px solid rgba(255,176,32,0.5)" : "0.5px solid var(--color-border-default)",
+    boxShadow: focused ? "0 0 0 3px rgba(255,176,32,0.06)" : "none",
     color: "var(--color-text-primary)",
     padding: "10px 12px",
     borderRadius: 10,
@@ -78,8 +78,8 @@ function SkillInput({
         className="flex flex-wrap gap-1.5 min-h-[44px] items-center px-3 py-2 rounded-xl cursor-text"
         style={{
           background: "var(--color-bg-elevated)",
-          border: focused ? "0.5px solid rgba(204,255,0,0.5)" : "0.5px solid var(--color-border-default)",
-          boxShadow: focused ? "0 0 0 3px rgba(204,255,0,0.06)" : "none",
+          border: focused ? "0.5px solid rgba(255,176,32,0.5)" : "0.5px solid var(--color-border-default)",
+          boxShadow: focused ? "0 0 0 3px rgba(255,176,32,0.06)" : "none",
           transition: "all 0.15s",
         }}
         onClick={() => inputRef.current?.focus()}
@@ -88,7 +88,7 @@ function SkillInput({
           <span
             key={skill}
             className="flex items-center gap-1 font-mono text-xs px-2.5 py-1 rounded-lg"
-            style={{ background: "rgba(204,255,0,0.1)", color: "var(--color-lime)", border: "0.5px solid rgba(204,255,0,0.3)" }}
+            style={{ background: "rgba(255,176,32,0.1)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.3)" }}
           >
             {skill}
             <button
@@ -136,9 +136,9 @@ function SkillInput({
                   disabled={skills.includes(t)}
                   className="font-mono text-[11px] px-2.5 py-1 rounded-lg transition-all"
                   style={{
-                    background: skills.includes(t) ? "rgba(204,255,0,0.05)" : "var(--color-bg-surface)",
-                    border: skills.includes(t) ? "0.5px solid rgba(204,255,0,0.2)" : "0.5px solid var(--color-border-default)",
-                    color: skills.includes(t) ? "rgba(204,255,0,0.4)" : "var(--color-text-secondary)",
+                    background: skills.includes(t) ? "rgba(255,176,32,0.05)" : "var(--color-bg-surface)",
+                    border: skills.includes(t) ? "0.5px solid rgba(255,176,32,0.2)" : "0.5px solid var(--color-border-default)",
+                    color: skills.includes(t) ? "rgba(255,176,32,0.4)" : "var(--color-text-secondary)",
                     cursor: skills.includes(t) ? "default" : "pointer",
                     opacity: skills.includes(t) ? 0.6 : 1,
                   }}
@@ -188,7 +188,7 @@ function ProyekCard({
         <div className="flex items-center gap-3">
           <span
             className="font-mono text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(204,255,0,0.1)", color: "var(--color-lime)" }}
+            style={{ background: "rgba(255,176,32,0.1)", color: "var(--color-lime)" }}
           >
             {index + 1}
           </span>
@@ -259,8 +259,8 @@ function ProyekCard({
                   onClick={() => onChange({ ...proyek, tipe: proyek.tipe === t ? undefined : t })}
                   className="font-mono text-[11px] px-2.5 py-1 rounded-lg transition-all"
                   style={{
-                    background: proyek.tipe === t ? "rgba(204,255,0,0.1)" : "var(--color-bg-surface)",
-                    border: proyek.tipe === t ? "0.5px solid rgba(204,255,0,0.4)" : "0.5px solid var(--color-border-default)",
+                    background: proyek.tipe === t ? "rgba(255,176,32,0.1)" : "var(--color-bg-surface)",
+                    border: proyek.tipe === t ? "0.5px solid rgba(255,176,32,0.4)" : "0.5px solid var(--color-border-default)",
                     color: proyek.tipe === t ? "var(--color-lime)" : "var(--color-text-secondary)",
                   }}
                 >
@@ -360,7 +360,7 @@ export default function KontenStep({ profesi, value, onChange, onNext, onBack }:
       <div className="mb-8">
         <span
           className="font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full mb-4 inline-block"
-          style={{ background: "rgba(204,255,0,0.08)", color: "var(--color-lime)", border: "0.5px solid rgba(204,255,0,0.25)" }}
+          style={{ background: "rgba(255,176,32,0.08)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.25)" }}
         >
           Step 2 of 3 — Konten
         </span>
@@ -441,7 +441,7 @@ export default function KontenStep({ profesi, value, onChange, onNext, onBack }:
                 border: "0.5px dashed var(--color-border-strong)",
                 color: "var(--color-text-tertiary)",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(204,255,0,0.3)"; e.currentTarget.style.color = "var(--color-lime)"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,176,32,0.3)"; e.currentTarget.style.color = "var(--color-lime)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border-strong)"; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
             >
               + Tambah Proyek
@@ -535,7 +535,7 @@ export default function KontenStep({ profesi, value, onChange, onNext, onBack }:
           className="flex-1 py-3 rounded-xl font-mono font-bold text-sm transition-all"
           style={{
             background: canNext ? "var(--color-lime)" : "var(--color-bg-elevated)",
-            color: canNext ? "#0A0A0A" : "var(--color-text-disabled, rgba(255,255,255,0.2))",
+            color: canNext ? "#0D1321" : "var(--color-text-disabled, rgba(255,255,255,0.2))",
             border: canNext ? "none" : "0.5px solid var(--color-border-default)",
             cursor: canNext ? "pointer" : "not-allowed",
           }}

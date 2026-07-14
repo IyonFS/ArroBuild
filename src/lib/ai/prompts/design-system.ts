@@ -40,7 +40,7 @@ const DESIGN_PRESET_TRAITS: Record<DesignPreset, string> = {
 };
 
 const DEPTH_INSTRUCTIONS: Record<V3Tier, string> = {
-  FREE: ``, // Tidak tersedia untuk FREE
+  STARTER: ``,
   PRO: `
 Buat design system document dengan:
 - Color palette (primary, secondary, neutral, semantic)

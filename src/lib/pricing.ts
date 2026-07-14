@@ -13,6 +13,8 @@ export interface PricingTier {
   name: string;
   price: string;
   priceAmount: number;
+  /** Harga referensi untuk tampilan dicoret di landing */
+  compareAtPrice?: string;
   period: string;
   description: string;
   features: string[];
@@ -27,7 +29,7 @@ export const PAID_TIER_IDS: PricingTierId[] = ["starter", "pro", "pro_max"];
 export const PRICING_TIERS: PricingTier[] = [
   {
     id: "starter",
-    name: "Starter",
+    name: "Base",
     price: "Rp 65K",
     priceAmount: TIER_CONFIG[TIER.STARTER].priceIdr,
     period: "/bulan",
@@ -39,12 +41,12 @@ export const PRICING_TIERS: PricingTier[] = [
       "3.000 kredit/bulan",
       "Download Markdown",
     ],
-    cta: "Mulai Starter",
+    cta: "Mulai Base",
     ctaHref: "/signup?plan=starter",
   },
   {
     id: "pro",
-    name: "Pro",
+    name: "Core",
     price: "Rp 145K",
     priceAmount: TIER_CONFIG[TIER.PRO].priceIdr,
     period: "/bulan",
@@ -56,14 +58,15 @@ export const PRICING_TIERS: PricingTier[] = [
       "7.000 kredit/bulan",
       "Chat WA founder 2x/bulan",
     ],
-    cta: "Upgrade ke Pro",
+    cta: "Upgrade ke Core",
     ctaHref: "/signup?plan=pro",
     highlighted: true,
-    badge: "Paling populer",
+    badge: "Paling Direkomendasikan",
+    compareAtPrice: "Rp 175K",
   },
   {
     id: "pro_max",
-    name: "Pro Max",
+    name: "Prime",
     price: "Rp 199K",
     priceAmount: TIER_CONFIG[TIER.PRO_MAX].priceIdr,
     period: "/bulan",
@@ -75,9 +78,10 @@ export const PRICING_TIERS: PricingTier[] = [
       "14.000 kredit/bulan",
       "Revisi unlimited + semua mini tools",
     ],
-    cta: "Upgrade ke Pro Max",
+    cta: "Upgrade ke Prime",
     ctaHref: "/signup?plan=pro_max",
     badge: "Terlengkap",
+    compareAtPrice: "Rp 265K",
   },
 ];
 

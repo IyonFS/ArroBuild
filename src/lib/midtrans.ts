@@ -74,6 +74,7 @@ export async function createSnapToken(params: {
   amount: number;
   tierId: PricingTierId;
   customer: { email: string; name?: string | null };
+  itemName?: string;
 }) {
   const hint = getMidtransConfigHint();
   if (hint) throw new Error(hint);
@@ -101,7 +102,7 @@ export async function createSnapToken(params: {
             id: tier.id,
             price: params.amount,
             quantity: 1,
-            name: `ArroBuild ${tier.name}`.slice(0, 50),
+            name: (params.itemName ?? `ArroBuild ${tier.name}`).slice(0, 50),
           },
         ],
         customer_details: {

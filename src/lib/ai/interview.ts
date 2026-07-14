@@ -222,10 +222,10 @@ export async function runInterviewTurn(params: {
   try {
     raw = await generate(prompt, {
       model: process.env.GEMINI_API_KEY
-        ? "gemini-2.5-flash"
+        ? "gemini-3.1-flash-lite"
         : process.env.DEEPSEEK_API_KEY
-          ? "deepseek-chat"
-          : "gemini-2.5-flash",
+          ? "deepseek-v4-flash"
+          : "gemini-3.1-flash-lite",
       maxOutputTokens: 1024,
       temperature: 0.4,
     });

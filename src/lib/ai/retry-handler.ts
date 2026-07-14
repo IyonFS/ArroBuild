@@ -16,13 +16,13 @@ import { V3_TIER_CONFIG, type V3Tier, type ModelId } from "./tier-enforcer";
 export const FALLBACK_CHAIN: Record<ModelId, ModelId[]> = {
   "claude-sonnet-4-20250514": [
     "gpt-5.4",
-    "gemini-2.5-pro",
-    "gemini-2.5-flash",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
   ],
-  "gpt-5.4": ["gemini-2.5-pro", "gemini-2.5-flash"],
-  "gemini-2.5-pro": ["gpt-5.4", "gemini-2.5-flash"],
-  "gemini-2.5-flash": ["deepseek-v4-flash"],
-  "deepseek-v4-flash": ["gemini-2.5-flash"],
+  "gpt-5.4": ["gemini-3.5-flash", "gemini-3.1-flash-lite"],
+  "gemini-3.5-flash": ["gemini-3.1-flash-lite", "deepseek-v4-flash"],
+  "gemini-3.1-flash-lite": ["deepseek-v4-flash", "gemini-3.5-flash"],
+  "deepseek-v4-flash": ["gemini-3.1-flash-lite", "gemini-3.5-flash"],
 };
 
 // ─── Error Classifiers ──────────────────────────────────────────────────────
@@ -48,6 +48,20 @@ function isProviderUnavailableError(err: unknown): boolean {
   );
 }
 
+function isModelNotFoundError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    msg.includes("NOT_FOUND") ||
+    msg.includes("is not found") ||
+    msg.includes("no longer available")
+  );
+}
+
+function isMissingProviderKeyError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes("_API_KEY is not set");
+}
+
 export function isFreeTierQuotaError(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
   return (
@@ -59,11 +73,12 @@ export function isFreeTierQuotaError(err: unknown): boolean {
 }
 
 /**
- * Should we retry or fail fast for this error?
+ * Daily Gemini free-tier quota — still try the next provider in chain (e.g. DeepSeek).
  */
 export function shouldFallback(err: unknown): boolean {
-  // Daily free-tier quota won't recover — fail fast
-  if (isFreeTierQuotaError(err)) return false;
+  if (isModelNotFoundError(err)) return true;
+  if (isMissingProviderKeyError(err)) return true;
+  if (isFreeTierQuotaError(err)) return true;
   return isRateLimitError(err) || isProviderUnavailableError(err);
 }
 

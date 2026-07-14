@@ -3,6 +3,14 @@
     {
       "path": "/api/cron/expire-subscriptions",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/renew-credits",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/reconcile-ledger",
+      "schedule": "0 3 * * 0"
     }
   ]
 }

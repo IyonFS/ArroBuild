@@ -2,8 +2,9 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { SubscriptionTier } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { createClient } from "@/lib/supabase/server";
-import type { UserTier } from "@/lib/ai/prompts/shared";
-import { getModelsForTier } from "@/lib/ai/prompts/shared";
+import type { UserTier as OrchestratorUserTier } from "@/lib/ai/prompts/shared";
+import { getModelsForTier } from "@/components/generate/types";
+import { legacyTierSlugToUserTier } from "@/lib/config/documents";
 import {
   getUserSubscriptionTier,
   tierToOrchestratorUserTier,
@@ -11,7 +12,16 @@ import {
   tierIdToUserPlan,
 } from "@/lib/services/tier.service";
 import { CreditService } from "@/lib/services/credit.service";
-import { getTierConfig, TIER, type TierId } from "@/lib/config/tiers";
+import { getTierConfig, TIER, pricingSlugFromTierId, type TierId } from "@/lib/config/tiers";
+import type { UserTier } from "@/lib/config/documents";
+import { normalizeLegacyModelId } from "@/lib/legacy-model-ids";
+
+export { normalizeLegacyModelId } from "@/lib/legacy-model-ids";
+
+export function isModelAllowedForTier(modelId: string, tierId: TierId): boolean {
+  const userTier = pricingSlugFromTierId(tierId) as UserTier;
+  return getModelsForTier(userTier).some((model) => model.id === modelId);
+}
 
 export async function getSupabaseUser() {
   const supabase = await createClient();
@@ -52,11 +62,11 @@ export async function syncDbUser(supabaseUser: SupabaseUser) {
   });
 }
 
-export function subscriptionToUserTier(tier: SubscriptionTier | null): UserTier {
+export function subscriptionToUserTier(tier: SubscriptionTier | null): OrchestratorUserTier {
   return tierToOrchestratorUserTier(tier);
 }
 
-export async function getEffectiveTier(userId?: string | null): Promise<UserTier> {
+export async function getEffectiveTier(userId?: string | null): Promise<OrchestratorUserTier> {
   if (!userId) return "free";
   const subscriptionTier = await getUserSubscriptionTier(userId);
   return subscriptionToUserTier(subscriptionTier);
@@ -66,13 +76,9 @@ export async function getActiveTierId(userId: string): Promise<TierId | null> {
   return resolveTierId(userId);
 }
 
-export function isModelAllowedForTier(modelId: string, tier: UserTier): boolean {
-  return getModelsForTier(tier).some((model) => model.id === modelId);
-}
-
 export async function assertCanGenerate(
   userId: string | null | undefined,
-  tier: UserTier,
+  tier: OrchestratorUserTier,
   modelId?: string,
   estimatedCredits = 8
 ): Promise<{ ok: true; tierId: TierId } | { ok: false; status: number; error: string }> {
@@ -90,16 +96,17 @@ export async function assertCanGenerate(
       ok: false,
       status: 402,
       error:
-        "Paket berlangganan belum aktif. Pilih Starter, Pro, atau Pro Max untuk mulai generate.",
+        "Paket berlangganan belum aktif. Pilih Base, Core, atau Prime untuk mulai generate.",
     };
   }
 
-  if (modelId && !isModelAllowedForTier(modelId, tier)) {
+  const normalizedModelId = normalizeLegacyModelId(modelId);
+  if (normalizedModelId && !isModelAllowedForTier(normalizedModelId, tierId)) {
+    const planLabel = tierIdToUserPlan(tierId);
     return {
       ok: false,
       status: 403,
-      error:
-        "Model AI ini memerlukan paket berbayar. Upgrade akun kamu untuk mengakses model premium.",
+      error: `Model "${normalizedModelId}" tidak tersedia di paket ${planLabel}. Paket Base memakai kelas Hemat (Gemini Flash Lite / DeepSeek).`,
     };
   }
 

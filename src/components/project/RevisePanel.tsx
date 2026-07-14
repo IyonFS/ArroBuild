@@ -6,7 +6,22 @@ import {
   parseMarkdownSections,
   unifiedDiff,
 } from "@/lib/ai/section-revise";
+import { parseApiErrorMessage } from "@/lib/parse-api-error";
+import { normalizeDocumentKey } from "@/lib/config/documents";
 import type { WorkspaceFile } from "./FileSidebar";
+
+async function readApiJson(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(parseApiErrorMessage(res.status, text));
+  }
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    throw new Error(parseApiErrorMessage(res.status, text));
+  }
+}
 
 interface DiffRow {
   type: "same" | "add" | "del";
@@ -14,7 +29,8 @@ interface DiffRow {
 }
 
 interface PreviewResult {
-  reservationId: string;
+  reservationId: string | null;
+  isFreeRevision?: boolean;
   estimatedCredits: number;
   sectionName: string;
   beforeSection: string;
@@ -41,17 +57,33 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
     [file?.content, file?.id, file?.version]
   );
   const [sectionName, setSectionName] = useState("");
+  const [sectionStartLine, setSectionStartLine] = useState<number | null>(null);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewResult | null>(null);
+  const [freeRevisionAvailable, setFreeRevisionAvailable] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/user/me")
+      .then((res) => res.json())
+      .then((data) => {
+        setFreeRevisionAvailable(data.revisionQuota?.hasFreeRevision === true);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setPreview(null);
     setError(null);
     setInstruction("");
-    if (sections[0]) setSectionName(sections[0].title);
-    else setSectionName("");
+    if (sections[0]) {
+      setSectionName(sections[0].title);
+      setSectionStartLine(sections[0].startLine);
+    } else {
+      setSectionName("");
+      setSectionStartLine(null);
+    }
   }, [file?.id, file?.version]);
 
   // Re-sync default when sections list changes for same file
@@ -65,34 +97,65 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
   const selected = sections.find((s) => s.title === sectionName);
   const estimate = selected ? estimateRevisionCredits(selected.content) : 0;
 
+  const restoreRevision = async (revisionId: string) => {
+    if (!file || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/project/${projectId}/revisions/${revisionId}`,
+        { method: "POST" }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal restore versi");
+      onAccepted(data.content, data.version);
+      setPreview(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal restore");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const runPreview = async () => {
     if (!file || !sectionName || !instruction.trim()) return;
     setBusy(true);
     setError(null);
     try {
+      const normalizedKey = normalizeDocumentKey(file.fileKey) ?? file.fileKey;
       const res = await fetch(`/api/project/${projectId}/revise`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "preview",
-          fileKey: file.fileKey,
+          fileKey: normalizedKey,
           sectionName,
+          ...(sectionStartLine != null ? { sectionStartLine } : {}),
           instruction: instruction.trim(),
         }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) {
-        throw new Error(data.error || "Gagal membuat preview revisi");
+        throw new Error(
+          (typeof data.error === "string" ? data.error : null) ||
+            "Gagal membuat preview revisi"
+        );
       }
       setPreview({
-        reservationId: data.reservationId,
-        estimatedCredits: data.estimatedCredits,
-        sectionName: data.sectionName,
-        beforeSection: data.beforeSection,
-        afterSection: data.afterSection,
-        fullProposed: data.fullProposed,
-        diff: data.diff ?? unifiedDiff(data.beforeSection, data.afterSection),
+        reservationId: (data.reservationId as string | null) ?? null,
+        isFreeRevision: data.isFreeRevision === true,
+        estimatedCredits: (data.estimatedCredits as number) ?? 0,
+        sectionName: data.sectionName as string,
+        beforeSection: data.beforeSection as string,
+        afterSection: data.afterSection as string,
+        fullProposed: data.fullProposed as string,
+        diff:
+          (data.diff as DiffRow[]) ??
+          unifiedDiff(data.beforeSection as string, data.afterSection as string),
       });
+      if (data.isFreeRevision === true) {
+        setFreeRevisionAvailable(true);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
     } finally {
@@ -104,14 +167,16 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
     if (!preview) return;
     setBusy(true);
     try {
-      await fetch(`/api/project/${projectId}/revise`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "cancel",
-          reservationId: preview.reservationId,
-        }),
-      });
+      if (preview.reservationId) {
+        await fetch(`/api/project/${projectId}/revise`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "cancel",
+            reservationId: preview.reservationId,
+          }),
+        });
+      }
       setPreview(null);
     } catch {
       setPreview(null);
@@ -122,28 +187,43 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
 
   const acceptPreview = async () => {
     if (!file || !preview) return;
+    const wasFreeRevision = preview.isFreeRevision === true;
     setBusy(true);
     setError(null);
     try {
+      const normalizedKey = normalizeDocumentKey(file.fileKey) ?? file.fileKey;
       const res = await fetch(`/api/project/${projectId}/revise`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "accept",
-          fileKey: file.fileKey,
-          reservationId: preview.reservationId,
+          fileKey: normalizedKey,
+          ...(preview.reservationId
+            ? { reservationId: preview.reservationId }
+            : {}),
+          isFreeRevision: preview.isFreeRevision === true,
           newContent: preview.fullProposed,
           sectionName: preview.sectionName,
           estimatedCredits: preview.estimatedCredits,
         }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) {
-        throw new Error(data.error || "Gagal menyimpan revisi");
+        throw new Error(
+          (typeof data.error === "string" ? data.error : null) ||
+            "Gagal menyimpan revisi"
+        );
       }
-      onAccepted(data.content, data.version, data.balanceAfter);
+      onAccepted(
+        data.content as string,
+        data.version as number,
+        data.balanceAfter as number | undefined
+      );
       setPreview(null);
       setInstruction("");
+      if (wasFreeRevision) {
+        setFreeRevisionAvailable(false);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
     } finally {
@@ -218,16 +298,19 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
                   key={`${s.startLine}-${s.title}`}
                   type="button"
                   disabled={!!preview || busy}
-                  onClick={() => setSectionName(s.title)}
+                  onClick={() => {
+                    setSectionName(s.title);
+                    setSectionStartLine(s.startLine);
+                  }}
                   className="w-full text-left px-3 py-2.5 transition-all disabled:opacity-50"
                   style={{
                     borderRadius: 10,
                     paddingLeft: s.level === 3 ? 28 : 12,
                     background: active
-                      ? "rgba(204,255,0,0.12)"
+                      ? "rgba(255,176,32,0.12)"
                       : "transparent",
                     border: active
-                      ? "1px solid rgba(204,255,0,0.4)"
+                      ? "1px solid rgba(255,176,32,0.4)"
                       : "1px solid transparent",
                   }}
                 >
@@ -237,10 +320,10 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
                       style={{
                         borderRadius: 7,
                         background: active
-                          ? "rgba(204,255,0,0.2)"
+                          ? "rgba(255,176,32,0.2)"
                           : "rgba(255,255,255,0.06)",
                         color: active
-                          ? "var(--color-lime)"
+                          ? "var(--app-amber)"
                           : "rgba(255,255,255,0.4)",
                         fontFamily: "var(--font-jetbrains-mono), monospace",
                       }}
@@ -251,7 +334,7 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
                       className="text-[13px] font-medium truncate"
                       style={{
                         color: active
-                          ? "var(--color-lime)"
+                          ? "var(--app-amber)"
                           : "var(--color-text-primary)",
                       }}
                     >
@@ -281,7 +364,7 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
               borderRadius: 14,
               background: "rgba(0,0,0,0.35)",
               border: instruction.trim()
-                ? "1px solid rgba(204,255,0,0.35)"
+                ? "1px solid rgba(255,176,32,0.35)"
                 : "1px solid rgba(255,255,255,0.1)",
             }}
           >
@@ -306,18 +389,7 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
                   type="button"
                   disabled={!!preview || busy}
                   onClick={() => setInstruction(q)}
-                  className="text-[11px] px-2.5 py-1 transition-colors"
-                  style={{
-                    borderRadius: 999,
-                    background: instruction === q
-                      ? "rgba(204,255,0,0.15)"
-                      : "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color:
-                      instruction === q
-                        ? "var(--color-lime)"
-                        : "rgba(255,255,255,0.5)",
-                  }}
+                  className={`generate-chip !text-[11px] !py-1 !px-2.5 ${instruction === q ? "is-selected" : ""}`}
                 >
                   {q}
                 </button>
@@ -329,15 +401,17 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
         <div
           className="rounded-xl px-3.5 py-2.5 text-xs flex items-center justify-between gap-2"
           style={{
-            background: "rgba(204,255,0,0.06)",
-            border: "1px solid rgba(204,255,0,0.2)",
+            background: "rgba(255,176,32,0.06)",
+            border: "1px solid rgba(255,176,32,0.2)",
             fontFamily: "var(--font-jetbrains-mono), monospace",
             color: "rgba(255,255,255,0.6)",
           }}
         >
           <span>Estimasi kredit</span>
-          <span style={{ color: "var(--color-lime)", fontWeight: 700 }}>
-            ~{preview?.estimatedCredits ?? estimate} · HEMAT
+          <span style={{ color: "var(--app-amber)", fontWeight: 700 }}>
+            {preview?.isFreeRevision || (!preview && freeRevisionAvailable)
+              ? "Gratis (1×/bulan Pro)"
+              : `~${preview?.estimatedCredits ?? estimate} kredit`}
           </span>
         </div>
 
@@ -355,7 +429,7 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
             className="w-full py-3 text-sm font-bold disabled:opacity-40"
             style={{
               borderRadius: 12,
-              background: "var(--color-lime)",
+              background: "var(--app-amber)",
               color: "#0A0A0A",
             }}
           >
@@ -417,11 +491,11 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
                 className="flex-[1.3] py-3 text-sm font-bold"
                 style={{
                   borderRadius: 12,
-                  background: "var(--color-lime)",
+                  background: "var(--app-amber)",
                   color: "#0A0A0A",
                 }}
               >
-                Accept ({preview.estimatedCredits} kr)
+                Accept ({preview.isFreeRevision ? "gratis" : `${preview.estimatedCredits} kr`})
               </button>
             </div>
           </div>
@@ -437,17 +511,21 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
             </p>
             <ul className="space-y-1.5">
               {file.revisions.slice(0, 8).map((r) => (
-                <li
-                  key={r.id}
-                  className="text-[11px]"
-                  style={{
-                    color: "rgba(255,255,255,0.4)",
-                    fontFamily: "var(--font-jetbrains-mono), monospace",
-                  }}
-                >
-                  v{r.version}
-                  {r.sectionName ? ` · ${r.sectionName}` : ""} ·{" "}
-                  {new Date(r.createdAt).toLocaleString("id-ID")}
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void restoreRevision(r.id)}
+                    className="text-[11px] text-left w-full hover:opacity-100 opacity-80 transition-opacity"
+                    style={{
+                      color: "rgba(255,255,255,0.55)",
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                    }}
+                  >
+                    ↩ v{r.version}
+                    {r.sectionName ? ` · ${r.sectionName}` : ""} ·{" "}
+                    {new Date(r.createdAt).toLocaleString("id-ID")}
+                  </button>
                 </li>
               ))}
             </ul>

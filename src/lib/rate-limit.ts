@@ -1,6 +1,7 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { getTierConfig, type TierId } from "@/lib/config/tiers";
+import { logger } from "@/lib/logger";
 
 function createRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -10,6 +11,24 @@ function createRedis() {
 }
 
 const redis = createRedis();
+
+function isRateLimitRequired(): boolean {
+  return (
+    process.env.RATE_LIMIT_REQUIRED === "true" ||
+    process.env.NODE_ENV === "production"
+  );
+}
+
+function redisUnavailable(): boolean {
+  if (redis) return false;
+  if (isRateLimitRequired()) {
+    logger.error("rate_limit_redis_missing", {
+      message: "Upstash Redis tidak dikonfigurasi — rate limit tidak aktif",
+    });
+    return true;
+  }
+  return false;
+}
 
 export const ipLimiter = redis
   ? new Ratelimit({
@@ -38,6 +57,9 @@ export function generateLimiter(tierId: TierId): Ratelimit | null {
 }
 
 export async function checkIpRateLimit(ip: string): Promise<boolean> {
+  if (redisUnavailable()) {
+    return !isRateLimitRequired();
+  }
   if (!ipLimiter) return true;
   const { success } = await ipLimiter.limit(ip);
   return success;
@@ -47,6 +69,9 @@ export async function checkGenerateRateLimit(
   userId: string,
   tierId: TierId
 ): Promise<{ ok: boolean; limit?: number }> {
+  if (redisUnavailable()) {
+    return { ok: !isRateLimitRequired(), limit: getTierConfig(tierId).maxProjectsPerDay };
+  }
   const limiter = generateLimiter(tierId);
   if (!limiter) return { ok: true };
   const { success } = await limiter.limit(userId);

@@ -20,19 +20,25 @@ export default function LearnLessonNav({
       {prevLesson ? (
         <Link
           href={`/learn/${pathSlug}/${prevLesson.slug}`}
-          className="learn-nav-text learn-hover-link flex items-center gap-2 text-sm min-w-0"
-          style={{ color: "var(--color-text-tertiary)" }}
+          className="learn-hover-btn learn-nav-text flex items-center gap-2 text-sm min-w-0 px-3 py-2 rounded-md"
+          style={{
+            color: "var(--color-text-tertiary)",
+            border: "0.5px solid transparent",
+          }}
         >
           <span className="shrink-0">←</span>
           <span className="truncate">{prevLesson.title}</span>
         </Link>
       ) : (
         <Link
-          href="/learn"
-          className="learn-nav-text learn-hover-link flex items-center gap-2 text-sm"
-          style={{ color: "var(--color-text-tertiary)" }}
+          href={`/learn/${pathSlug}`}
+          className="learn-hover-btn learn-nav-text flex items-center gap-2 text-sm px-3 py-2 rounded-md"
+          style={{
+            color: "var(--color-text-tertiary)",
+            border: "0.5px solid transparent",
+          }}
         >
-          ← Kembali ke Learn Hub
+          ← Overview path
         </Link>
       )}
 

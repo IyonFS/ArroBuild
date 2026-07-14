@@ -38,8 +38,8 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
   const activeTheme = COLOR_THEMES.find((t) => t.id === value.themeId);
 
   // Preview swatch for the currently selected custom/preset theme
-  const previewBg = value.themeId === "custom" ? (value.customBg || "#0A0A0A") : (activeTheme?.bg || "#0A0A0A");
-  const previewPrimary = value.themeId === "custom" ? (value.customPrimary || "#CCFF00") : (activeTheme?.primary || "#CCFF00");
+  const previewBg = value.themeId === "custom" ? (value.customBg || "#0D1321") : (activeTheme?.bg || "#0D1321");
+  const previewPrimary = value.themeId === "custom" ? (value.customPrimary || "#FFB020") : (activeTheme?.primary || "#FFB020");
   const previewText = value.themeId === "custom" ? (value.customText || "#FFFFFF") : (activeTheme?.text || "#FFFFFF");
 
   return (
@@ -48,7 +48,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
       <div className="mb-8">
         <span
           className="font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full mb-4 inline-block"
-          style={{ background: "rgba(204,255,0,0.08)", color: "var(--color-lime)", border: "0.5px solid rgba(204,255,0,0.25)" }}
+          style={{ background: "rgba(255,176,32,0.08)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.25)" }}
         >
           Step 3 of 3 — Desain
         </span>
@@ -78,8 +78,8 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                   onClick={() => set("themeId", theme.id)}
                   className="flex flex-col items-start gap-1.5 p-3 rounded-xl transition-all text-left"
                   style={{
-                    background: active ? "rgba(204,255,0,0.06)" : "var(--color-bg-elevated)",
-                    border: active ? "1px solid rgba(204,255,0,0.45)" : "0.5px solid var(--color-border-default)",
+                    background: active ? "rgba(255,176,32,0.06)" : "var(--color-bg-elevated)",
+                    border: active ? "1px solid rgba(255,176,32,0.45)" : "0.5px solid var(--color-border-default)",
                   }}
                 >
                   {/* Color swatches */}
@@ -106,8 +106,8 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
             onClick={() => set("themeId", "custom")}
             className="flex items-center gap-2 px-3 py-2 rounded-lg font-mono text-xs transition-all mb-3"
             style={{
-              background: value.themeId === "custom" ? "rgba(204,255,0,0.08)" : "var(--color-bg-elevated)",
-              border: value.themeId === "custom" ? "1px solid rgba(204,255,0,0.45)" : "0.5px solid var(--color-border-default)",
+              background: value.themeId === "custom" ? "rgba(255,176,32,0.08)" : "var(--color-bg-elevated)",
+              border: value.themeId === "custom" ? "1px solid rgba(255,176,32,0.45)" : "0.5px solid var(--color-border-default)",
               color: value.themeId === "custom" ? "var(--color-lime)" : "var(--color-text-secondary)",
             }}
           >
@@ -123,8 +123,8 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {(
                   [
-                    { key: "customBg" as const, label: "Background", placeholder: "#0A0A0A" },
-                    { key: "customPrimary" as const, label: "Primary/Accent", placeholder: "#CCFF00", hint: "Warna aksen untuk button, link, highlight" },
+                    { key: "customBg" as const, label: "Background", placeholder: "#0D1321" },
+                    { key: "customPrimary" as const, label: "Primary/Accent", placeholder: "#FFB020", hint: "Warna aksen untuk button, link, highlight" },
                     { key: "customText" as const, label: "Text", placeholder: "#FFFFFF" },
                   ]
                 ).map(({ key, label, placeholder, hint }) => (
@@ -147,7 +147,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                         onChange={(e) => set(key, e.target.value)}
                         style={{
                           background: "var(--color-bg-surface)",
-                          border: focusedCustom === key ? "0.5px solid rgba(204,255,0,0.5)" : "0.5px solid var(--color-border-default)",
+                          border: focusedCustom === key ? "0.5px solid rgba(255,176,32,0.5)" : "0.5px solid var(--color-border-default)",
                           color: "var(--color-text-primary)",
                           padding: "7px 10px",
                           borderRadius: 8,
@@ -199,8 +199,8 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                   onClick={() => set("fontPairId", fp.id)}
                   className="flex items-center gap-4 px-4 py-3 rounded-xl text-left transition-all"
                   style={{
-                    background: active ? "rgba(204,255,0,0.06)" : "var(--color-bg-elevated)",
-                    border: active ? "1px solid rgba(204,255,0,0.45)" : "0.5px solid var(--color-border-default)",
+                    background: active ? "rgba(255,176,32,0.06)" : "var(--color-bg-elevated)",
+                    border: active ? "1px solid rgba(255,176,32,0.45)" : "0.5px solid var(--color-border-default)",
                   }}
                 >
                   <div
@@ -210,7 +210,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                       background: active ? "var(--color-lime)" : "transparent",
                     }}
                   >
-                    {active && <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#0A0A0A" }} />}
+                    {active && <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#0D1321" }} />}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -247,8 +247,8 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                   onClick={() => set("vibe", active ? undefined : vibe)}
                   className="font-mono text-xs px-3 py-2 rounded-lg transition-all"
                   style={{
-                    background: active ? "rgba(204,255,0,0.08)" : "var(--color-bg-elevated)",
-                    border: active ? "1px solid rgba(204,255,0,0.45)" : "0.5px solid var(--color-border-default)",
+                    background: active ? "rgba(255,176,32,0.08)" : "var(--color-bg-elevated)",
+                    border: active ? "1px solid rgba(255,176,32,0.45)" : "0.5px solid var(--color-border-default)",
                     color: active ? "var(--color-lime)" : "var(--color-text-secondary)",
                   }}
                 >
@@ -260,8 +260,8 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
               onClick={() => set("vibe", undefined)}
               className="font-mono text-xs px-3 py-2 rounded-lg transition-all"
               style={{
-                background: !value.vibe ? "rgba(204,255,0,0.08)" : "var(--color-bg-elevated)",
-                border: !value.vibe ? "1px solid rgba(204,255,0,0.45)" : "0.5px solid var(--color-border-default)",
+                background: !value.vibe ? "rgba(255,176,32,0.08)" : "var(--color-bg-elevated)",
+                border: !value.vibe ? "1px solid rgba(255,176,32,0.45)" : "0.5px solid var(--color-border-default)",
                 color: !value.vibe ? "var(--color-lime)" : "var(--color-text-secondary)",
               }}
             >
@@ -294,8 +294,8 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                     onClick={() => set("heroLayout", id)}
                     className="flex-1 flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all"
                     style={{
-                      background: active ? "rgba(204,255,0,0.06)" : "var(--color-bg-surface)",
-                      border: active ? "1px solid rgba(204,255,0,0.45)" : "0.5px solid var(--color-border-default)",
+                      background: active ? "rgba(255,176,32,0.06)" : "var(--color-bg-surface)",
+                      border: active ? "1px solid rgba(255,176,32,0.45)" : "0.5px solid var(--color-border-default)",
                     }}
                   >
                     {/* Mini layout icon */}
@@ -345,8 +345,8 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                     onClick={() => set("bgEffect", id)}
                     className="font-mono text-[11px] px-2.5 py-1.5 rounded-lg transition-all"
                     style={{
-                      background: active ? "rgba(204,255,0,0.08)" : "var(--color-bg-surface)",
-                      border: active ? "0.5px solid rgba(204,255,0,0.4)" : "0.5px solid var(--color-border-default)",
+                      background: active ? "rgba(255,176,32,0.08)" : "var(--color-bg-surface)",
+                      border: active ? "0.5px solid rgba(255,176,32,0.4)" : "0.5px solid var(--color-border-default)",
                       color: active ? "var(--color-lime)" : "var(--color-text-secondary)",
                     }}
                   >
@@ -371,8 +371,8 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                     onClick={() => set("borderStyle", id)}
                     className="font-mono text-[11px] px-2.5 py-1.5 rounded-lg transition-all"
                     style={{
-                      background: active ? "rgba(204,255,0,0.08)" : "var(--color-bg-surface)",
-                      border: active ? "0.5px solid rgba(204,255,0,0.4)" : "0.5px solid var(--color-border-default)",
+                      background: active ? "rgba(255,176,32,0.08)" : "var(--color-bg-surface)",
+                      border: active ? "0.5px solid rgba(255,176,32,0.4)" : "0.5px solid var(--color-border-default)",
                       color: active ? "var(--color-lime)" : "var(--color-text-secondary)",
                       borderRadius: id === "sharp" ? 4 : id === "slightly-rounded" ? 8 : 10,
                     }}
@@ -417,7 +417,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                     >
                       {checked && (
                         <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-                          <path d="M2 6l3 3 5-5" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M2 6l3 3 5-5" stroke="#0D1321" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </div>
@@ -449,7 +449,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
         <button
           onClick={onNext}
           className="flex-1 py-3 rounded-xl font-mono font-bold text-sm transition-all"
-          style={{ background: "var(--color-lime)", color: "#0A0A0A" }}
+          style={{ background: "var(--color-lime)", color: "#0D1321" }}
         >
           Generate Prompt →
         </button>

@@ -20,9 +20,8 @@ export default function StepIndicator({ currentStep, onGoTo, completedSteps }: P
 
   return (
     <div className="w-full">
-      {/* Progress bar */}
       <div
-        className="h-px w-full mb-4"
+        className="mb-4 h-px w-full"
         style={{ background: "var(--color-border-default)" }}
       >
         <div
@@ -34,8 +33,7 @@ export default function StepIndicator({ currentStep, onGoTo, completedSteps }: P
         />
       </div>
 
-      {/* Steps */}
-      <div className="flex items-center gap-0 sm:gap-2 max-w-2xl mx-auto px-4">
+      <div className="mx-auto flex max-w-2xl items-center gap-0 px-2 sm:gap-2 sm:px-4">
         {STEPS.map(({ num, label }) => {
           const done = completedSteps.has(num);
           const active = currentStep === num;
@@ -44,43 +42,65 @@ export default function StepIndicator({ currentStep, onGoTo, completedSteps }: P
           return (
             <button
               key={num}
+              type="button"
               onClick={() => clickable && onGoTo(num)}
               disabled={!clickable}
-              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg transition-all"
+              className="flex items-center gap-1.5 rounded-lg px-2 py-2 transition-all sm:gap-2 sm:px-3"
               style={{
                 cursor: clickable ? "pointer" : "default",
-                background: active ? "rgba(204,255,0,0.08)" : "transparent",
-                border: active ? "0.5px solid rgba(204,255,0,0.25)" : "0.5px solid transparent",
+                background: active ? "rgba(255,176,32,0.1)" : "transparent",
+                border: active
+                  ? "0.5px solid rgba(255,176,32,0.35)"
+                  : "0.5px solid transparent",
                 opacity: !done && !active ? 0.4 : 1,
               }}
             >
-              {/* Circle */}
               <div
-                className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-all"
                 style={{
                   background: done
                     ? "var(--color-lime)"
                     : active
-                    ? "rgba(204,255,0,0.15)"
-                    : "var(--color-bg-elevated)",
-                  border: active ? "1px solid rgba(204,255,0,0.5)" : done ? "none" : "0.5px solid var(--color-border-default)",
+                      ? "rgba(255,176,32,0.15)"
+                      : "var(--color-bg-elevated)",
+                  border: active
+                    ? "1px solid rgba(255,176,32,0.5)"
+                    : done
+                      ? "none"
+                      : "0.5px solid var(--color-border-default)",
                 }}
               >
                 {done ? (
                   <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6l3 3 5-5" stroke="#0A0A0A" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M2 6l3 3 5-5"
+                      stroke="#0D1321"
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 ) : (
-                  <span className="font-mono text-[9px] font-bold" style={{ color: active ? "var(--color-lime)" : "var(--color-text-tertiary)" }}>
+                  <span
+                    className="font-mono text-[9px] font-bold"
+                    style={{
+                      color: active ? "var(--color-lime)" : "var(--color-text-tertiary)",
+                    }}
+                  >
                     {num}
                   </span>
                 )}
               </div>
 
-              {/* Label */}
               <span
-                className="font-mono text-[11px] font-semibold hidden sm:block"
-                style={{ color: active ? "var(--color-lime)" : done ? "var(--color-text-secondary)" : "var(--color-text-tertiary)" }}
+                className="hidden font-mono text-[11px] font-semibold sm:block"
+                style={{
+                  color: active
+                    ? "var(--color-lime)"
+                    : done
+                      ? "var(--color-text-secondary)"
+                      : "var(--color-text-tertiary)",
+                }}
               >
                 {label}
               </span>
@@ -88,30 +108,33 @@ export default function StepIndicator({ currentStep, onGoTo, completedSteps }: P
           );
         })}
 
-        {/* Connector dots */}
         <div className="flex-1" />
 
-        {/* Result indicator */}
         <div
-          className="flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg"
+          className="flex items-center gap-1.5 rounded-lg px-2 py-2 sm:px-3"
           style={{
-            background: isResult ? "rgba(204,255,0,0.08)" : "transparent",
-            border: isResult ? "0.5px solid rgba(204,255,0,0.25)" : "0.5px solid transparent",
+            background: isResult ? "rgba(255,176,32,0.1)" : "transparent",
+            border: isResult
+              ? "0.5px solid rgba(255,176,32,0.35)"
+              : "0.5px solid transparent",
             opacity: !isResult && !completedSteps.has(3) ? 0.3 : 1,
           }}
         >
           <div
-            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+            className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full"
             style={{
               background: isResult ? "var(--color-lime)" : "var(--color-bg-elevated)",
               border: isResult ? "none" : "0.5px solid var(--color-border-default)",
+              color: isResult ? "#0D1321" : undefined,
             }}
           >
             <span style={{ fontSize: 10 }}>{isResult ? "✦" : "⬡"}</span>
           </div>
           <span
-            className="font-mono text-[11px] font-semibold hidden sm:block"
-            style={{ color: isResult ? "var(--color-lime)" : "var(--color-text-tertiary)" }}
+            className="hidden font-mono text-[11px] font-semibold sm:block"
+            style={{
+              color: isResult ? "var(--color-lime)" : "var(--color-text-tertiary)",
+            }}
           >
             Prompt
           </span>

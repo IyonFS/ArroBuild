@@ -44,8 +44,8 @@ const DEMO_PROFESI = Object.keys(PROFESI_DEMO);
 function inputStyle(focused: boolean) {
   return {
     background: "var(--color-bg-elevated)",
-    border: focused ? "0.5px solid rgba(204,255,0,0.5)" : "0.5px solid var(--color-border-default)",
-    boxShadow: focused ? "0 0 0 3px rgba(204,255,0,0.06)" : "none",
+    border: focused ? "0.5px solid rgba(255,176,32,0.5)" : "0.5px solid var(--color-border-default)",
+    boxShadow: focused ? "0 0 0 3px rgba(255,176,32,0.06)" : "none",
     color: "var(--color-text-primary)",
     padding: "12px 14px",
     borderRadius: 12,
@@ -119,7 +119,7 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
       <div className="mb-8">
         <span
           className="font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full mb-4 inline-block"
-          style={{ background: "rgba(204,255,0,0.08)", color: "var(--color-lime)", border: "0.5px solid rgba(204,255,0,0.25)" }}
+          style={{ background: "rgba(255,176,32,0.08)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.25)" }}
         >
           Step 1 of 3 — Identitas
         </span>
@@ -137,7 +137,7 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
       {/* Demo data tip */}
       <div
         className="flex items-center justify-between px-4 py-3 rounded-xl mb-6"
-        style={{ background: "rgba(204,255,0,0.04)", border: "0.5px solid rgba(204,255,0,0.15)" }}
+        style={{ background: "rgba(255,176,32,0.04)", border: "0.5px solid rgba(255,176,32,0.15)" }}
       >
         <p className="font-mono text-xs" style={{ color: "var(--color-text-secondary)" }}>
           💡 Belum tahu mau isi apa?
@@ -146,7 +146,7 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
           <button
             onClick={() => setShowDemoMenu((v) => !v)}
             className="font-mono text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
-            style={{ background: "rgba(204,255,0,0.1)", color: "var(--color-lime)", border: "0.5px solid rgba(204,255,0,0.3)" }}
+            style={{ background: "rgba(255,176,32,0.1)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.3)" }}
           >
             Coba data demo →
           </button>
@@ -324,7 +324,7 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
         className="w-full py-3 rounded-xl font-mono font-bold text-sm transition-all"
         style={{
           background: canNext ? "var(--color-lime)" : "var(--color-bg-elevated)",
-          color: canNext ? "#0A0A0A" : "var(--color-text-disabled, rgba(255,255,255,0.2))",
+          color: canNext ? "#0D1321" : "var(--color-text-disabled, rgba(255,255,255,0.2))",
           border: canNext ? "none" : "0.5px solid var(--color-border-default)",
           cursor: canNext ? "pointer" : "not-allowed",
         }}

@@ -9,9 +9,11 @@ import {
   getEffectiveTier,
   assertCanGenerate,
   syncDbUser,
+  normalizeLegacyModelId,
 } from "@/lib/auth";
+import { tierIdToUserPlan } from "@/lib/services/tier.service";
 import { CreditService, CreditServiceError } from "@/lib/services/credit.service";
-import { checkGenerateRateLimit } from "@/lib/rate-limit";
+import { checkDailyLimit } from "@/lib/ai/tier-enforcer";
 import {
   FRAMEWORKS,
   DESIGN_PRESETS,
@@ -33,6 +35,10 @@ import {
 } from "@/lib/config/options";
 import { MODEL_CLASS, type ModelClassId } from "@/lib/config/tiers";
 import { capFormInput } from "@/lib/ai-gateway/context-builder";
+import {
+  sanitizePerDocumentModelClass,
+  legacyTierSlugToUserTier,
+} from "@/lib/config/documents";
 
 const FeatureSchema = z.object({
   id: z.string(),
@@ -66,8 +72,20 @@ const GenerationInputSchema = z.object({
   projectStage: z.enum(PROJECT_STAGES).optional(),
   features: z.array(FeatureSchema).optional(),
   perDocumentModelClass: z
-    .record(z.enum(DOCUMENT_FILE_KEYS), z.enum(MODEL_CLASS_SLUGS))
-    .optional(),
+    .record(z.string(), z.enum(MODEL_CLASS_SLUGS))
+    .optional()
+    .superRefine((val, ctx) => {
+      if (!val) return;
+      for (const key of Object.keys(val)) {
+        if (!(DOCUMENT_FILE_KEYS as readonly string[]).includes(key)) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Unknown document key: ${key}`,
+            path: ["perDocumentModelClass", key],
+          });
+        }
+      }
+    }),
   tier: z.enum(FRONTEND_TIER_SLUGS).optional(),
   modelId: z.string().optional(),
   selectedDocs: z.array(z.enum(DOCUMENT_FILE_KEYS)).optional(),
@@ -111,11 +129,12 @@ export async function POST(req: NextRequest) {
   const userId = supabaseUser.id;
   const effectiveTier = await getEffectiveTier(userId);
   const estimatedCredits = parsed.data.estimatedCredits ?? 8;
+  const normalizedModelId = normalizeLegacyModelId(parsed.data.modelId);
 
   const gate = await assertCanGenerate(
     userId,
     effectiveTier,
-    parsed.data.modelId,
+    normalizedModelId,
     estimatedCredits
   );
   if (!gate.ok) {
@@ -125,20 +144,25 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const rateCheck = await checkGenerateRateLimit(userId, gate.tierId);
-  if (!rateCheck.ok) {
-    return new Response(
-      JSON.stringify({
-        error: `Limit harian tercapai (${rateCheck.limit} proyek/hari).`,
-      }),
-      { status: 429, headers: { "Content-Type": "application/json" } }
-    );
+  const planSlug = tierIdToUserPlan(gate.tierId);
+
+  const dailyCheck = await checkDailyLimit(userId, planSlug);
+  if (!dailyCheck.allowed) {
+    return new Response(JSON.stringify({ error: dailyCheck.reason }), {
+      status: 429,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   const input: GenerationInput = {
     ...parsed.data,
     idea: capFormInput(parsed.data.idea, gate.tierId),
-    tier: effectiveTier,
+    modelId: normalizedModelId,
+    tier: planSlug,
+    perDocumentModelClass: sanitizePerDocumentModelClass(
+      parsed.data.perDocumentModelClass,
+      legacyTierSlugToUserTier(planSlug)
+    ),
   };
 
   let projectId: string;
@@ -155,7 +179,7 @@ export async function POST(req: NextRequest) {
           projectStage: parsed.data.projectStage,
           features: parsed.data.features,
           selectedDocs: parsed.data.selectedDocs,
-          perDocumentModelClass: parsed.data.perDocumentModelClass,
+          perDocumentModelClass: input.perDocumentModelClass,
           estimatedCredits: parsed.data.estimatedCredits,
         },
         status: "GENERATING",
@@ -235,7 +259,7 @@ export async function POST(req: NextRequest) {
           const documentsGenerated =
             generatedDocs.length > 0
               ? generatedDocs
-              : (parsed.data.selectedDocs ?? ["prd", "context", "plan"]).map(
+              : (parsed.data.selectedDocs ?? ["prd", "architecture", "plan-task"]).map(
                   (fileKey) => ({
                     fileKey,
                     modelClass: MODEL_CLASS.HEMAT,

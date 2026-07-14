@@ -1,99 +1,85 @@
 /**
- * prd.ts — Tier-aware prd.md prompt builder (v3)
- *
- * FREE:    PRD sederhana — Problem, Target Users, Core Features, Out of Scope.
- * PRO:     Komprehensif — User stories + Acceptance Criteria + MoSCoW + KPI.
- * PRO_MAX: Engineering-grade — FR-001 format, personas, edge cases, data requirements.
+ * prd.ts — PRD prompt with YAML Knowledge Model (Document-isi v2)
  */
 
 import { buildBaseContext, type GenerationInput } from "./shared";
-import type { V3Tier } from "../tier-enforcer";
+import { buildPrdYamlMetadata, buildFeatIdContextBlock } from "./yaml-metadata";
+import type { PromptDepthTier } from "@/lib/config/documents";
 
-const DEPTH_INSTRUCTIONS: Record<V3Tier, string> = {
-  FREE: `
-Buat PRD sederhana yang fokus pada MVP:
-
-1. **Problem Statement** — 3-4 pain point spesifik yang dialami user
-2. **Solution** — apa yang produk ini lakukan, alur utama dalam numbered steps
-3. **Target Users** — primary dan secondary user sebagai tabel
-4. **Core Features (MVP)** — 4-6 fitur utama sebagai user stories sederhana
-   Format: "Sebagai [user], saya ingin [aksi], agar [manfaat]"
-5. **Out of Scope** — apa yang TIDAK akan ada di MVP
-6. **Success Metrics** — 3-4 metric yang measurable untuk mengukur keberhasilan
-
-Fokus pada kejelasan dan actionability. Singkat tapi lengkap.`,
+const DEPTH: Record<PromptDepthTier, string> = {
+  STARTER: `
+1. Ringkasan Produk (2-3 kalimat)
+2. Masalah yang Diselesaikan
+3. Target Pengguna
+4. Fitur Utama (tabel FEAT-XXX — samakan dengan YAML)
+5. Cara Kerja Tiap Fitur (P0/P1 — 1 baris deskripsi, tanpa kriteria formal panjang)
+6. Alur Pengguna Utama (1 alur)
+7. Batasan
+8. Section khusus product_type (wajib)`,
 
   PRO: `
-Buat PRD komprehensif yang siap digunakan sebagai referensi AI agent:
-
-1. **Executive Summary** — ringkasan 2-3 paragraf: masalah, solusi, target pasar
-2. **Problem & Opportunity** — pain point dengan data/konteks pasar jika relevan
-3. **Target Users** — 2 persona detail: nama, profil, goals, frustrations, skenario penggunaan
-4. **User Stories** — dikelompokkan per Epic
-   Format: "As a [user], I want [action] so that [benefit]"
-   Sertakan Acceptance Criteria per story (Given/When/Then)
-5. **Feature Prioritization (MoSCoW)**
-   - Must Have: fitur yang HARUS ada di MVP
-   - Should Have: penting tapi bisa menyusul
-   - Could Have: nice-to-have
-   - Won't Have: out of scope
-6. **Non-Functional Requirements** — performance, security, scalability, accessibility
-7. **Success Metrics (KPI)** — Launch / Growth / Revenue dengan target angka spesifik
-8. **Constraints & Assumptions** — Technical, Business, User
-9. **Open Questions** — 4-5 pertanyaan desain/bisnis yang belum terjawab
-10. **Out of Scope** — eksplisit apa yang tidak dikerjakan
-
-Format harus langsung bisa digunakan AI agent untuk eksekusi tanpa klarifikasi tambahan.`,
+1. Ringkasan Produk
+2. Masalah yang Diselesaikan
+3. Target Pengguna (multi-persona)
+4. Fitur Utama (tabel FEAT-XXX)
+5. Cara Kerja Tiap Fitur — user story + **Kriteria selesai** untuk P0/P1
+6. Alur Pengguna Utama
+7. Batasan
+8. Section khusus product_type`,
 
   PRO_MAX: `
-Buat PRD engineering-grade yang sangat lengkap dan detail:
+Semua section Pro, plus:
+- Kondisi gagal/edge case per fitur P0
+- Minimal 1 alur alternatif (mis. pembayaran gagal)
+- Detail lebih dalam di section product_type`,
+};
 
-1. **Executive Summary** — business case, nilai bisnis, strategic fit
-2. **Problem Statement** — dengan market context dan current solution analysis
-3. **User Personas** — 2-3 persona dengan:
-   - Demographic & psychographic profile
-   - Goals, frustrations, behaviors
-   - User journey map langkah demi langkah
-   - Success criteria per persona
-4. **Functional Requirements** — terformat sebagai FR-001, FR-002, dst.
-   Tiap requirement: Description + Acceptance Criteria + Priority (P0/P1/P2) + Complexity (S/M/L)
-5. **Non-Functional Requirements** — Performance, Security, Scalability, Accessibility
-   Dengan target numerik yang konkret
-6. **Edge Cases & Error Scenarios** — per fitur utama: skenario gagal, batas, kondisi ekstrem
-7. **Data Requirements** — entitas data, validasi field, business rules, data retention
-8. **Integration Requirements** — API eksternal, webhook, third-party services, format data
-9. **Success Metrics** — dengan baseline saat ini dan target dalam 30/90/180 hari
-10. **Risk Assessment** — tabel: Risk | Probability | Impact | Mitigation Strategy
-11. **Out of Scope** — eksplisit dengan alasan
-12. **Open Questions** — dengan owner dan deadline untuk setiap pertanyaan
-
-PRD ini harus cukup lengkap untuk dieksekusi langsung oleh AI agent tanpa butuh klarifikasi tambahan.`,
+const PRODUCT_TYPE_SECTIONS: Record<string, string> = {
+  saas: "Model Harga & Langganan",
+  marketplace: "Peran Dua Sisi & Aturan Transaksi",
+  mobile: "Platform & Fitur Native",
+  api: "Pengguna API & Skenario Use Case",
+  ecommerce: "Katalog, Pembayaran & Checkout",
+  "ai-app": "Model AI, Privasi & Perilaku Gagal",
+  internal: "Pengguna Internal & Integrasi Legacy",
+  portfolio: "Proyek Unggulan & Audiens",
+  other: "Konteks Produk (dari input user)",
 };
 
 export function buildPrdPrompt(
   input: GenerationInput,
-  tier: V3Tier = "FREE",
+  tier: PromptDepthTier = "STARTER",
   accumulatedContext = ""
 ): string {
-  const base = buildBaseContext(input);
-  const contextBlock = accumulatedContext
-    ? `\n<accumulated_context>\n${accumulatedContext}\n</accumulated_context>\n`
-    : "";
+  const yaml = buildPrdYamlMetadata(input);
+  const featBlock = buildFeatIdContextBlock(input);
+  const productType = input.productType ?? "saas";
+  const section8 = PRODUCT_TYPE_SECTIONS[productType] ?? PRODUCT_TYPE_SECTIONS.other;
 
-  return `You are a senior product manager and software strategist.
+  return `You are a senior product manager.
 
-Generate a **prd.md** (Product Requirements Document).
+Generate **prd.md**.
 
-${base}
-${contextBlock}
----
+${buildBaseContext(input)}
 
-${DEPTH_INSTRUCTIONS[tier]}
+MANDATORY: Start the document with this exact YAML metadata block (fill from form data):
+${yaml}
 
-=== OUTPUT RULES ===
-- Output ONLY raw markdown. No code block wrapping.
-- Start directly with: # Product Requirements Document — [product name]
-- Be specific to THIS project — avoid generic template language.
-- All user stories must be realistic for this specific product.
-- Use specific numbers in metrics — never vague ranges like "many" or "some".`;
+${featBlock ? `<feat_registry>\n${featBlock}\n</feat_registry>\n` : ""}
+${accumulatedContext ? `<context>\n${accumulatedContext}\n</context>\n` : ""}
+
+Sections to write after YAML:
+${DEPTH[tier]}
+
+Section 8 title for this product: **${section8}**
+
+RULES:
+- Do NOT change/delete FEAT-IDs from YAML — only add detail around them
+- After YAML, start markdown with: # Product Requirements Document
+- Write each section ONCE — never repeat YAML, the main heading, or section numbers
+- Ground every section in the user's specific idea — no generic SaaS boilerplate
+- Each section needs concrete bullets or tables (min 3 bullets for narrative sections)
+- Fitur Utama table must list every FEAT-ID from YAML with a one-line user benefit
+- Cara Kerja must explain step-by-step flow per P0 feature
+- Output ONLY raw markdown — no outer code fences`;
 }

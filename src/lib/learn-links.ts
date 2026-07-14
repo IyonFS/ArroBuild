@@ -6,8 +6,8 @@ export const OPEN_LEARN_IN_NEW_TAB = {
 
 export const LEARN_HUB_PATH = "/learn";
 
-export const LEARN_PRIMARY_NAV_HEIGHT = 68;
-export const LEARN_TOPIC_STRIP_HEIGHT = 48;
+export const LEARN_PRIMARY_NAV_HEIGHT = 76;
+export const LEARN_TOPIC_STRIP_HEIGHT = 40;
 
 /** Combined height of primary nav + topic strip (px). */
 export const LEARN_NAV_HEIGHT =

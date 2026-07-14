@@ -3,80 +3,77 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LEARNING_PATHS } from "@/lib/learn-content";
-import { getActivePathSlug, getFirstLessonHref } from "@/lib/learn-nav";
+import {
+  getActivePathSlug,
+  getPathOverviewHref,
+  getPathTheme,
+} from "@/lib/learn-nav";
 import LearnPathIcon from "@/components/learn/LearnPathIcon";
-import { LEARN_PRIMARY_NAV_HEIGHT } from "@/lib/learn-links";
+import {
+  LEARN_PRIMARY_NAV_HEIGHT,
+  LEARN_TOPIC_STRIP_HEIGHT,
+} from "@/lib/learn-links";
 
 export default function LearnTopicStrip() {
   const pathname = usePathname();
   const activeSlug = getActivePathSlug(pathname);
+  const hubActive = pathname === "/learn";
 
   return (
     <div
       className="sticky z-40 border-b"
       style={{
         top: LEARN_PRIMARY_NAV_HEIGHT,
+        height: LEARN_TOPIC_STRIP_HEIGHT,
         background: "var(--learn-strip-bg)",
         borderColor: "var(--learn-border)",
         backdropFilter: "blur(10px)",
       }}
     >
       <div
-        className="flex items-center gap-2 overflow-x-auto px-4 sm:px-6 h-12 scrollbar-none"
+        className="flex items-center gap-1.5 overflow-x-auto px-4 sm:px-6 h-full scrollbar-none"
         style={{ scrollbarWidth: "none" }}
       >
         <Link
           href="/learn"
-          className="learn-nav-text learn-hover-pill inline-flex items-center shrink-0 text-sm font-semibold px-3.5 py-2 rounded-lg"
+          className="learn-nav-text learn-hover-pill inline-flex items-center shrink-0 text-xs font-semibold px-3 py-1.5 rounded-md"
           style={{
-            color:
-              pathname === "/learn"
-                ? "var(--color-orange)"
-                : "var(--learn-text-tertiary)",
-            background:
-              pathname === "/learn"
-                ? "rgba(255,92,26,0.14)"
-                : "transparent",
-            border:
-              pathname === "/learn"
-                ? "0.5px solid rgba(255,92,26,0.38)"
-                : "0.5px solid transparent",
+            color: hubActive ? "var(--learn-accent)" : "var(--learn-text-tertiary)",
+            background: hubActive ? "var(--learn-accent-tint)" : "transparent",
+            border: hubActive
+              ? "0.5px solid var(--learn-accent-border)"
+              : "0.5px solid transparent",
           }}
         >
           Beranda
         </Link>
 
         <span
-          className="w-px h-5 shrink-0 mx-0.5"
+          className="w-px h-4 shrink-0 mx-0.5"
           style={{ background: "var(--color-border-default)" }}
           aria-hidden
         />
 
         {LEARNING_PATHS.map((path) => {
           const isActive = activeSlug === path.slug;
+          const theme = getPathTheme(path.slug);
           return (
             <Link
               key={path.slug}
-              href={getFirstLessonHref(path)}
-              className="learn-nav-text learn-hover-pill inline-flex items-center gap-2 shrink-0 text-sm font-medium px-3.5 py-2 rounded-lg whitespace-nowrap"
+              href={getPathOverviewHref(path)}
+              className="learn-nav-text learn-hover-pill inline-flex items-center gap-1.5 shrink-0 text-xs font-medium px-3 py-1.5 rounded-md whitespace-nowrap"
               style={{
-                color: isActive
-                  ? "var(--color-orange)"
-                  : "var(--learn-text-secondary)",
-                background: isActive
-                  ? "rgba(255,92,26,0.14)"
-                  : "transparent",
+                color: isActive ? theme.accent : "var(--learn-text-secondary)",
+                background: isActive ? theme.tint : "transparent",
                 border: isActive
-                  ? "0.5px solid rgba(255,92,26,0.38)"
+                  ? `0.5px solid ${theme.border}`
                   : "0.5px solid transparent",
               }}
             >
               <LearnPathIcon
                 id={path.icon}
-                size={16}
-                color={
-                  isActive ? "var(--color-orange)" : "var(--learn-text-tertiary)"
-                }
+                size={14}
+                color={isActive ? theme.accent : "var(--learn-text-tertiary)"}
               />
               <span>{path.title}</span>
             </Link>

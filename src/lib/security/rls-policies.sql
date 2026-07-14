@@ -57,5 +57,28 @@ CREATE POLICY "whatsapp_chats_insert_own" ON whatsapp_chats FOR INSERT
 CREATE POLICY "system_config_select_authenticated" ON system_config FOR SELECT
   TO authenticated USING (true);
 
+ALTER TABLE interview_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE waitlist_entries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "interview_select_own" ON interview_sessions FOR SELECT
+  USING (auth.uid()::text = "userId");
+CREATE POLICY "interview_insert_own" ON interview_sessions FOR INSERT
+  WITH CHECK (auth.uid()::text = "userId");
+CREATE POLICY "interview_update_own" ON interview_sessions FOR UPDATE
+  USING (auth.uid()::text = "userId");
+
+CREATE POLICY "waitlist_select_own" ON waitlist_entries FOR SELECT
+  USING (
+    auth.uid()::text = "userId"
+    OR email = (auth.jwt() ->> 'email')
+  );
+CREATE POLICY "waitlist_insert_authenticated" ON waitlist_entries FOR INSERT
+  TO authenticated WITH CHECK (true);
+CREATE POLICY "waitlist_update_own" ON waitlist_entries FOR UPDATE
+  USING (
+    auth.uid()::text = "userId"
+    OR email = (auth.jwt() ->> 'email')
+  );
+
 CREATE POLICY "rate_limit_events_deny_all" ON rate_limit_events FOR ALL
   USING (false) WITH CHECK (false);

@@ -1,0 +1,104 @@
+import {
+  DOCUMENT_DEFINITIONS,
+  type DocumentFileKey,
+  type ModelClass,
+  type UserTier,
+} from "@/lib/config/documents";
+import { TIER_LABELS } from "@/components/generate/types";
+import { TIER_CONFIG, TIER, type TierId } from "@/lib/config/tiers";
+
+const TIER_RANK: Record<UserTier, number> = {
+  starter: 1,
+  pro: 2,
+  pro_max: 3,
+};
+
+function tierIdToUserTier(tierId: TierId): UserTier {
+  switch (tierId) {
+    case TIER.STARTER:
+      return "starter";
+    case TIER.PRO:
+      return "pro";
+    case TIER.PRO_MAX:
+      return "pro_max";
+  }
+}
+
+export interface TierRecommendation {
+  recommended: UserTier;
+  minimum: UserTier;
+  reason: string;
+}
+
+export function recommendTierForPlan(params: {
+  estimatedCredits: number;
+  selectedDocs: DocumentFileKey[];
+  perDocumentModelClass?: Partial<Record<DocumentFileKey, ModelClass>>;
+}): TierRecommendation {
+  let minimum: UserTier = "starter";
+
+  for (const docKey of params.selectedDocs) {
+    const def = DOCUMENT_DEFINITIONS[docKey];
+    if (TIER_RANK[def.minTier] > TIER_RANK[minimum]) {
+      minimum = def.minTier;
+    }
+  }
+
+  for (const [, modelClass] of Object.entries(params.perDocumentModelClass ?? {})) {
+    if (modelClass === "ultra" || modelClass === "flagship") {
+      if (modelClass === "ultra") minimum = "pro_max";
+      else if (TIER_RANK[minimum] < TIER_RANK.pro) minimum = "pro";
+    }
+    if (modelClass === "menengah" && TIER_RANK[minimum] < TIER_RANK.pro) {
+      minimum = "pro";
+    }
+  }
+
+  const starterPool = TIER_CONFIG[TIER.STARTER].creditsPerMonth;
+  const proPool = TIER_CONFIG[TIER.PRO].creditsPerMonth;
+
+  if (params.estimatedCredits > proPool) {
+    minimum = "pro_max";
+  } else if (params.estimatedCredits > starterPool) {
+    if (TIER_RANK[minimum] < TIER_RANK.pro) minimum = "pro";
+  }
+
+  let recommended = minimum;
+  const reasons: string[] = [];
+
+  if (minimum === "pro_max") {
+    reasons.push("plan butuh dokumen opsional atau kelas model Ultra/Flagship");
+  } else if (minimum === "pro") {
+    reasons.push("plan butuh lebih dari 3 dokumen inti atau model Menengah+");
+  }
+
+  if (params.estimatedCredits > starterPool && recommended === "starter") {
+    recommended = "pro";
+    reasons.push(`estimasi ${params.estimatedCredits} kredit melebihi pool Base (${starterPool})`);
+  }
+
+  if (params.estimatedCredits > proPool && recommended !== "pro_max") {
+    recommended = "pro_max";
+    reasons.push(`estimasi ${params.estimatedCredits} kredit melebihi pool Core (${proPool})`);
+  }
+
+  if (reasons.length === 0) {
+    reasons.push("plan ini cocok dengan paket Base");
+  }
+
+  return {
+    recommended,
+    minimum,
+    reason: reasons.join("; "),
+  };
+}
+
+export function tierLabel(tier: UserTier): string {
+  return TIER_LABELS[tier];
+}
+
+export function pricingHrefForTier(tier: UserTier): string {
+  return `/dashboard?upgrade=true&plan=${tier}`;
+}
+
+export { tierIdToUserTier };

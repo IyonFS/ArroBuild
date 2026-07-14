@@ -13,7 +13,9 @@ import type {
   ProjectStage,
 } from "./types";
 import { FILE_META, TIER_FILE_KEYS, resolvePreviewTier, isSubscribed } from "./types";
+import { DocIcon } from "@/lib/ui/app-icons";
 import { trackEvent } from "@/lib/analytics";
+import { parseApiErrorMessage } from "@/lib/parse-api-error";
 
 type FileStatus = "pending" | "generating" | "done" | "error";
 
@@ -46,13 +48,19 @@ interface GenerationProgressProps {
 // Educational tips per file key
 const FILE_TIPS: Partial<Record<FileKey, string>> = {
   prd: "PRD (Product Requirements Document) adalah kontrak antara tim product, design, dan engineering. Ini yang bikin semua orang build hal yang sama.",
-  context: "context.md adalah 'memory' untuk AI agent kamu. Paste di Claude Code atau Cursor sebelum mulai coding.",
-  plan: "Development plan berisi urutan fitur yang logis — build yang foundational dulu, jangan langsung ke fitur fancy.",
+  architecture: "architecture.md adalah blueprint teknis — skema DB, struktur folder, dan kontrak API untuk AI agent kamu.",
+  "plan-task": "Plan / task berisi urutan fitur yang logis — build yang foundational dulu, jangan langsung ke fitur fancy.",
   "design-system": "Design system memastikan konsistensi visual dari hari pertama. AI agent bisa pakai ini sebagai referensi tiap generate komponen UI.",
-  agents: "File ini berisi instruksi khusus untuk AI agent kamu. Paste langsung ke .cursorrules atau CLAUDE.md setelah selesai.",
-  "production-hardening": "Production hardening checklist memastikan kamu tidak miss hal kritikal sebelum launch — security, monitoring, dan rollback plan.",
-  "scale-performance": "Scale planning sebelum traffic datang jauh lebih murah daripada refactor saat sudah overload.",
-  "growth-quality": "Growth strategy yang terdokumentasi memastikan tim punya arah yang sama — bukan jalan sendiri-sendiri.",
+  "agent-rules": "File ini berisi instruksi khusus untuk AI agent kamu. Paste langsung ke .cursorrules atau CLAUDE.md setelah selesai.",
+  "adaptive-document": "Dokumen adaptif menyesuaikan strategi dengan tipe produk kamu — SaaS, marketplace, mobile, dan lainnya.",
+  "cost-infrastructure": "Estimasi biaya hosting & infrastruktur membantu kamu tidak kaget saat traffic naik.",
+  "analytics-metrics": "Event tracking dan funnel yang terdokumentasi memastikan tim punya data yang sama untuk dioptimasi.",
+  "testing-qa": "Testing plan prioritas memastikan fitur kritikal tervalidasi sebelum launch.",
+  "onboarding-email": "Alur onboarding & email transaksional yang jelas meningkatkan aktivasi pengguna pertama.",
+  "competitive-analysis": "Analisis kompetitor membantu positioning produk yang jelas dan diferensiasi yang kuat.",
+  "security-launch": "Security & launch checklist memastikan kamu tidak miss hal kritikal sebelum go-live.",
+  "database-deep-dive": "Database deep-dive sebelum traffic datang jauh lebih murah daripada refactor saat sudah overload.",
+  "compliance-legal": "Outline privasi & legal membantu produk siap regulasi sejak awal.",
 };
 
 function Spinner() {
@@ -60,8 +68,8 @@ function Spinner() {
     <div
       className="w-4 h-4 rounded-full border-2 animate-spin"
       style={{
-        borderColor: "rgba(204,255,0,0.2)",
-        borderTopColor: "var(--color-lime)",
+        borderColor: "rgba(255,176,32,0.2)",
+        borderTopColor: "var(--app-amber)",
       }}
     />
   );
@@ -120,6 +128,17 @@ export default function GenerationProgress({
     async function run() {
       trackEvent("generation_started");
       try {
+        const previewTier = resolvePreviewTier(plan);
+        const docKeys = selectedDocs ?? TIER_FILE_KEYS[previewTier];
+        const perDocumentModelClass =
+          perDocModelClass && Object.keys(perDocModelClass).length > 0
+            ? Object.fromEntries(
+                docKeys
+                  .filter((k) => perDocModelClass[k])
+                  .map((k) => [k, perDocModelClass[k]!])
+              )
+            : undefined;
+
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -127,9 +146,8 @@ export default function GenerationProgress({
             idea,
             clarifications,
             presets,
-            modelId,
             selectedDocs,
-            perDocumentModelClass: perDocModelClass,
+            perDocumentModelClass,
             estimatedCredits,
             productType,
             projectStage,
@@ -140,7 +158,7 @@ export default function GenerationProgress({
 
         if (!res.ok || !res.body) {
           const text = await res.text().catch(() => "Unknown error");
-          throw new Error(`API error ${res.status}: ${text}`);
+          throw new Error(parseApiErrorMessage(res.status, text));
         }
 
         const reader = res.body.getReader();
@@ -257,7 +275,7 @@ export default function GenerationProgress({
   const progressPct = (doneCount / files.length) * 100;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10 animate-fade-in-up">
+    <div className="generate-app max-w-2xl mx-auto px-4 py-10 animate-fade-in-up">
       {/* Heading */}
       <div className="mb-8 text-center">
         {globalStatus === "running" && (
@@ -265,8 +283,8 @@ export default function GenerationProgress({
             <div
               className="w-12 h-12 rounded-full border-2 animate-spin mx-auto mb-5"
               style={{
-                borderColor: "rgba(204,255,0,0.2)",
-                borderTopColor: "var(--color-lime)",
+                borderColor: "rgba(255,176,32,0.2)",
+                borderTopColor: "var(--app-amber)",
               }}
             />
             <h1
@@ -288,7 +306,7 @@ export default function GenerationProgress({
             <div className="text-5xl mb-4">✅</div>
             <h1
               className="font-unbounded font-bold text-xl mb-2"
-              style={{ color: "var(--color-lime)", letterSpacing: "-0.02em" }}
+              style={{ color: "var(--app-amber)", letterSpacing: "-0.02em" }}
             >
               Docs siap!
             </h1>
@@ -327,8 +345,8 @@ export default function GenerationProgress({
             width: `${progressPct}%`,
             background:
               globalStatus === "done"
-                ? "var(--color-lime)"
-                : "linear-gradient(90deg, rgba(204,255,0,0.6), var(--color-lime))",
+                ? "var(--app-amber)"
+                : "linear-gradient(90deg, rgba(255,176,32,0.6), var(--app-amber))",
           }}
         />
       </div>
@@ -337,7 +355,7 @@ export default function GenerationProgress({
       <div
         className="rounded-xl overflow-hidden mb-6"
         style={{
-          border: "1px solid rgba(204,255,0,0.18)",
+          border: "1px solid rgba(255,176,32,0.18)",
           background: "#050505",
           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
         }}
@@ -353,7 +371,7 @@ export default function GenerationProgress({
             <span
               className="ml-2 text-[10px] uppercase tracking-widest font-bold"
               style={{
-                color: "rgba(204,255,0,0.7)",
+                color: "rgba(255,176,32,0.7)",
                 fontFamily: "var(--font-jetbrains-mono), monospace",
               }}
             >
@@ -378,7 +396,7 @@ export default function GenerationProgress({
             fontFamily: "var(--font-jetbrains-mono), monospace",
             fontSize: 11,
             lineHeight: 1.65,
-            color: "rgba(204,255,0,0.75)",
+            color: "rgba(255,176,32,0.75)",
           }}
         >
           {buildLog.map((line, i) => (
@@ -432,7 +450,7 @@ export default function GenerationProgress({
                 {file.status === "done" && (
                   <div
                     className="w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ background: "var(--color-lime)" }}
+                    style={{ background: "var(--app-amber)" }}
                   >
                     <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
                       <path
@@ -458,7 +476,19 @@ export default function GenerationProgress({
               {/* File info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                  <span className="text-base">{meta.icon}</span>
+                  <DocIcon
+                    doc={file.key}
+                    size={16}
+                    className="shrink-0"
+                    style={{
+                      color:
+                        file.status === "generating"
+                          ? "var(--app-amber)"
+                          : file.status === "done"
+                            ? "var(--app-amber)"
+                            : "var(--app-text-tertiary)",
+                    }}
+                  />
                   <span
                     className="font-mono font-semibold text-sm"
                     style={{
@@ -527,7 +557,7 @@ export default function GenerationProgress({
                     }}
                   >
                     <span>{file.chunks.slice(-200)}</span>
-                    <span className="animate-pulse" style={{ color: "var(--color-lime)" }}>▊</span>
+                    <span className="animate-pulse" style={{ color: "var(--app-amber)" }}>▊</span>
                   </div>
                 )}
 
@@ -555,15 +585,15 @@ export default function GenerationProgress({
         <div
           className="flex items-start gap-3 px-4 py-3 rounded-xl mb-6"
           style={{
-            background: "rgba(204,255,0,0.04)",
-            border: "0.5px solid rgba(204,255,0,0.12)",
+            background: "rgba(255,176,32,0.04)",
+            border: "0.5px solid rgba(255,176,32,0.12)",
           }}
         >
-          <span style={{ color: "var(--color-lime)", fontSize: 14, flexShrink: 0 }}>💡</span>
+          <span style={{ color: "var(--app-amber)", fontSize: 14, flexShrink: 0 }}>💡</span>
           <div>
             <p
               className="font-mono text-[10px] font-bold tracking-wide uppercase mb-1"
-              style={{ color: "var(--color-lime)" }}
+              style={{ color: "var(--app-amber)" }}
             >
               Tau nggak?
             </p>
@@ -594,3 +624,4 @@ export default function GenerationProgress({
     </div>
   );
 }
+

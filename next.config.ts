@@ -13,7 +13,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   // Next.js + Midtrans Snap; inline/eval needed for Next runtime bootstrap
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.midtrans.com https://app.sandbox.midtrans.com",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.midtrans.com https://app.midtrans.com https://app.sandbox.midtrans.com https://*.upstash.io",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.midtrans.com https://app.midtrans.com https://app.sandbox.midtrans.com https://*.upstash.io https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
   "frame-src 'self' https://app.midtrans.com https://app.sandbox.midtrans.com",
   ...(isProd ? ["upgrade-insecure-requests"] : []),
 ].join("; ");

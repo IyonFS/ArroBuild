@@ -29,9 +29,15 @@ export async function updateSession(request: NextRequest) {
       },
     });
 
-    await supabase.auth.getUser();
-  } catch (err) {
-    console.error("Auth middleware error:", err);
+    // Prefer local session read; avoids network call on every public page hit.
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.auth.getUser();
+    }
+  } catch {
+    // Supabase unreachable (offline, DNS, ad blocker) — don't break the page.
   }
 
   return supabaseResponse;

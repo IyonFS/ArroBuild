@@ -24,7 +24,7 @@ async function testWithConfig(label, config) {
   let text = "";
   let chunkCount = 0;
   const stream = await ai.models.generateContentStream({
-    model: "gemini-2.5-flash",
+    model: "gemini-3.1-flash-lite",
     contents: prompt,
     config,
   });

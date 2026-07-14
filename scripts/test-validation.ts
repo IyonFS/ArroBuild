@@ -2,6 +2,9 @@ import {
   endsAbruptly,
   validateGeneratedContent,
   countHeadings,
+  sanitizeGeneratedContent,
+  dedupeRepeatedDocument,
+  mergeContinuationContent,
 } from "../src/lib/ai/validation";
 
 let passed = 0;
@@ -28,7 +31,7 @@ assert(
 
 const truncatedPrd = `# Product Requirements Document
 
-## 1. Problem Statement
+## 1. Masalah yang Diselesaikan
 
 Restaurant owners face many challenges:
 - Manual Menu Management
@@ -38,56 +41,113 @@ const truncatedResult = validateGeneratedContent(truncatedPrd, "prd", "MAX_TOKEN
 assert("truncated PRD fails validation", !truncatedResult.valid);
 assert("truncated PRD detected as truncated", truncatedResult.truncated);
 
-const completePrd = `# PRD
+const completePrd = `# Product Requirements Document
 
-## 1. Problem Statement
-${"Pain points with detail for restaurant owners managing orders. ".repeat(60)}
+## 1. Ringkasan Produk
+${"Platform untuk restoran digital. ".repeat(40)}
 
-## 2. Solution
-${"Step by step solution flow for the platform. ".repeat(20)}
+## 2. Masalah yang Diselesaikan
+${"Pain points with detail for restaurant owners managing orders. ".repeat(30)}
 
-## 3. Target Users
-| Segment | Description | Pain Point |
-|---|---|---|
-| Owners | Restaurant owners | Manual processes |
+## 3. Target Pengguna
+| Segment | Description |
+|---|---|
+| Owners | Restaurant owners |
 
-## 4. Core Value Proposition
-Headline and differentiators here.
+## 4. Fitur Utama
+| ID | Fitur |
+|---|---|
+| FEAT-001 | QR ordering |
 
-## 5. Features
-### 5.1 Core Features
-${"Feature detail with acceptance criteria. ".repeat(15)}
+## 5. Cara Kerja Tiap Fitur
+FEAT-001: scan QR, order, pay.
 
-### 5.2 Premium Features
-${"Premium feature details for post-MVP. ".repeat(10)}
+## 6. Alur Pengguna Utama
+Scan → order → pay.
 
-## 6. MVP Scope
-- [x] Included feature one
-- [ ] Not in MVP feature
+## 7. Batasan
+MVP scope listed here.
 
-## 7. Success Metrics
-Launch, growth, and revenue targets with numbers.
-
-## 8. User Stories
-As a restaurant owner, I want QR ordering, so that customers can order faster.
-
-## 9. Constraints & Assumptions
-Technical, business, and user assumptions listed here.
-
-## 10. Open Questions
-1. Payment integration approach?
-2. Multi-location support timing?
-3. Offline mode requirements?
-4. Staff role permissions model?
+## 8. Model Harga & Langganan
+Freemium with Pro tier.
 `;
 
-assert("complete PRD has enough headings", countHeadings(completePrd) >= 8);
+assert("complete PRD has enough headings", countHeadings(completePrd) >= 5);
 const completeResult = validateGeneratedContent(completePrd, "prd", "STOP");
 assert("complete PRD passes validation", completeResult.valid);
-assert(
-  "complete PRD long enough",
-  completePrd.length >= 2500
+
+const duplicated = `${completePrd}
+
+\`\`\`yaml
+project_id: "x"
+\`\`\`
+
+# Product Requirements Document
+
+## 1. Ringkasan Produk
+Duplicate start.
+`;
+
+const deduped = dedupeRepeatedDocument(duplicated);
+assert("dedupe removes second document copy", !deduped.includes("Duplicate start"));
+assert("dedupe keeps first document", deduped.includes("Model Harga"));
+
+const merged = mergeContinuationContent(
+  "## 6. Alur Pengguna Utama\nStep one.",
+  "Step one. Step two completes the flow."
 );
+assert("merge removes overlap", merged === "## 6. Alur Pengguna Utama\nStep one. Step two completes the flow.");
+
+const dupResult = validateGeneratedContent(duplicated, "prd", "STOP");
+assert("duplicate structure auto-healed and passes validation", dupResult.valid);
+
+const partialFirst = `# Product Requirements Document
+
+## 1. Ringkasan Produk
+Short only.
+
+## 2. Masalah
+Brief.
+`;
+
+const completeSecond = `${partialFirst}
+\`\`\`yaml
+project_id: "x"
+\`\`\`
+
+# Product Requirements Document
+
+## 1. Ringkasan Produk
+${"Platform untuk restoran digital. ".repeat(40)}
+
+## 2. Masalah yang Diselesaikan
+${"Pain points with detail for restaurant owners managing orders. ".repeat(30)}
+
+## 3. Target Pengguna
+| Segment | Description |
+|---|---|
+| Owners | Restaurant owners |
+
+## 4. Fitur Utama
+| ID | Fitur |
+|---|---|
+| FEAT-001 | QR ordering |
+
+## 5. Cara Kerja Tiap Fitur
+FEAT-001: scan QR, order, pay.
+
+## 6. Alur Pengguna Utama
+Scan → order → pay.
+
+## 7. Batasan
+MVP scope listed here.
+
+## 8. Model Harga & Langganan
+Freemium with Pro tier.
+`;
+
+const picked = dedupeRepeatedDocument(completeSecond);
+assert("dedupe keeps more complete second half", picked.includes("Model Harga") && !picked.endsWith("Brief."));
 
 console.log(`\n=== Results: ${passed} passed, ${failed} failed ===\n`);
 process.exit(failed > 0 ? 1 : 0);

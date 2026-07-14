@@ -3,8 +3,6 @@
 import { usePathname } from "next/navigation";
 import LearnPrimaryNav from "@/components/learn/LearnPrimaryNav";
 import LearnTopicStrip from "@/components/learn/LearnTopicStrip";
-import LearnBackground from "@/components/learn/LearnBackground";
-import LearnCursor from "@/components/learn/LearnCursor";
 import { useLearnTheme } from "@/components/learn/LearnThemeProvider";
 import { LEARN_NAV_HEIGHT } from "@/lib/learn-links";
 
@@ -19,7 +17,7 @@ export default function LearnShell({ children }: LearnShellProps) {
 
   return (
     <div
-      className={`learn-shell flex flex-col ${
+      className={`learn-shell learn-app flex flex-col ${
         isLessonPage ? "h-screen overflow-hidden" : "min-h-screen"
       }`}
       data-learn-theme={theme}
@@ -28,8 +26,6 @@ export default function LearnShell({ children }: LearnShellProps) {
         ["--learn-nav-height" as string]: `${LEARN_NAV_HEIGHT}px`,
       }}
     >
-      <LearnBackground />
-      <LearnCursor />
       <div className="relative z-10 flex flex-col h-full min-h-0 flex-1">
         <LearnPrimaryNav />
         <LearnTopicStrip />
