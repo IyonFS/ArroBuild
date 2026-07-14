@@ -188,7 +188,7 @@ function LearnSearchField({
               style={{
                 background:
                   index === activeIndex
-                    ? "rgba(255,92,26,0.1)"
+                    ? "var(--learn-accent-tint)"
                     : "transparent",
               }}
             >

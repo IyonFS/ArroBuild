@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { LEARNING_PATHS } from "@/lib/learn-content";
-import { getFirstLessonHref } from "@/lib/learn-nav";
+import { getPathOverviewHref } from "@/lib/learn-nav";
 import LearnLogo from "@/components/learn/LearnLogo";
 
+/** @deprecated Prefer shared marketing Footer on hub/overview pages. */
 export default function LearnFooter() {
   const year = new Date().getFullYear();
 
@@ -26,7 +27,7 @@ export default function LearnFooter() {
               {LEARNING_PATHS.map((path) => (
                 <li key={path.slug}>
                   <Link
-                    href={getFirstLessonHref(path)}
+                    href={getPathOverviewHref(path)}
                     className="learn-nav-text learn-hover-link text-sm"
                     style={{ color: "var(--learn-text-secondary)" }}
                   >

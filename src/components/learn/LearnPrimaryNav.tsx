@@ -53,7 +53,7 @@ export default function LearnPrimaryNav() {
             avatarUrl: (data.user.user_metadata?.avatar_url as string) ?? null,
           });
         }
-      });
+      }).catch(() => {});
 
       const {
         data: { subscription },
@@ -112,18 +112,6 @@ export default function LearnPrimaryNav() {
           <nav className="hidden lg:flex items-center gap-7 shrink-0 learn-nav-text">
             <LearnNavDropdown label="Tutorial" items={tutorialItems} />
             <LearnNavDropdown label="Referensi" items={referenceItems} />
-            <span
-              className="learn-nav-text text-sm cursor-not-allowed"
-              style={{ color: "var(--learn-text-tertiary)", opacity: 0.75 }}
-              title="Segera hadir"
-            >
-              Latihan
-              <span
-                className="learn-brand-badge learn-brand-badge-muted ml-2 text-[10px] px-2 py-0.5 rounded"
-              >
-                Segera
-              </span>
-            </span>
           </nav>
 
           <div className="flex-1 flex justify-center min-w-0">
@@ -147,8 +135,13 @@ export default function LearnPrimaryNav() {
             {user ? (
               <Link
                 href="/dashboard"
-                className="btn btn-secondary btn-sm"
-                style={{ maxWidth: 160, gap: 8 }}
+                className="learn-hover-btn learn-nav-text text-sm px-3 py-2 rounded-lg inline-flex items-center gap-2"
+                style={{
+                  maxWidth: 160,
+                  color: "var(--color-text-primary)",
+                  border: "0.5px solid var(--learn-border)",
+                  background: "var(--learn-bg-elevated)",
+                }}
               >
                 {user.avatarUrl ? (
                   <img
@@ -172,8 +165,8 @@ export default function LearnPrimaryNav() {
                       justifyContent: "center",
                       fontSize: 10,
                       fontWeight: 700,
-                      background: "rgba(255,92,26,0.15)",
-                      color: "var(--color-orange)",
+                      background: "var(--learn-accent-tint)",
+                      color: "var(--learn-accent)",
                     }}
                   >
                     {(user.name ?? user.email)[0]?.toUpperCase()}
@@ -182,7 +175,10 @@ export default function LearnPrimaryNav() {
                 <span className="truncate">{navUserLabel}</span>
               </Link>
             ) : (
-              <Link href="/login" className="btn btn-ghost btn-sm">
+              <Link
+                href="/login"
+                className="learn-cta learn-nav-text text-sm font-semibold px-3.5 py-2 rounded-lg"
+              >
                 Masuk
               </Link>
             )}
@@ -212,7 +208,7 @@ export default function LearnPrimaryNav() {
       {menuOpen && (
         <div
           className="learn-mobile-overlay fixed inset-0 z-[60] lg:hidden"
-          style={{ background: "rgba(10,10,10,0.85)" }}
+          style={{ background: "rgba(13,19,33,0.85)" }}
           onClick={() => setMenuOpen(false)}
           aria-hidden
         />
@@ -278,8 +274,13 @@ export default function LearnPrimaryNav() {
           <Link
             href="/"
             onClick={() => setMenuOpen(false)}
-            className="btn btn-secondary"
-            style={{ width: "100%", justifyContent: "center" }}
+            className="learn-hover-btn learn-nav-text text-sm px-4 py-2.5 rounded-lg text-center"
+            style={{
+              width: "100%",
+              color: "var(--color-text-primary)",
+              border: "0.5px solid var(--learn-border)",
+              background: "var(--learn-bg-elevated)",
+            }}
           >
             ← Kembali ke ArroBuild
           </Link>
@@ -287,8 +288,8 @@ export default function LearnPrimaryNav() {
             <Link
               href="/login"
               onClick={() => setMenuOpen(false)}
-              className="btn btn-ghost"
-              style={{ width: "100%", justifyContent: "center" }}
+              className="learn-cta learn-nav-text text-sm font-semibold px-4 py-2.5 rounded-lg text-center"
+              style={{ width: "100%" }}
             >
               Masuk
             </Link>
