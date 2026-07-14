@@ -50,23 +50,27 @@ export default function ProjectWorkspace({ projectId }: Props) {
   const rightWidthRef = useRef(340);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("arrobuild_workspace_widths");
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { left?: number; right?: number };
-      if (parsed.left) {
-        const w = Math.min(420, Math.max(200, parsed.left));
-        setLeftWidth(w);
-        leftWidthRef.current = w;
+    // Restore persisted widths after mount. Deferred so state updates don't run
+    // synchronously inside the effect body (and to avoid a hydration mismatch).
+    queueMicrotask(() => {
+      try {
+        const raw = localStorage.getItem("arrobuild_workspace_widths");
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as { left?: number; right?: number };
+        if (parsed.left) {
+          const w = Math.min(420, Math.max(200, parsed.left));
+          setLeftWidth(w);
+          leftWidthRef.current = w;
+        }
+        if (parsed.right) {
+          const w = Math.min(480, Math.max(280, parsed.right));
+          setRightWidth(w);
+          rightWidthRef.current = w;
+        }
+      } catch {
+        /* ignore */
       }
-      if (parsed.right) {
-        const w = Math.min(480, Math.max(280, parsed.right));
-        setRightWidth(w);
-        rightWidthRef.current = w;
-      }
-    } catch {
-      /* ignore */
-    }
+    });
   }, []);
 
   useEffect(() => {
@@ -111,7 +115,7 @@ export default function ProjectWorkspace({ projectId }: Props) {
     };
   }, []);
 
-  const startDrag = (which: "left" | "right") => (e: React.MouseEvent) => {
+  const startDrag = (which: "left" | "right", e: React.MouseEvent) => {
     e.preventDefault();
     draggingRef.current = which;
     document.body.style.cursor = "col-resize";
@@ -148,7 +152,9 @@ export default function ProjectWorkspace({ projectId }: Props) {
   }, [projectId]);
 
   useEffect(() => {
-    void load();
+    queueMicrotask(() => {
+      void load();
+    });
   }, [load]);
 
   useEffect(() => {
@@ -609,7 +615,7 @@ export default function ProjectWorkspace({ projectId }: Props) {
             role="separator"
             aria-orientation="vertical"
             aria-label="Sesuaikan lebar panel dokumen"
-            onMouseDown={startDrag("left")}
+            onMouseDown={(e) => startDrag("left", e)}
             className="flex-shrink-0 flex items-center justify-center group"
             style={{ width: 12, cursor: "col-resize" }}
           >
@@ -641,7 +647,7 @@ export default function ProjectWorkspace({ projectId }: Props) {
             role="separator"
             aria-orientation="vertical"
             aria-label="Sesuaikan lebar panel revisi"
-            onMouseDown={startDrag("right")}
+            onMouseDown={(e) => startDrag("right", e)}
             className="flex-shrink-0 flex items-center justify-center group"
             style={{ width: 12, cursor: "col-resize" }}
           >

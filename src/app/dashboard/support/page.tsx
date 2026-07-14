@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import DashboardShell from "@/components/dashboard/DashboardShell";
@@ -20,11 +20,13 @@ function SupportContent() {
     "/dashboard/support"
   );
   const [whatsappQuota, setWhatsappQuota] = useState<WhatsappQuotaDisplay | null>(null);
+  const [prevData, setPrevData] = useState(data);
 
-  useEffect(() => {
+  if (data !== prevData) {
+    setPrevData(data);
     const q = (data as { whatsappQuota?: WhatsappQuotaDisplay | null })?.whatsappQuota;
     if (q !== undefined) setWhatsappQuota(q);
-  }, [data]);
+  }
 
   async function handleSignOut() {
     await fetch("/api/auth/signout", { method: "POST" });

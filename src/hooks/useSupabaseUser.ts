@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useHydrated } from "./use-hydrated";
 
 export interface SupabaseUserSummary {
   email: string;
@@ -11,10 +12,9 @@ export interface SupabaseUserSummary {
 
 export function useSupabaseUser() {
   const [user, setUser] = useState<SupabaseUserSummary | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHydrated();
 
   useEffect(() => {
-    setMounted(true);
     try {
       const supabase = createClient();
 
@@ -52,7 +52,7 @@ export function useSupabaseUser() {
 
       return () => subscription.unsubscribe();
     } catch {
-      setMounted(true);
+      return undefined;
     }
   }, []);
 

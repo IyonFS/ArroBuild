@@ -414,8 +414,8 @@ export default function KontenStep({ profesi, value, onChange, onNext, onBack }:
             <span style={{ color: "#3B82F6", fontSize: 12, flexShrink: 0, marginTop: 1 }}>ⓘ</span>
             <p className="font-mono text-[11px]" style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
               Belum punya proyek nyata? Tulis proyek fiktif yang realistis — misalnya{" "}
-              <em style={{ color: "var(--color-text-primary)" }}>"Landing page untuk kafe lokal"</em> atau{" "}
-              <em style={{ color: "var(--color-text-primary)" }}>"App manajemen tugas sederhana"</em>. Ini tetap valid untuk belajar.
+              <em style={{ color: "var(--color-text-primary)" }}>&quot;Landing page untuk kafe lokal&quot;</em> atau{" "}
+              <em style={{ color: "var(--color-text-primary)" }}>&quot;App manajemen tugas sederhana&quot;</em>. Ini tetap valid untuk belajar.
             </p>
           </div>
 

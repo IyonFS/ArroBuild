@@ -8,6 +8,7 @@ import { getDisplayName, getNavLabel } from "@/lib/display-name";
 import { OPEN_LEARN_IN_NEW_TAB, LEARN_HUB_PATH } from "@/lib/learn-links";
 import { APP_NAV_HEIGHT_PX } from "@/lib/nav-routes";
 import { MenuIcon, CloseIcon } from "@/components/marketing/icons";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 const APP_LINKS = [
   { href: LEARN_HUB_PATH, label: "Belajar", external: true },
@@ -38,11 +39,7 @@ export default function AppNav() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";

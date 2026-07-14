@@ -133,12 +133,16 @@ function TerminalPanel() {
 
   const seq = TERMINAL_SEQUENCES[seqIdx];
 
-  useEffect(() => {
+  // Reset the animation state when the sequence changes (adjust state during
+  // render instead of in an effect to avoid cascading renders).
+  const [prevSeqIdx, setPrevSeqIdx] = useState(seqIdx);
+  if (seqIdx !== prevSeqIdx) {
+    setPrevSeqIdx(seqIdx);
     setTypedChars(0);
     setVisibleFiles(0);
     setShowSummary(false);
     setPhase("typing");
-  }, [seqIdx]);
+  }
 
   // Typing phase
   useEffect(() => {

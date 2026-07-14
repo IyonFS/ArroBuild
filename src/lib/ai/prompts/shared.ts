@@ -1,8 +1,8 @@
 /**
- * Shared types and prompt dispatcher for ArroBuild v2 documents.
+ * Shared types and helpers for ArroBuild v2 documents.
  */
 
-import type { DocumentFileKey, PromptDepthTier } from "@/lib/config/documents";
+import type { DocumentFileKey } from "@/lib/config/documents";
 
 export type {
   DocumentFileKey,
@@ -123,61 +123,3 @@ Agent tool: ${presets.agentTool}
 </user_input>`;
 }
 
-export function buildPromptForTier(
-  fileKey: DocumentFileKey,
-  input: GenerationInput,
-  tier: PromptDepthTier,
-  accumulatedContext: string
-): string {
-  const { buildPrdPrompt } = require("./prd");
-  const { buildArchitecturePrompt } = require("./architecture");
-  const { buildPlanTaskPrompt } = require("./plan-task");
-  const { buildDesignSystemPrompt } = require("./design-system");
-  const { buildAgentRulesPrompt } = require("./agent-rules");
-  const { buildAdaptiveDocumentPrompt } = require("./adaptive-document");
-  const {
-    buildCostInfrastructurePrompt,
-    buildAnalyticsMetricsPrompt,
-    buildTestingQaPrompt,
-    buildOnboardingEmailPrompt,
-    buildCompetitiveAnalysisPrompt,
-    buildSecurityLaunchPrompt,
-    buildDatabaseDeepDivePrompt,
-    buildComplianceLegalPrompt,
-  } = require("./optional-modules");
-
-  const depth: PromptDepthTier = tier;
-
-  switch (fileKey) {
-    case "prd":
-      return buildPrdPrompt(input, depth, accumulatedContext);
-    case "architecture":
-      return buildArchitecturePrompt(input, depth, accumulatedContext);
-    case "plan-task":
-      return buildPlanTaskPrompt(input, depth, accumulatedContext);
-    case "design-system":
-      return buildDesignSystemPrompt(input, depth as "PRO" | "PRO_MAX", accumulatedContext);
-    case "agent-rules":
-      return buildAgentRulesPrompt(input, depth as "PRO" | "PRO_MAX", accumulatedContext);
-    case "adaptive-document":
-      return buildAdaptiveDocumentPrompt(input, depth, accumulatedContext);
-    case "cost-infrastructure":
-      return buildCostInfrastructurePrompt(input, depth, accumulatedContext);
-    case "analytics-metrics":
-      return buildAnalyticsMetricsPrompt(input, depth, accumulatedContext);
-    case "testing-qa":
-      return buildTestingQaPrompt(input, depth, accumulatedContext);
-    case "onboarding-email":
-      return buildOnboardingEmailPrompt(input, depth, accumulatedContext);
-    case "competitive-analysis":
-      return buildCompetitiveAnalysisPrompt(input, depth, accumulatedContext);
-    case "security-launch":
-      return buildSecurityLaunchPrompt(input, depth, accumulatedContext);
-    case "database-deep-dive":
-      return buildDatabaseDeepDivePrompt(input, depth, accumulatedContext);
-    case "compliance-legal":
-      return buildComplianceLegalPrompt(input, depth, accumulatedContext);
-    default:
-      throw new Error(`Unknown fileKey: ${fileKey}`);
-  }
-}

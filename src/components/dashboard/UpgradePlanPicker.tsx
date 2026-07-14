@@ -165,7 +165,7 @@ export default function UpgradePlanPicker({
 
       if (data.redirectUrl && data.orderId) {
         sessionStorage.setItem("arrobuild_pending_order", data.orderId);
-        window.location.href = data.redirectUrl;
+        window.location.assign(data.redirectUrl);
         return;
       }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -271,22 +272,22 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
           className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 mt-4 pt-4"
           style={{ borderTop: "0.5px solid var(--app-border-default)" }}
         >
-          <a
+          <Link
             href="/learn"
             {...OPEN_LEARN_IN_NEW_TAB}
             className="font-mono text-xs flex items-center gap-1.5 transition-colors hover:opacity-80"
             style={{ color: "var(--app-sky)" }}
           >
             → Cara pakai context.md di Claude Code
-          </a>
-          <a
+          </Link>
+          <Link
             href="/learn"
             {...OPEN_LEARN_IN_NEW_TAB}
             className="font-mono text-xs flex items-center gap-1.5 transition-colors hover:opacity-80"
             style={{ color: "var(--app-sky)" }}
           >
             → Setup .cursorrules yang benar
-          </a>
+          </Link>
         </div>
       </section>
 

@@ -89,9 +89,14 @@ export default function DocumentPanel({
 
   const isDirty = file ? draft.trim() !== file.content.trim() : false;
 
-  useEffect(() => {
+  // Re-sync the editable draft when the underlying file changes (adjust state
+  // during render instead of in an effect to avoid cascading renders).
+  const fileKey = `${file?.id ?? ""}:${file?.version ?? ""}:${file?.content ?? ""}`;
+  const [prevFileKey, setPrevFileKey] = useState(fileKey);
+  if (fileKey !== prevFileKey) {
+    setPrevFileKey(fileKey);
     setDraft(file?.content ?? "");
-  }, [file?.id, file?.version, file?.content]);
+  }
 
   useEffect(() => {
     if (!scrollToLine || !scrollRef.current || showRaw) return;

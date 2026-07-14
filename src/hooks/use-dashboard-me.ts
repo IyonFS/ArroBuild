@@ -45,6 +45,10 @@ export function useDashboardMe(loginNext = "/dashboard") {
     };
   }, []);
 
+  const loadProfileRef = useRef<
+    (retryAfterRefresh?: boolean) => Promise<boolean>
+  >(() => Promise.resolve(false));
+
   const loadProfile = useCallback(
     async (retryAfterRefresh = false): Promise<boolean> => {
       if (!mountedRef.current) return false;
@@ -71,7 +75,7 @@ export function useDashboardMe(loginNext = "/dashboard") {
 
         if (authData.user && !retryAfterRefresh) {
           await supabase.auth.refreshSession();
-          return loadProfile(true);
+          return loadProfileRef.current(true);
         }
 
         if (!authData.user) {
@@ -99,15 +103,21 @@ export function useDashboardMe(loginNext = "/dashboard") {
   );
 
   useEffect(() => {
-    loadProfile()
-      .catch(() => {
-        if (mountedRef.current) {
-          setLoadError("Gagal memuat profil. Periksa koneksi lalu coba lagi.");
-        }
-      })
-      .finally(() => {
-        if (mountedRef.current) setLoading(false);
-      });
+    loadProfileRef.current = loadProfile;
+  }, [loadProfile]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      loadProfile()
+        .catch(() => {
+          if (mountedRef.current) {
+            setLoadError("Gagal memuat profil. Periksa koneksi lalu coba lagi.");
+          }
+        })
+        .finally(() => {
+          if (mountedRef.current) setLoading(false);
+        });
+    });
   }, [loadProfile]);
 
   return { data, loading, loadError, loadProfile, setLoading };

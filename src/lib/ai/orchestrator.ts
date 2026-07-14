@@ -3,7 +3,7 @@
  */
 
 import { streamWithFinishReason, type GenerationConfig } from "./generator";
-import { buildPromptForTier } from "./prompts/shared";
+import { buildPromptForTier } from "./prompts/build-prompt";
 import { ContextManager } from "./context-manager";
 import {
   FALLBACK_CHAIN,
