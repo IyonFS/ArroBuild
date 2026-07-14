@@ -85,7 +85,7 @@ export default function PricingSection() {
           >
             Mulai gratis.{" "}
             <span style={{ color: "var(--color-lime)" }}>
-              Upgrade saat siap.
+              Bayar saat siap generate.
             </span>
           </h2>
           <p
@@ -103,8 +103,8 @@ export default function PricingSection() {
               transform: isVisible ? "translateY(0)" : "translateY(12px)",
             }}
           >
-            Free tier tanpa login. Bayar via Midtrans saat butuh bundle lengkap
-            dan model AI premium.
+            Daftar gratis, bangun plan tanpa kredit. Bayar via Midtrans saat siap
+            generate dokumen AI.
           </p>
         </div>
 
@@ -178,11 +178,25 @@ export default function PricingSection() {
                   style={{
                     display: "flex",
                     alignItems: "baseline",
-                    gap: 4,
+                    gap: 8,
                     flexWrap: "wrap",
                     marginBottom: 8,
                   }}
                 >
+                  {tier.compareAtPrice && (
+                    <span
+                      style={{
+                        fontFamily: "var(--font-jetbrains-mono), monospace",
+                        fontSize: 14,
+                        fontWeight: 400,
+                        color: "var(--color-text-tertiary)",
+                        textDecoration: "line-through",
+                        opacity: 0.65,
+                      }}
+                    >
+                      {tier.compareAtPrice}
+                    </span>
+                  )}
                   <span
                     style={{
                       fontFamily: "var(--font-unbounded), 'Unbounded', sans-serif",
@@ -325,8 +339,8 @@ export default function PricingSection() {
             margin: "24px auto 0",
           }}
         >
-          * Paket Unlimited: akses fitur selama langganan aktif. Pembayaran
-          Midtrans segera hadir — login untuk daftar early access.
+          * Kredit di-refresh tiap bulan sesuai paket. Slot terbatas pada fase
+          peluncuran — daftar waitlist jika tier penuh.
         </p>
       </div>
     </section>

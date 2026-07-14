@@ -19,7 +19,14 @@ import {
   calcTotalCredits,
   resolvePreviewTier,
   isSubscribed,
+  type UserTier,
 } from "./types";
+import {
+  recommendTierForPlan,
+  tierLabel,
+  pricingHrefForTier,
+} from "@/lib/services/tier-recommendation";
+import { DocIcon, ModelClassIcon } from "@/lib/ui/app-icons";
 
 interface Props {
   productType: ProductType;
@@ -32,6 +39,9 @@ interface Props {
   creditBalance?: number;
   hasActiveSubscription?: boolean;
   limitReached?: boolean;
+  dailyLimitReached?: boolean;
+  dailyProjectCount?: number;
+  dailyProjectLimit?: number;
   onEdit: (step: "product-type" | "context" | "stack" | "docs") => void;
   onGenerate: () => void;
 }
@@ -202,6 +212,9 @@ export default function ConfirmScreen({
   creditBalance = 0,
   hasActiveSubscription = false,
   limitReached,
+  dailyLimitReached = false,
+  dailyProjectCount = 0,
+  dailyProjectLimit = 0,
   onEdit,
   onGenerate,
 }: Props) {
@@ -214,35 +227,51 @@ export default function ConfirmScreen({
   const insufficientCredits =
     hasActiveSubscription && creditBalance < totalCredits;
   const canGenerate =
-    hasActiveSubscription && !limitReached && creditBalance >= totalCredits;
+    hasActiveSubscription &&
+    !limitReached &&
+    !dailyLimitReached &&
+    creditBalance >= totalCredits;
   const balanceAfter = creditBalance - totalCredits;
   const planLabel = isSubscribed(plan)
     ? TIER_LABELS[plan]
     : PLAN_STATUS_LABELS.none;
 
+  const tierRec = recommendTierForPlan({
+    estimatedCredits: totalCredits,
+    selectedDocs,
+    perDocumentModelClass: perDocModelClass,
+  });
+
+  const tierRank: Record<UserTier, number> = { starter: 1, pro: 2, pro_max: 3 };
+  const showTierHint =
+    needsSubscription ||
+    (hasActiveSubscription &&
+      isSubscribed(plan) &&
+      tierRank[plan] < tierRank[tierRec.recommended]);
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="generate-app max-w-[720px] mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
         <span
           className="font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full mb-4 inline-block"
           style={{
-            background: "rgba(204,255,0,0.08)",
-            color: "var(--color-lime)",
-            border: "0.5px solid rgba(204,255,0,0.25)",
+            background: "rgba(255,176,32,0.08)",
+            color: "var(--app-amber)",
+            border: "0.5px solid rgba(255,176,32,0.25)",
           }}
         >
           Review & Generate
         </span>
         <h2
-          className="font-unbounded font-bold text-xl sm:text-2xl mb-2"
-          style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
+          className="font-unbounded font-extrabold text-[clamp(24px,3vw,28px)] mb-2"
+          style={{ color: "var(--app-text-primary)", letterSpacing: "-0.02em" }}
         >
           Sudah semuanya?
         </h2>
         <p
-          className="font-mono text-sm"
-          style={{ color: "var(--color-text-secondary)" }}
+          className="font-mono text-[14px]"
+          style={{ color: "var(--app-text-secondary)" }}
         >
           Cek ringkasan proyekmu sebelum generate. Klik bagian manapun untuk edit.
         </p>
@@ -262,7 +291,7 @@ export default function ConfirmScreen({
           <div className="flex items-center justify-between mb-3">
             <span
               className="font-mono text-[10px] font-bold tracking-widest uppercase"
-              style={{ color: "var(--color-lime)" }}
+              style={{ color: "var(--app-amber)" }}
             >
               — Tipe & Fase
             </span>
@@ -291,7 +320,7 @@ export default function ConfirmScreen({
             <div className="flex items-center justify-between mb-3">
               <span
                 className="font-mono text-[10px] font-bold tracking-widest uppercase"
-                style={{ color: "var(--color-lime)" }}
+                style={{ color: "var(--app-amber)" }}
               >
                 — Mini Brief Preview
               </span>
@@ -355,7 +384,7 @@ export default function ConfirmScreen({
           <div className="flex items-center justify-between mb-3">
             <span
               className="font-mono text-[10px] font-bold tracking-widest uppercase"
-              style={{ color: "var(--color-lime)" }}
+              style={{ color: "var(--app-amber)" }}
             >
               — Stack & Style
             </span>
@@ -380,9 +409,15 @@ export default function ConfirmScreen({
               />
             )}
             <SummaryRow
-              label="Framework"
+              label={presets.backendFramework ? "Frontend" : "Framework"}
               value={FRAMEWORK_LABELS[presets.framework] ?? presets.framework}
             />
+            {presets.backendFramework && (
+              <SummaryRow
+                label="Backend"
+                value={FRAMEWORK_LABELS[presets.backendFramework] ?? presets.backendFramework}
+              />
+            )}
             <SummaryRow
               label="Design"
               value={DESIGN_LABELS[presets.design] ?? presets.design}
@@ -421,7 +456,7 @@ export default function ConfirmScreen({
           <div className="flex items-center justify-between mb-3">
             <span
               className="font-mono text-[10px] font-bold tracking-widest uppercase"
-              style={{ color: "var(--color-lime)" }}
+              style={{ color: "var(--app-amber)" }}
             >
               — Dokumen & Model
             </span>
@@ -442,14 +477,15 @@ export default function ConfirmScreen({
               return (
                 <div key={key} className="flex items-center justify-between">
                   <span
-                    className="font-mono text-[11px]"
+                    className="font-mono text-[11px] inline-flex items-center gap-1.5"
                     style={{ color: "var(--color-text-secondary)" }}
                   >
-                    {FILE_META[key].icon} {FILE_META[key].label}
+                    <DocIcon doc={key} size={12} />
+                    {FILE_META[key].label}
                   </span>
                   <span className="flex items-center gap-2">
                     <span
-                      className="font-mono text-[10px] px-1.5 py-0.5 rounded"
+                      className="font-mono text-[10px] px-1.5 py-0.5 rounded inline-flex items-center gap-1"
                       style={{
                         background:
                           mc === "hemat"
@@ -470,7 +506,8 @@ export default function ConfirmScreen({
                         fontWeight: 600,
                       }}
                     >
-                      {classInfo?.icon} {classInfo?.label}
+                      {mc && <ModelClassIcon modelClass={mc} size={10} />}
+                      {classInfo?.label}
                     </span>
                     <span
                       className="font-mono text-[10px] font-bold"
@@ -484,23 +521,32 @@ export default function ConfirmScreen({
             })}
           </div>
 
-          {/* Total credits */}
+          {/* Total credits — prominent commit card */}
           <div
-            className="flex items-center justify-between pt-2"
-            style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}
+            className="rounded-xl px-5 py-5 mt-4"
+            style={{
+              background: "rgba(255,176,32,0.08)",
+              border: "1px solid rgba(255,176,32,0.3)",
+            }}
           >
-            <span
-              className="font-mono text-xs font-semibold"
-              style={{ color: "var(--color-text-primary)" }}
+            <p
+              className="font-mono text-[12px] font-bold uppercase tracking-wide mb-2"
+              style={{ color: "var(--app-amber)" }}
             >
               Biaya batch ini
-            </span>
-            <span
-              className="font-mono text-sm font-bold"
-              style={{ color: "var(--color-lime)" }}
+            </p>
+            <p
+              className="font-unbounded font-extrabold"
+              style={{ fontSize: 36, color: "var(--app-amber)", lineHeight: 1 }}
             >
-              {totalCredits} kredit
-            </span>
+              {totalCredits}{" "}
+              <span className="font-mono text-[16px] font-bold" style={{ color: "var(--app-text-secondary)" }}>
+                kredit
+              </span>
+            </p>
+            <p className="font-mono text-[12px] mt-2" style={{ color: "var(--app-text-tertiary)" }}>
+              Kredit langsung terpotong saat generate dimulai
+            </p>
           </div>
 
           {/* Actual balance vs cost — not pool max disguised as balance */}
@@ -509,10 +555,10 @@ export default function ConfirmScreen({
             style={{
               background: insufficientCredits
                 ? "rgba(239,68,68,0.08)"
-                : "rgba(204,255,0,0.05)",
+                : "rgba(255,176,32,0.05)",
               border: insufficientCredits
                 ? "0.5px solid rgba(239,68,68,0.25)"
-                : "0.5px solid rgba(204,255,0,0.18)",
+                : "0.5px solid rgba(255,176,32,0.18)",
             }}
           >
             <div className="flex items-center justify-between">
@@ -542,7 +588,7 @@ export default function ConfirmScreen({
                     (Math.max(creditBalance, 0) / Math.max(creditPool, 1)) * 100,
                     100
                   )}%`,
-                  background: insufficientCredits ? "#EF4444" : "var(--color-lime)",
+                  background: insufficientCredits ? "#EF4444" : "var(--app-amber)",
                 }}
               />
             </div>
@@ -557,7 +603,7 @@ export default function ConfirmScreen({
                 className="font-mono text-[10px]"
                 style={{
                   color: canGenerate
-                    ? "rgba(204,255,0,0.7)"
+                    ? "rgba(255,176,32,0.7)"
                     : "rgba(255,255,255,0.3)",
                 }}
               >
@@ -577,15 +623,15 @@ export default function ConfirmScreen({
         <div
           className="flex flex-col gap-2 px-4 py-3 rounded-xl mb-6"
           style={{
-            background: "rgba(204,255,0,0.06)",
-            border: "0.5px solid rgba(204,255,0,0.25)",
+            background: "rgba(255,176,32,0.06)",
+            border: "0.5px solid rgba(255,176,32,0.25)",
           }}
         >
           <div className="flex items-start gap-2">
-            <span style={{ color: "var(--color-lime)", fontSize: 13, marginTop: 1 }}>🔒</span>
+            <span style={{ color: "var(--app-amber)", fontSize: 13, marginTop: 1 }}>🔒</span>
             <p
               className="font-mono text-xs font-bold"
-              style={{ color: "var(--color-lime)", lineHeight: 1.6 }}
+              style={{ color: "var(--app-amber)", lineHeight: 1.6 }}
             >
               Paket berlangganan diperlukan untuk generate
             </p>
@@ -597,12 +643,41 @@ export default function ConfirmScreen({
             Isi form gratis — bayar hanya saat kamu siap generate dokumen. Estimasi batch ini:{" "}
             <strong>{totalCredits} kredit</strong>.
           </p>
-          <a
-            href="/dashboard?upgrade=true"
-            className="font-mono text-[11px] underline mt-1"
-            style={{ color: "var(--color-lime)", marginLeft: 22 }}
+          <p
+            className="font-mono text-[11px]"
+            style={{ color: "var(--color-text-secondary)", marginLeft: 22 }}
           >
-            Pilih paket Starter, Pro, atau Pro Max →
+            Rekomendasi: paket <strong>{tierLabel(tierRec.recommended)}</strong> — {tierRec.reason}
+          </p>
+          <a
+            href={pricingHrefForTier(tierRec.recommended)}
+            className="font-mono text-[11px] underline mt-1"
+            style={{ color: "var(--app-amber)", marginLeft: 22 }}
+          >
+            Pilih {tierLabel(tierRec.recommended)} →
+          </a>
+        </div>
+      ) : showTierHint ? (
+        <div
+          className="flex flex-col gap-2 px-4 py-3 rounded-xl mb-6"
+          style={{
+            background: "rgba(59,130,246,0.06)",
+            border: "0.5px solid rgba(59,130,246,0.2)",
+          }}
+        >
+          <p
+            className="font-mono text-[11px]"
+            style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}
+          >
+            Plan ini lebih cocok dengan paket <strong>{tierLabel(tierRec.recommended)}</strong>:{" "}
+            {tierRec.reason}
+          </p>
+          <a
+            href={pricingHrefForTier(tierRec.recommended)}
+            className="font-mono text-[11px] underline"
+            style={{ color: "#3B82F6" }}
+          >
+            Lihat paket {tierLabel(tierRec.recommended)} →
           </a>
         </div>
       ) : insufficientCredits ? (
@@ -631,10 +706,35 @@ export default function ConfirmScreen({
           <a
             href="/dashboard?upgrade=true"
             className="font-mono text-[11px] underline mt-1"
-            style={{ color: "var(--color-lime)", marginLeft: 22 }}
+            style={{ color: "var(--app-amber)", marginLeft: 22 }}
           >
             Upgrade paket untuk tambah kredit →
           </a>
+        </div>
+      ) : dailyLimitReached ? (
+        <div
+          className="flex flex-col gap-2 px-4 py-3 rounded-xl mb-6"
+          style={{
+            background: "rgba(239, 68, 68, 0.06)",
+            border: "0.5px solid rgba(239, 68, 68, 0.2)",
+          }}
+        >
+          <div className="flex items-start gap-2">
+            <span style={{ color: "#EF4444", fontSize: 13, marginTop: 1 }}>⚠</span>
+            <p
+              className="font-mono text-xs font-bold"
+              style={{ color: "#EF4444", lineHeight: 1.6 }}
+            >
+              Limit harian generate tercapai
+            </p>
+          </div>
+          <p
+            className="font-mono text-[11px]"
+            style={{ color: "var(--color-text-secondary)", marginLeft: 22 }}
+          >
+            {dailyProjectCount}/{dailyProjectLimit} proyek berhasil hari ini. Proyek gagal tidak
+            dihitung — coba lagi besok atau lanjutkan testing setelah reset harian.
+          </p>
         </div>
       ) : limitReached ? (
         <div
@@ -662,7 +762,7 @@ export default function ConfirmScreen({
           <a
             href="/dashboard?upgrade=true"
             className="font-mono text-[11px] underline mt-1"
-            style={{ color: "var(--color-lime)", marginLeft: 22 }}
+            style={{ color: "var(--app-amber)", marginLeft: 22 }}
           >
             Lihat paket & upgrade →
           </a>
@@ -703,8 +803,8 @@ export default function ConfirmScreen({
           disabled={!canGenerate}
           className="flex-1 py-3 rounded-xl font-mono font-bold text-sm transition-all flex items-center justify-center gap-2"
           style={{
-            background: canGenerate ? "var(--color-lime)" : "var(--color-bg-elevated)",
-            color: canGenerate ? "#0A0A0A" : "var(--color-text-tertiary)",
+            background: canGenerate ? "var(--app-amber)" : "var(--app-bg-elevated)",
+            color: canGenerate ? "#0D1321" : "var(--app-text-tertiary)",
             cursor: canGenerate ? "pointer" : "not-allowed",
             border: canGenerate ? "none" : "0.5px solid var(--color-border-default)",
           }}
@@ -724,3 +824,4 @@ export default function ConfirmScreen({
     </div>
   );
 }
+

@@ -1,6 +1,18 @@
 // Shared types for all generate step components
 
-// ─── Legacy (kept for backwards compat with API) ──────────────────────────────
+import {
+  DOCUMENT_DEFINITIONS,
+  DOCUMENT_FILE_KEYS,
+  DEFAULT_CORE_DOCS_BY_TIER,
+  canAccessDocument,
+  calcDocumentCredits,
+  getDefaultModelClass,
+  sanitizeSelectedDocs,
+  type DocumentFileKey,
+} from "@/lib/config/documents";
+
+export type FileKey = DocumentFileKey;
+export { canAccessDocument, getDefaultModelClass, sanitizeSelectedDocs };
 export type Platform = "web" | "mobile" | "desktop" | "api";
 export type Monetization = "free" | "paid" | "freemium" | "open-source";
 export type Scope = "mvp" | "full-product" | "experiment";
@@ -506,6 +518,8 @@ export const PRODUCT_DB_RECOMMENDATIONS: Record<ProductType, Database[]> = {
 
 export interface Presets {
   framework: Framework;
+  /** Separate backend when frontend + API are chosen independently */
+  backendFramework?: Framework;
   design: Design;
   agentTool: AgentTool;
   database?: Database;
@@ -558,7 +572,7 @@ export const MODEL_CLASSES: ModelClassInfo[] = [
     label: "Hemat",
     icon: "⚡",
     creditsPer1kTokens: 1,
-    exampleModels: "DeepSeek V4 Flash, Gemini 2.5 Flash-Lite",
+    exampleModels: "DeepSeek V4 Flash, Gemini 3.1 Flash Lite",
     desc: "Cepat & hemat kredit",
   },
   {
@@ -566,7 +580,7 @@ export const MODEL_CLASSES: ModelClassInfo[] = [
     label: "Menengah",
     icon: "✦",
     creditsPer1kTokens: 24,
-    exampleModels: "Gemini 2.5 Pro, Gemini 3.5 Flash",
+    exampleModels: "Gemini 3.5 Flash",
     desc: "Keseimbangan kualitas & biaya",
   },
   {
@@ -574,7 +588,7 @@ export const MODEL_CLASSES: ModelClassInfo[] = [
     label: "Flagship",
     icon: "◈",
     creditsPer1kTokens: 35,
-    exampleModels: "GPT-5.4, Claude Sonnet, Gemini 3.1 Pro",
+    exampleModels: "GPT-5.4, Claude Sonnet",
     desc: "Kualitas terbaik untuk dokumen kritis",
   },
   {
@@ -587,6 +601,14 @@ export const MODEL_CLASSES: ModelClassInfo[] = [
   },
 ];
 
+/** Human-readable pipeline shown on document picker */
+export const MODEL_CLASS_PIPELINE: Record<ModelClass, string> = {
+  hemat: "Gemini 3.1 Flash Lite → DeepSeek V4 Flash (otomatis jika gagal)",
+  menengah: "Gemini 3.5 Flash → Gemini Flash Lite (fallback)",
+  flagship: "GPT-5.4 / Claude Sonnet (butuh API key provider)",
+  ultra: "Claude Opus / GPT-5.5 (butuh API key provider)",
+};
+
 /** Which model classes are available per tier */
 export const TIER_MODEL_CLASSES: Record<UserTier, ModelClass[]> = {
   starter: ["hemat"],
@@ -594,40 +616,34 @@ export const TIER_MODEL_CLASSES: Record<UserTier, ModelClass[]> = {
   pro_max: ["hemat", "menengah", "flagship", "ultra"],
 };
 
-/** Token budget per document per tier (from arrobuild_pricing_monetisasi_v2.md §4.2) */
-export const DOC_TOKEN_BUDGET: Record<FileKey, Record<UserTier, number>> = {
-  prd:                    { starter: 2500, pro: 4000, pro_max: 7000 },
-  context:                { starter: 2500, pro: 4000, pro_max: 7000 },
-  plan:                   { starter: 2000, pro: 3000, pro_max: 5000 },
-  "design-system":        { starter: 0,    pro: 3000, pro_max: 5000 },
-  agents:                 { starter: 0,    pro: 2500, pro_max: 4000 },
-  "production-hardening": { starter: 0,    pro: 0,    pro_max: 6500 },
-  "scale-performance":    { starter: 0,    pro: 0,    pro_max: 5000 },
-  "growth-quality":       { starter: 0,    pro: 0,    pro_max: 5000 },
-};
+/** Token budget per document per tier (from Document-isi / pricing v2) */
+export const DOC_TOKEN_BUDGET: Record<FileKey, Record<UserTier, number>> =
+  Object.fromEntries(
+    DOCUMENT_FILE_KEYS.map((key) => [
+      key,
+      DOCUMENT_DEFINITIONS[key].tokenBudget,
+    ])
+  ) as Record<FileKey, Record<UserTier, number>>;
 
-/** Default model class per document per tier (from arrobuild_pricing_monetisasi_v2.md §4.2) */
-export const DOC_DEFAULT_MODEL_CLASS: Record<FileKey, Record<UserTier, ModelClass>> = {
-  prd:                    { starter: "hemat", pro: "menengah",  pro_max: "flagship" },
-  context:                { starter: "hemat", pro: "menengah",  pro_max: "flagship" },
-  plan:                   { starter: "hemat", pro: "hemat",     pro_max: "menengah" },
-  "design-system":        { starter: "hemat", pro: "menengah",  pro_max: "menengah" },
-  agents:                 { starter: "hemat", pro: "hemat",     pro_max: "flagship" },
-  "production-hardening": { starter: "hemat", pro: "hemat",     pro_max: "flagship" },
-  "scale-performance":    { starter: "hemat", pro: "hemat",     pro_max: "flagship" },
-  "growth-quality":       { starter: "hemat", pro: "hemat",     pro_max: "flagship" },
-};
+export const DOC_DEFAULT_MODEL_CLASS: Record<FileKey, Record<UserTier, ModelClass>> =
+  Object.fromEntries(
+    DOCUMENT_FILE_KEYS.map((key) => [
+      key,
+      DOCUMENT_DEFINITIONS[key].defaultModelClass,
+    ])
+  ) as Record<FileKey, Record<UserTier, ModelClass>>;
+
 
 /** Per-document model class overrides */
 export type PerDocumentModelClass = Partial<Record<FileKey, ModelClass>>;
 
-/** Calculate credits for a single document given its token budget and model class */
-export function calcDocCredits(fileKey: FileKey, tier: UserTier, modelClass: ModelClass): number {
-  const tokens = DOC_TOKEN_BUDGET[fileKey][tier];
-  if (tokens === 0) return 0;
-  const classInfo = MODEL_CLASSES.find((c) => c.id === modelClass);
-  if (!classInfo) return 0;
-  return Math.ceil((tokens / 1000) * classInfo.creditsPer1kTokens);
+/** Calculate credits for a single document */
+export function calcDocCredits(
+  fileKey: FileKey,
+  tier: UserTier,
+  modelClass: ModelClass
+): number {
+  return calcDocumentCredits(fileKey, tier, modelClass);
 }
 
 /** Calculate total credits for selected docs with per-doc model class overrides */
@@ -651,16 +667,16 @@ export const TIER_CREDIT_POOL: Record<UserTier, number> = {
 
 /** Tier labels for display */
 export const TIER_LABELS: Record<UserTier, string> = {
-  starter: "Starter",
-  pro: "Pro",
-  pro_max: "Pro Max",
+  starter: "Base",
+  pro: "Core",
+  pro_max: "Prime",
 };
 
 export const PLAN_STATUS_LABELS: Record<UserPlanStatus, string> = {
   none: "Belum berlangganan",
-  starter: "Starter",
-  pro: "Pro",
-  pro_max: "Pro Max",
+  starter: "Base",
+  pro: "Core",
+  pro_max: "Prime",
 };
 
 // ─── Legacy Model Options (backward compat for API & GenerationProgress) ────
@@ -679,9 +695,9 @@ export interface ModelOption {
 
 export const MODEL_OPTIONS: ModelOption[] = [
   {
-    id: "gemini-2.5-flash",
+    id: "gemini-3.1-flash-lite",
     provider: "gemini",
-    label: "Gemini Flash",
+    label: "Gemini Flash Lite",
     tier: "free",
     icon: "✦",
     speed: "~30 dtk/dok",
@@ -701,9 +717,9 @@ export const MODEL_OPTIONS: ModelOption[] = [
     modelClass: "hemat",
   },
   {
-    id: "gemini-2.5-pro",
+    id: "gemini-3.5-flash",
     provider: "gemini",
-    label: "Gemini 2.5 Pro",
+    label: "Gemini 3.5 Flash",
     tier: "paid",
     icon: "✦",
     speed: "~1 mnt/dok",
@@ -742,18 +758,6 @@ export function getModelsForTier(tier: UserTier): ModelOption[] {
   return MODEL_OPTIONS;
 }
 
-// ─── File Keys & Metadata ─────────────────────────────────────────────────────
-
-export type FileKey =
-  | "prd"
-  | "context"
-  | "plan"
-  | "design-system"
-  | "agents"
-  | "production-hardening"
-  | "scale-performance"
-  | "growth-quality";
-
 export interface GeneratedFiles {
   [key: string]: string;
 }
@@ -761,88 +765,43 @@ export interface GeneratedFiles {
 export const FILE_META: Record<
   FileKey,
   { label: string; description: string; icon: string; phase: string }
-> = {
-  prd: {
-    label: "Product Requirements",
-    description: "Features, user stories, dan acceptance criteria",
-    icon: "📝",
-    phase: "Semua fase",
-  },
-  context: {
-    label: "Project Context",
-    description: "Vision, goals, dan product overview",
-    icon: "📋",
-    phase: "Semua fase",
-  },
-  plan: {
-    label: "Development Plan",
-    description: "Tech stack, tasks, roadmap, dan budget",
-    icon: "🗺️",
-    phase: "Semua fase",
-  },
-  "design-system": {
-    label: "Design System",
-    description: "Colors, typography, components, dan accessibility",
-    icon: "🎨",
-    phase: "Semua fase",
-  },
-  agents: {
-    label: "AI Agents & Rules",
-    description: "Agent roles, coding rules, dan workflow",
-    icon: "🤖",
-    phase: "Semua fase",
-  },
-  "production-hardening": {
-    label: "Production Hardening",
-    description: "Security, monitoring, CI/CD, dan incident response",
-    icon: "🛡️",
-    phase: "Siap launch / sudah production",
-  },
-  "scale-performance": {
-    label: "Scale & Performance",
-    description: "Scaling strategy, performance optimization, cost projection",
-    icon: "⚡",
-    phase: "Sudah ada traffic nyata",
-  },
-  "growth-quality": {
-    label: "Growth & Quality",
-    description: "Go-to-market, acquisition, testing, dan analytics",
-    icon: "📈",
-    phase: "Optimasi post-launch",
-  },
-};
+> = Object.fromEntries(
+  DOCUMENT_FILE_KEYS.map((key) => {
+    const d = DOCUMENT_DEFINITIONS[key];
+    return [
+      key,
+      { label: d.label, description: d.description, icon: d.icon, phase: d.phase },
+    ];
+  })
+) as Record<FileKey, { label: string; description: string; icon: string; phase: string }>;
 
-/** All available file keys — everyone can pick any document */
-export const ALL_FILE_KEYS: FileKey[] = [
-  "prd",
-  "context",
-  "plan",
-  "design-system",
-  "agents",
-  "production-hardening",
-  "scale-performance",
-  "growth-quality",
-];
+export const ALL_FILE_KEYS: FileKey[] = [...DOCUMENT_FILE_KEYS];
 
-/** Smart presets based on project stage */
 export const STAGE_PRESETS: Record<ProjectStage, FileKey[]> = {
-  idea: ["prd", "context", "plan"],
-  prototype: ["prd", "context", "plan", "design-system", "agents"],
+  idea: ["prd", "architecture", "plan-task"],
+  prototype: ["prd", "architecture", "plan-task", "design-system", "agent-rules"],
   production: [
     "prd",
-    "context",
-    "plan",
+    "architecture",
+    "plan-task",
     "design-system",
-    "agents",
-    "production-hardening",
+    "agent-rules",
+    "security-launch",
   ],
 };
 
-/** Per-tier file access (all tiers can pick any document in form) */
+export function documentsForTier(tier: UserTier): FileKey[] {
+  const core = DEFAULT_CORE_DOCS_BY_TIER[tier];
+  const optional = ALL_FILE_KEYS.filter(
+    (k) => DOCUMENT_DEFINITIONS[k].kind === "optional" && canAccessDocument(k, tier)
+  );
+  return [...core, ...optional];
+}
+
 export const TIER_FILE_KEYS: Record<UserTier, FileKey[]> = {
-  starter: ALL_FILE_KEYS,
-  pro: ALL_FILE_KEYS,
-  pro_max: ALL_FILE_KEYS,
+  starter: documentsForTier("starter"),
+  pro: documentsForTier("pro"),
+  pro_max: documentsForTier("pro_max"),
 };
 
 // ─── Framework Display Data ──────────────────────────────────────────────────

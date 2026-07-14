@@ -16,8 +16,8 @@ export function buildPortfolioPrompt(state: PortfolioFormState): string {
   // Resolve color theme
   let bg: string, primary: string, text: string;
   if (design.themeId === "custom") {
-    bg = design.customBg || "#0A0A0A";
-    primary = design.customPrimary || "#CCFF00";
+    bg = design.customBg || "#0D1321";
+    primary = design.customPrimary || "#FFB020";
     text = design.customText || "#FFFFFF";
   } else {
     const theme = COLOR_THEMES.find((t) => t.id === design.themeId) ?? COLOR_THEMES[0];

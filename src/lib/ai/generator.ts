@@ -66,7 +66,7 @@ export interface GenerationResult {
 const DEFAULT_CONFIG: GenerationConfig = {
   maxOutputTokens: 8192,
   temperature: 0.7,
-  model: "gemini-2.5-flash",
+  model: "gemini-3.1-flash-lite",
   provider: "gemini",
 };
 

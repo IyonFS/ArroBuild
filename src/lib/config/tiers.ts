@@ -1,6 +1,6 @@
 /**
  * Single source of truth for tier, credit, and business configuration.
- * Adapted from docs-v2/Backend-sistem-baru/10-tiers-config.ts
+ * Single source of truth — see docs/08-MONETIZATION.md for business context
  */
 
 export const TIER = {
@@ -68,7 +68,7 @@ export const TIER_CONFIG: Record<TierId, TierConfig> = {
     maxActiveSeats: 150,
     coreDocuments: ["prd", "architecture", "plan-task"],
     allowedModelClasses: ["HEMAT"],
-    maxOutputTokensPerDoc: 2_500,
+    maxOutputTokensPerDoc: 4_096,
     maxContextInjectionTokens: 3_000,
     maxFormInputTokens: 1_500,
     maxProjectsPerMonth: 10,
@@ -188,4 +188,92 @@ export function pricingSlugFromTierId(tierId: TierId): string {
     case TIER.PRO_MAX:
       return "pro_max";
   }
+}
+
+/** One-time credit top-up packs (IDR) — docs/12-DECISIONS-LOG.md */
+export const CREDIT_TOPUP_PACKS = [
+  { id: "topup_1k", credits: 1_000, priceIdr: 20_000, label: "+1.000 kredit" },
+  { id: "topup_2_5k", credits: 2_500, priceIdr: 45_000, label: "+2.500 kredit" },
+  { id: "topup_5k", credits: 5_000, priceIdr: 85_000, label: "+5.000 kredit" },
+] as const;
+
+export type CreditTopupPackId = (typeof CREDIT_TOPUP_PACKS)[number]["id"];
+
+export function getCreditTopupPack(packId: string) {
+  return CREDIT_TOPUP_PACKS.find((p) => p.id === packId) ?? null;
+}
+
+/** Bonus kredit bulan pertama langganan Pro Max — docs/08-MONETIZATION.md pricing */
+export const PRO_MAX_FIRST_MONTH_BONUS = 500;
+
+export type BillingMonths = 1 | 3 | 4;
+
+export interface SubscriptionPack {
+  tierId: typeof TIER.PRO | typeof TIER.PRO_MAX;
+  months: BillingMonths;
+  priceIdr: number;
+  label: string;
+  savingsNote?: string;
+}
+
+/** Multi-bulan Pro/Pro Max — kredit refresh tetap bulanan via cron */
+export const SUBSCRIPTION_PACKS: SubscriptionPack[] = [
+  {
+    tierId: TIER.PRO,
+    months: 3,
+    priceIdr: 365_000,
+    label: "Core 3 bulan",
+    savingsNote: "Hemat vs 3× bulanan",
+  },
+  {
+    tierId: TIER.PRO,
+    months: 4,
+    priceIdr: 459_000,
+    label: "Core 4 bulan",
+    savingsNote: "Hemat vs 4× bulanan",
+  },
+  {
+    tierId: TIER.PRO_MAX,
+    months: 3,
+    priceIdr: 499_000,
+    label: "Prime 3 bulan",
+    savingsNote: "Hemat vs 3× bulanan",
+  },
+  {
+    tierId: TIER.PRO_MAX,
+    months: 4,
+    priceIdr: 629_000,
+    label: "Prime 4 bulan",
+    savingsNote: "Hemat vs 4× bulanan",
+  },
+];
+
+export function getMonthlyPriceIdr(tierId: TierId): number {
+  return getTierConfig(tierId).priceIdr;
+}
+
+export function resolveSubscriptionPrice(
+  tierId: TierId,
+  months: BillingMonths
+): { priceIdr: number; label: string } | null {
+  if (months === 1) {
+    return {
+      priceIdr: getMonthlyPriceIdr(tierId),
+      label: "Bulanan",
+    };
+  }
+  if (tierId !== TIER.PRO && tierId !== TIER.PRO_MAX) return null;
+  const pack = SUBSCRIPTION_PACKS.find(
+    (p) => p.tierId === tierId && p.months === months
+  );
+  if (!pack) return null;
+  return { priceIdr: pack.priceIdr, label: pack.label };
+}
+
+export function parseBillingMonthsFromOrderId(orderId: string): BillingMonths {
+  const match = orderId.match(/-m([134])-/);
+  if (!match) return 1;
+  const n = Number(match[1]);
+  if (n === 3 || n === 4) return n;
+  return 1;
 }

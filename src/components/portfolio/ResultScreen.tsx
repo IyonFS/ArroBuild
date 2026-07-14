@@ -24,7 +24,7 @@ function CopyButton({ text }: { text: string }) {
       className="flex items-center gap-2 px-5 py-3 rounded-xl font-mono font-bold text-sm transition-all"
       style={{
         background: copied ? "rgba(34,197,94,0.15)" : "var(--color-lime)",
-        color: copied ? "#22C55E" : "#0A0A0A",
+        color: copied ? "#22C55E" : "#0D1321",
         border: copied ? "1px solid rgba(34,197,94,0.4)" : "none",
       }}
     >
@@ -93,7 +93,7 @@ export default function ResultScreen({ state, onEdit, onReset }: Props) {
       {/* Success header */}
       <div
         className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-5 py-4 rounded-xl mb-6"
-        style={{ background: "rgba(204,255,0,0.05)", border: "0.5px solid rgba(204,255,0,0.2)" }}
+        style={{ background: "rgba(255,176,32,0.05)", border: "0.5px solid rgba(255,176,32,0.2)" }}
       >
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -222,7 +222,7 @@ export default function ResultScreen({ state, onEdit, onReset }: Props) {
               <div className="flex items-start gap-4">
                 <div
                   className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 font-mono text-xs font-bold mt-0.5"
-                  style={{ background: "rgba(204,255,0,0.1)", color: "var(--color-lime)", border: "0.5px solid rgba(204,255,0,0.2)" }}
+                  style={{ background: "rgba(255,176,32,0.1)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.2)" }}
                 >
                   {step.num}
                 </div>
@@ -247,7 +247,7 @@ export default function ResultScreen({ state, onEdit, onReset }: Props) {
                   {step.tip && (
                     <div
                       className="flex items-start gap-2 px-3 py-2 rounded-lg mt-2"
-                      style={{ background: "rgba(204,255,0,0.04)", border: "0.5px solid rgba(204,255,0,0.12)" }}
+                      style={{ background: "rgba(255,176,32,0.04)", border: "0.5px solid rgba(255,176,32,0.12)" }}
                     >
                       <span style={{ color: "var(--color-lime)", fontSize: 11, flexShrink: 0 }}>💡</span>
                       <p className="font-mono text-[11px] italic" style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
@@ -265,7 +265,7 @@ export default function ResultScreen({ state, onEdit, onReset }: Props) {
       {/* "Ini baru permulaan" callout */}
       <div
         className="px-5 py-5 rounded-xl"
-        style={{ background: "linear-gradient(135deg, rgba(204,255,0,0.04) 0%, rgba(255,92,26,0.03) 100%)", border: "0.5px solid rgba(204,255,0,0.15)" }}
+        style={{ background: "linear-gradient(135deg, rgba(255,176,32,0.04) 0%, rgba(255,92,26,0.03) 100%)", border: "0.5px solid rgba(255,176,32,0.15)" }}
       >
         <div className="flex items-center gap-2 mb-3">
           <span style={{ fontSize: 20 }}>🚀</span>
@@ -298,7 +298,7 @@ export default function ResultScreen({ state, onEdit, onReset }: Props) {
           href="/learn"
           {...OPEN_LEARN_IN_NEW_TAB}
           className="inline-flex items-center gap-2 font-mono text-sm font-bold px-4 py-2.5 rounded-lg transition-all"
-          style={{ background: "var(--color-lime)", color: "#0A0A0A" }}
+          style={{ background: "var(--color-lime)", color: "#0D1321" }}
         >
           Mulai belajar →
         </a>

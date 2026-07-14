@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
+import type { Prisma } from "@prisma/client";
 import { getSupabaseUser, syncDbUser } from "@/lib/auth";
+import { mergeDisplayTitle } from "@/lib/project-meta";
+import { sanitizeGeneratedContent } from "@/lib/ai/validation";
 
-const PatchSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  emailOptIn: z.boolean().optional().default(false),
-});
+const PatchSchema = z
+  .object({
+    email: z.string().email("Invalid email address").optional(),
+    emailOptIn: z.boolean().optional(),
+    displayTitle: z.union([z.string().min(1).max(120), z.null()]).optional(),
+  })
+  .refine(
+    (data) =>
+      data.email !== undefined ||
+      data.emailOptIn !== undefined ||
+      data.displayTitle !== undefined,
+    { message: "At least one field is required" }
+  );
 
 async function requireOwnedProject(projectId: string) {
   const supabaseUser = await getSupabaseUser();
@@ -98,7 +110,23 @@ export async function GET(
     return NextResponse.json({ error: "Project tidak ditemukan" }, { status: 404 });
   }
 
-  return NextResponse.json({ project });
+  const healedFiles = await Promise.all(
+    project.files.map(async (file) => {
+      const cleaned = sanitizeGeneratedContent(file.content);
+      if (cleaned === file.content) return file;
+
+      await prisma.generatedFile
+        .update({
+          where: { id: file.id },
+          data: { content: cleaned },
+        })
+        .catch(() => {});
+
+      return { ...file, content: cleaned };
+    })
+  );
+
+  return NextResponse.json({ project: { ...project, files: healedFiles } });
 }
 
 export async function PATCH(
@@ -129,21 +157,73 @@ export async function PATCH(
     );
   }
 
-  const { email, emailOptIn } = parsed.data;
+  const { email, emailOptIn, displayTitle } = parsed.data;
 
   try {
+    if (displayTitle !== undefined) {
+      const existing = await prisma.project.findUnique({
+        where: { id },
+        select: { planData: true },
+      });
+      const project = await prisma.project.update({
+        where: { id },
+        data: {
+          planData: mergeDisplayTitle(existing?.planData, displayTitle) as Prisma.InputJsonValue,
+        },
+        select: { id: true, planData: true },
+      });
+      return NextResponse.json({ ok: true, project });
+    }
+
+    if (!email) {
+      return NextResponse.json({ error: "Email is required for this update" }, { status: 422 });
+    }
+
     const project = await prisma.project.update({
       where: { id },
-      data: { email, emailOptIn },
+      data: { email, emailOptIn: emailOptIn ?? false },
       select: { id: true, email: true, emailOptIn: true },
     });
 
     return NextResponse.json({ ok: true, project });
   } catch (err) {
-    console.error("Failed to update project email:", err);
+    console.error("Failed to update project:", err);
     return NextResponse.json(
       { error: "Project not found or database error" },
       { status: 404 }
     );
   }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  if (!id) {
+    return NextResponse.json({ error: "Project ID is required" }, { status: 400 });
+  }
+
+  const owned = await requireOwnedProject(id);
+  if ("error" in owned && owned.error) return owned.error;
+
+  const project = await prisma.project.findUnique({
+    where: { id },
+    select: { status: true },
+  });
+
+  if (!project) {
+    return NextResponse.json({ error: "Project tidak ditemukan" }, { status: 404 });
+  }
+
+  if (project.status === "GENERATING") {
+    return NextResponse.json(
+      { error: "Project sedang digenerate. Tunggu selesai atau gagal dulu." },
+      { status: 409 }
+    );
+  }
+
+  await prisma.project.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
 }

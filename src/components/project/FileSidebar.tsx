@@ -1,6 +1,8 @@
 "use client";
 
 import { FILE_META, type FileKey } from "@/components/generate/types";
+import { normalizeDocumentKey } from "@/lib/config/documents";
+import { DocIcon } from "@/lib/ui/app-icons";
 
 export interface WorkspaceFile {
   id: string;
@@ -35,10 +37,11 @@ export default function FileSidebar({
 }: Props) {
   return (
     <aside className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5">
+      <div className="flex-1 overflow-y-auto p-2.5 space-y-1">
         {files.map((file) => {
-          const key = file.fileKey as FileKey;
-          const meta = FILE_META[key];
+          const normalized = normalizeDocumentKey(file.fileKey);
+          const key = (normalized ?? file.fileKey) as FileKey;
+          const meta = normalized ? FILE_META[normalized] : FILE_META[key];
           const active = file.fileKey === activeKey;
           const featN = featCounts[file.fileKey] ?? 0;
           return (
@@ -46,50 +49,44 @@ export default function FileSidebar({
               key={file.id}
               type="button"
               onClick={() => onSelect(file.fileKey)}
-              className="w-full text-left px-3.5 py-3 transition-all"
+              className={`workspace-file-item w-full text-left px-3.5 py-3 rounded-lg ${active ? "is-active" : ""}`}
               style={{
-                borderRadius: 12,
-                background: active ? "rgba(204,255,0,0.1)" : "rgba(255,255,255,0.02)",
-                border: active
-                  ? "1px solid rgba(204,255,0,0.4)"
-                  : "1px solid rgba(255,255,255,0.06)",
-                boxShadow: active ? "0 0 16px rgba(204,255,0,0.08)" : "none",
+                border: "0.5px solid var(--app-border-default)",
+                background: active ? undefined : "var(--app-bg-elevated)",
               }}
             >
               <div className="flex items-start justify-between gap-2">
                 <span
-                  className="text-[13px] font-semibold leading-snug"
+                  className="text-[13px] font-semibold leading-snug flex items-center gap-2"
                   style={{
-                    color: active
-                      ? "var(--color-lime)"
-                      : "var(--color-text-primary)",
+                    color: active ? "var(--app-amber)" : "var(--app-text-primary)",
                   }}
                 >
-                  <span className="mr-1.5 opacity-80">{meta?.icon ?? "📄"}</span>
+                  {normalized ? (
+                    <DocIcon doc={normalized} size={14} />
+                  ) : (
+                    <span className="opacity-70">📄</span>
+                  )}
                   {meta?.label ?? file.label}
                 </span>
                 <span
-                  className="text-[10px] flex-shrink-0 mt-0.5 px-1.5 py-0.5"
+                  className="text-[10px] flex-shrink-0 mt-0.5 px-1.5 py-0.5 font-mono"
                   style={{
                     borderRadius: 6,
-                    background: "rgba(255,255,255,0.05)",
-                    color: active ? "rgba(204,255,0,0.8)" : "rgba(255,255,255,0.35)",
-                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                    background: "var(--app-bg-hover)",
+                    color: active ? "var(--app-amber)" : "var(--app-text-tertiary)",
                   }}
                 >
                   v{file.version}
                 </span>
               </div>
               <div
-                className="text-[11px] mt-1.5 flex items-center gap-2"
-                style={{
-                  color: "rgba(255,255,255,0.35)",
-                  fontFamily: "var(--font-jetbrains-mono), monospace",
-                }}
+                className="text-[11px] mt-1.5 flex items-center gap-2 font-mono"
+                style={{ color: "var(--app-text-tertiary)" }}
               >
                 <span>{file.fileName}</span>
                 {featN > 0 && (
-                  <span style={{ color: active ? "rgba(204,255,0,0.7)" : undefined }}>
+                  <span style={{ color: active ? "var(--app-amber)" : undefined }}>
                     · {featN} FEAT
                   </span>
                 )}
@@ -98,7 +95,7 @@ export default function FileSidebar({
           );
         })}
         {files.length === 0 && (
-          <p className="text-xs px-3 py-6" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <p className="text-xs px-3 py-6 font-mono" style={{ color: "var(--app-text-tertiary)" }}>
             Belum ada dokumen.
           </p>
         )}

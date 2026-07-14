@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import { Lightbulb } from "lucide-react";
 import type { Feature, FeaturePriority, ProductType } from "./types";
 import { nextFeatureId } from "./types";
 
@@ -96,6 +97,15 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
+  const moveFeature = (idx: number, dir: -1 | 1) => {
+    const next = idx + dir;
+    if (next < 0 || next >= features.length) return;
+    const copy = [...features];
+    const [item] = copy.splice(idx, 1);
+    copy.splice(next, 0, item);
+    onChange(copy);
+  };
+
   const chips = FEATURE_CHIPS[productType] ?? FEATURE_CHIPS.other ?? [];
   const usedTitles = new Set(features.map((f) => f.title.toLowerCase()));
 
@@ -182,8 +192,8 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
         <span
           className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
           style={{
-            background: features.length > 0 ? "rgba(204,255,0,0.12)" : "rgba(255,255,255,0.06)",
-            color: features.length > 0 ? "var(--color-lime)" : "rgba(255,255,255,0.3)",
+            background: features.length > 0 ? "rgba(255,176,32,0.12)" : "rgba(255,255,255,0.06)",
+            color: features.length > 0 ? "var(--app-amber)" : "var(--app-text-tertiary)",
             fontFamily: "var(--font-jetbrains-mono), monospace",
             fontSize: "10px",
           }}
@@ -191,11 +201,11 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
           {features.length > 0 ? "✓" : "③"}
         </span>
         <label
-          className="text-sm font-semibold"
-          style={{ color: "var(--color-text-primary)", lineHeight: 1.4 }}
+          className="font-mono text-[14px] font-bold"
+          style={{ color: "var(--app-text-primary)", lineHeight: 1.4 }}
         >
           Fitur inti yang HARUS ada di versi pertama
-          <span className="ml-2 text-xs font-normal" style={{ color: "rgba(255,255,255,0.3)" }}>
+          <span className="ml-2 text-xs font-normal font-mono" style={{ color: "var(--app-text-tertiary)" }}>
             ({features.length} fitur)
           </span>
         </label>
@@ -208,17 +218,11 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
           return (
             <button
               key={chip}
+              type="button"
               onClick={() => !used && addFeature(chip)}
               disabled={used}
-              className="text-sm px-4 py-2 rounded-full transition-all duration-150"
-              style={{
-                background: used ? "rgba(204,255,0,0.08)" : "rgba(255,255,255,0.05)",
-                color: used ? "rgba(204,255,0,0.5)" : "rgba(255,255,255,0.55)",
-                border: used ? "0.5px solid rgba(204,255,0,0.15)" : "0.5px solid rgba(255,255,255,0.1)",
-                fontWeight: used ? 600 : 400,
-                cursor: used ? "default" : "pointer",
-                opacity: used ? 0.6 : 1,
-              }}
+              className={`generate-chip ${used ? "is-selected" : ""}`}
+              style={{ opacity: used ? 0.65 : 1, cursor: used ? "default" : "pointer" }}
             >
               {used && <span className="mr-1">✓</span>}
               {chip}
@@ -232,8 +236,8 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
         <div
           className="rounded-2xl overflow-hidden mb-3"
           style={{
-            border: "0.5px solid rgba(255,255,255,0.08)",
-            background: "var(--color-bg-elevated)",
+            border: "0.5px solid var(--app-border-default)",
+            background: "var(--app-bg-elevated)",
           }}
         >
           {features.map((f, idx) => (
@@ -247,10 +251,42 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
               className="flex items-center gap-3 px-4 py-3 transition-all group"
               style={{
                 borderBottom: idx < features.length - 1 ? "0.5px solid rgba(255,255,255,0.06)" : "none",
-                background: dragOverIdx === idx ? "rgba(204,255,0,0.04)" : "transparent",
+                background: dragOverIdx === idx ? "rgba(255,176,32,0.04)" : "transparent",
                 cursor: "grab",
               }}
             >
+              {/* Reorder: keyboard-friendly */}
+              <div className="flex flex-col gap-0.5 flex-shrink-0">
+                <button
+                  type="button"
+                  aria-label={`Pindah ${f.id} ke atas`}
+                  disabled={idx === 0}
+                  onClick={() => moveFeature(idx, -1)}
+                  className="text-[10px] leading-none px-1 py-0.5 rounded"
+                  style={{
+                    opacity: idx === 0 ? 0.25 : 0.7,
+                    color: "rgba(255,255,255,0.6)",
+                    border: "0.5px solid rgba(255,255,255,0.12)",
+                  }}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Pindah ${f.id} ke bawah`}
+                  disabled={idx === features.length - 1}
+                  onClick={() => moveFeature(idx, 1)}
+                  className="text-[10px] leading-none px-1 py-0.5 rounded"
+                  style={{
+                    opacity: idx === features.length - 1 ? 0.25 : 0.7,
+                    color: "rgba(255,255,255,0.6)",
+                    border: "0.5px solid rgba(255,255,255,0.12)",
+                  }}
+                >
+                  ↓
+                </button>
+              </div>
+
               {/* Drag handle */}
               <span
                 className="flex-shrink-0 text-xs select-none opacity-30 group-hover:opacity-60 transition-opacity"
@@ -264,8 +300,8 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
               <span
                 className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded"
                 style={{
-                  background: "rgba(204,255,0,0.08)",
-                  color: "var(--color-lime)",
+                  background: "rgba(255,176,32,0.08)",
+                  color: "var(--app-amber)",
                   fontFamily: "var(--font-jetbrains-mono), monospace",
                   letterSpacing: "0.05em",
                 }}
@@ -288,7 +324,7 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
                   className="flex-1 text-sm bg-transparent border-none focus:outline-none"
                   style={{
                     color: "var(--color-text-primary)",
-                    borderBottom: "1px solid rgba(204,255,0,0.3)",
+                    borderBottom: "1px solid rgba(255,176,32,0.3)",
                     fontFamily: "var(--font-inter), system-ui, sans-serif",
                     padding: "2px 0",
                   }}
@@ -309,9 +345,9 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
                 onClick={() => togglePriority(f.id)}
                 className="flex-shrink-0 text-[10px] font-semibold px-2.5 py-1 rounded-full transition-all"
                 style={{
-                  background: f.priority === "must-have" ? "rgba(204,255,0,0.1)" : "rgba(255,255,255,0.05)",
-                  color: f.priority === "must-have" ? "var(--color-lime)" : "rgba(255,255,255,0.35)",
-                  border: f.priority === "must-have" ? "0.5px solid rgba(204,255,0,0.2)" : "0.5px solid rgba(255,255,255,0.08)",
+                  background: f.priority === "must-have" ? "rgba(255,176,32,0.1)" : "rgba(255,255,255,0.05)",
+                  color: f.priority === "must-have" ? "var(--app-amber)" : "rgba(255,255,255,0.35)",
+                  border: f.priority === "must-have" ? "0.5px solid rgba(255,176,32,0.2)" : "0.5px solid rgba(255,255,255,0.08)",
                   fontFamily: "var(--font-jetbrains-mono), monospace",
                 }}
                 title={f.priority === "must-have" ? "Klik untuk ubah ke Nice-to-have" : "Klik untuk ubah ke Wajib"}
@@ -349,17 +385,17 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
           className="flex-1 rounded-xl text-sm transition-all focus:outline-none"
           style={{
             background: "rgba(255,255,255,0.04)",
-            border: newTitle ? "1px solid rgba(204,255,0,0.3)" : "0.5px solid rgba(255,255,255,0.1)",
+            border: newTitle ? "1px solid rgba(255,176,32,0.3)" : "0.5px solid rgba(255,255,255,0.1)",
             color: "var(--color-text-primary)",
             padding: "12px 16px",
             fontFamily: "var(--font-inter), system-ui, sans-serif",
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = "rgba(204,255,0,0.5)";
-            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(204,255,0,0.06)";
+            e.currentTarget.style.borderColor = "rgba(255,176,32,0.5)";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,176,32,0.06)";
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = newTitle ? "rgba(204,255,0,0.3)" : "rgba(255,255,255,0.1)";
+            e.currentTarget.style.borderColor = newTitle ? "rgba(255,176,32,0.3)" : "rgba(255,255,255,0.1)";
             e.currentTarget.style.boxShadow = "none";
           }}
         />
@@ -368,8 +404,8 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
           disabled={!newTitle.trim()}
           className="px-5 py-3 rounded-xl text-sm font-semibold transition-all"
           style={{
-            background: newTitle.trim() ? "var(--color-lime)" : "rgba(255,255,255,0.05)",
-            color: newTitle.trim() ? "#0A0A0A" : "rgba(255,255,255,0.2)",
+            background: newTitle.trim() ? "var(--app-amber)" : "var(--app-bg-hover)",
+            color: newTitle.trim() ? "#0D1321" : "var(--app-text-tertiary)",
             cursor: newTitle.trim() ? "pointer" : "not-allowed",
             border: newTitle.trim() ? "none" : "0.5px solid rgba(255,255,255,0.06)",
           }}
@@ -380,8 +416,9 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
 
       {/* Helper text */}
       {features.length === 0 && (
-        <p className="mt-3 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
-          💡 Klik chip di atas atau ketik sendiri. Setiap fitur otomatis mendapat ID (FEAT-001, dst) yang dipakai AI untuk referensi silang antar dokumen.
+        <p className="mt-3 font-mono text-[12px] flex items-start gap-2" style={{ color: "var(--app-text-tertiary)" }}>
+          <Lightbulb size={14} className="shrink-0 mt-0.5" style={{ color: "var(--app-amber)" }} />
+          Klik chip di atas atau ketik sendiri. Setiap fitur otomatis mendapat ID (FEAT-001, dst) yang dipakai AI untuk referensi silang antar dokumen.
         </p>
       )}
 
@@ -393,3 +430,4 @@ export default function FeatureBuilder({ features, onChange, productType }: Prop
     </div>
   );
 }
+

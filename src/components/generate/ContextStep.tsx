@@ -371,6 +371,13 @@ const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   other: "Lainnya",
 };
 
+const OPTIONAL_CHIPS: Partial<Record<keyof ContextData, string[]>> = {
+  productName: ["Buildify", "NoteAI", "TaskFlow", "Belum ada nama"],
+  referenceProducts: ["Linear", "Notion", "Stripe", "Vercel", "Figma"],
+  antiFeatures: ["Tanpa chat AI", "Tanpa social login", "Tanpa dark mode", "Tanpa mobile app"],
+  launchTimeline: ["Minggu ini", "Bulan ini", "3 bulan", "Tidak mendesak"],
+};
+
 const OPTIONAL_EXTRAS: { key: keyof ContextData; label: string; placeholder: string }[] = [
   { key: "productName", label: "Nama produk (jika sudah ada)", placeholder: "Contoh: Buildify, NoteAI, TaskFlow" },
   { key: "referenceProducts", label: "Referensi produk sejenis yang disukai", placeholder: "Contoh: Linear untuk tracking, Notion untuk docs" },
@@ -481,7 +488,7 @@ function QuestionCard({
           className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
           style={{
             background: currentVal
-              ? "rgba(204,255,0,0.12)"
+              ? "rgba(255,176,32,0.12)"
               : "rgba(255,255,255,0.06)",
             color: currentVal ? "var(--color-lime)" : "rgba(255,255,255,0.3)",
             fontFamily: "var(--font-jetbrains-mono), monospace",
@@ -491,12 +498,12 @@ function QuestionCard({
           {currentVal ? "✓" : nums[index] ?? (index + 1)}
         </span>
         <label
-          className="text-sm font-semibold"
-          style={{ color: "var(--color-text-primary)", lineHeight: 1.4 }}
+          className="font-mono text-[14px] font-bold"
+          style={{ color: "var(--app-text-primary)", lineHeight: 1.4 }}
         >
           {q.label}
           {q.required && (
-            <span className="ml-1 text-xs" style={{ color: "rgba(204,255,0,0.5)" }}>
+            <span className="ml-1 text-xs" style={{ color: "rgba(255,176,32,0.5)" }}>
               *
             </span>
           )}
@@ -511,20 +518,14 @@ function QuestionCard({
             return (
               <button
                 key={chip}
+                type="button"
                 onClick={() => {
                   onUpdate(
                     q.key,
                     q.multiChip ? toggleChipInValue(currentVal, chip) : active ? "" : chip
                   );
                 }}
-                className="text-sm px-4 py-2 rounded-full transition-all duration-150"
-                style={{
-                  background: active ? "var(--color-lime)" : "rgba(255,255,255,0.05)",
-                  color: active ? "#0A0A0A" : "rgba(255,255,255,0.55)",
-                  border: active ? "none" : "0.5px solid rgba(255,255,255,0.1)",
-                  fontWeight: active ? "600" : "400",
-                  transform: active ? "scale(1.02)" : "scale(1)",
-                }}
+                className={`generate-chip ${active ? "is-selected" : ""}`}
               >
                 {active && q.multiChip && <span className="mr-1">✓ </span>}
                 {chip}
@@ -546,7 +547,7 @@ function QuestionCard({
           style={{
             background: "rgba(255,255,255,0.04)",
             border: currentVal
-              ? "1px solid rgba(204,255,0,0.3)"
+              ? "1px solid rgba(255,176,32,0.3)"
               : "0.5px solid rgba(255,255,255,0.1)",
             color: "var(--color-text-primary)",
             padding: "14px 16px",
@@ -554,12 +555,12 @@ function QuestionCard({
             fontFamily: "var(--font-inter), system-ui, sans-serif",
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = "rgba(204,255,0,0.5)";
-            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(204,255,0,0.06)";
+            e.currentTarget.style.borderColor = "rgba(255,176,32,0.5)";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,176,32,0.06)";
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = currentVal
-              ? "rgba(204,255,0,0.3)"
+              ? "rgba(255,176,32,0.3)"
               : "rgba(255,255,255,0.1)";
             e.currentTarget.style.boxShadow = "none";
           }}
@@ -575,19 +576,19 @@ function QuestionCard({
           style={{
             background: "rgba(255,255,255,0.04)",
             border: currentVal
-              ? "1px solid rgba(204,255,0,0.3)"
+              ? "1px solid rgba(255,176,32,0.3)"
               : "0.5px solid rgba(255,255,255,0.1)",
             color: "var(--color-text-primary)",
             padding: "14px 16px",
             fontFamily: "var(--font-inter), system-ui, sans-serif",
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = "rgba(204,255,0,0.5)";
-            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(204,255,0,0.06)";
+            e.currentTarget.style.borderColor = "rgba(255,176,32,0.5)";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,176,32,0.06)";
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = currentVal
-              ? "rgba(204,255,0,0.3)"
+              ? "rgba(255,176,32,0.3)"
               : "rgba(255,255,255,0.1)";
             e.currentTarget.style.boxShadow = "none";
           }}
@@ -596,26 +597,23 @@ function QuestionCard({
 
       {/* Example hint */}
       {q.example && !currentVal && (
-        <button
-          onClick={() => onUpdate(q.key, q.example!)}
-          className="flex items-start gap-2 mt-2.5 text-left w-full group"
-        >
-          <span className="text-xs flex-shrink-0 mt-0.5" style={{ color: "rgba(255,199,0,0.6)" }}>
-            💡
-          </span>
-          <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
-            Contoh:{" "}
-            <em style={{ color: "rgba(255,255,255,0.45)" }}>
-              &ldquo;{q.example}&rdquo;
-            </em>{" "}
-            <span
-              className="font-semibold group-hover:underline"
-              style={{ color: "var(--color-lime)", textDecorationColor: "rgba(204,255,0,0.4)" }}
-            >
-              pakai ini
-            </span>
-          </span>
-        </button>
+        <div className="mt-2.5">
+          <p className="font-mono text-[12px] italic mb-2" style={{ color: "var(--app-text-tertiary)" }}>
+            Contoh: &ldquo;{q.example}&rdquo;
+          </p>
+          <button
+            type="button"
+            onClick={() => onUpdate(q.key, q.example!)}
+            className="font-mono text-[12px] px-2.5 py-1 rounded-md transition-colors"
+            style={{
+              color: "var(--app-sky)",
+              border: "1px solid rgba(56,189,248,0.3)",
+              background: "transparent",
+            }}
+          >
+            Pakai contoh ini
+          </button>
+        </div>
       )}
     </div>
   );
@@ -648,17 +646,17 @@ export default function ContextStep({ productType, value, onChange, features, on
   });
 
   return (
-    <div className="font-inter max-w-[1200px] mx-auto px-6 py-14 flex flex-col lg:flex-row gap-10">
-      <div className="flex-1 max-w-2xl">
+    <div className="generate-app max-w-[1100px] mx-auto px-4 sm:px-6 py-10 sm:py-14 flex flex-col lg:flex-row gap-8 lg:gap-10">
+      <div className="flex-1 min-w-0 max-w-[640px]">
         {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-5">
           <div
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase"
             style={{
-              background: "rgba(204,255,0,0.08)",
+              background: "rgba(255,176,32,0.08)",
               color: "var(--color-lime)",
-              border: "0.5px solid rgba(204,255,0,0.2)",
+              border: "0.5px solid rgba(255,176,32,0.2)",
               fontFamily: "var(--font-jetbrains-mono), monospace",
             }}
           >
@@ -673,7 +671,7 @@ export default function ContextStep({ productType, value, onChange, features, on
             <span>{PRODUCT_TYPE_LABELS[productType]}</span>
             <span
               className="hover:underline"
-              style={{ color: "rgba(204,255,0,0.6)", textDecorationColor: "rgba(204,255,0,0.3)" }}
+              style={{ color: "rgba(255,176,32,0.6)", textDecorationColor: "rgba(255,176,32,0.3)" }}
             >
               [ubah]
             </span>
@@ -743,8 +741,8 @@ export default function ContextStep({ productType, value, onChange, features, on
           <div
             className="w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
             style={{
-              background: showOptional ? "rgba(204,255,0,0.1)" : "rgba(255,255,255,0.05)",
-              border: showOptional ? "0.5px solid rgba(204,255,0,0.2)" : "0.5px solid rgba(255,255,255,0.08)",
+              background: showOptional ? "rgba(255,176,32,0.1)" : "rgba(255,255,255,0.05)",
+              border: showOptional ? "0.5px solid rgba(255,176,32,0.2)" : "0.5px solid rgba(255,255,255,0.08)",
             }}
           >
             <span
@@ -803,14 +801,45 @@ export default function ContextStep({ productType, value, onChange, features, on
                     fontFamily: "var(--font-inter), system-ui, sans-serif",
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(204,255,0,0.4)";
-                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(204,255,0,0.04)";
+                    e.currentTarget.style.borderColor = "rgba(255,176,32,0.4)";
+                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,176,32,0.04)";
                   }}
                   onBlur={(e) => {
                     e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
                     e.currentTarget.style.boxShadow = "none";
                   }}
                 />
+                {(OPTIONAL_CHIPS[extra.key] ?? []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {(OPTIONAL_CHIPS[extra.key] ?? []).map((chip) => {
+                      const current = (value[extra.key] as string) ?? "";
+                      const active = isChipActive(current, chip);
+                      return (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() =>
+                            update(extra.key, toggleChipInValue(current, chip))
+                          }
+                          className="text-[11px] px-2.5 py-1 rounded-full transition-all"
+                          style={{
+                            background: active
+                              ? "rgba(255,176,32,0.15)"
+                              : "rgba(255,255,255,0.04)",
+                            border: active
+                              ? "0.5px solid rgba(255,176,32,0.4)"
+                              : "0.5px solid rgba(255,255,255,0.1)",
+                            color: active
+                              ? "var(--color-lime)"
+                              : "rgba(255,255,255,0.45)",
+                          }}
+                        >
+                          {chip}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -840,12 +869,10 @@ export default function ContextStep({ productType, value, onChange, features, on
           disabled={!hasAnyAnswer}
           className="flex-1 py-4 rounded-2xl font-semibold text-base transition-all duration-200"
           style={{
-            background: hasAnyAnswer ? "var(--color-lime)" : "rgba(255,255,255,0.05)",
-            color: hasAnyAnswer ? "#0A0A0A" : "rgba(255,255,255,0.2)",
+            background: hasAnyAnswer ? "var(--app-amber)" : "var(--app-bg-elevated)",
+            color: hasAnyAnswer ? "#0D1321" : "var(--app-text-tertiary)",
             cursor: hasAnyAnswer ? "pointer" : "not-allowed",
-            border: hasAnyAnswer ? "none" : "0.5px solid rgba(255,255,255,0.06)",
-            boxShadow: hasAnyAnswer ? "0 4px 24px rgba(204,255,0,0.2)" : "none",
-            letterSpacing: "-0.01em",
+            border: hasAnyAnswer ? "none" : "0.5px solid var(--app-border-default)",
           }}
         >
           {hasAnyAnswer ? "Lanjut ke Stack & Preferences →" : "Ceritakan sedikit saja dulu"}
@@ -853,10 +880,21 @@ export default function ContextStep({ productType, value, onChange, features, on
       </div>
       </div>
       
-      {/* Live Preview Panel (Right Side on Desktop) */}
-      <div className="hidden lg:block w-[400px] flex-shrink-0 sticky top-14 h-[calc(100vh-120px)] pb-14">
+      <div className="lg:hidden mb-6">
+        <details className="rounded-xl overflow-hidden" style={{ border: "0.5px solid var(--app-border-default)" }}>
+          <summary className="font-mono text-[12px] font-semibold px-4 py-3 cursor-pointer" style={{ color: "var(--app-sky)", background: "var(--app-bg-elevated)" }}>
+            Lihat progress knowledge model
+          </summary>
+          <div className="p-3">
+            <LiveJsonPreview data={value} features={features} />
+          </div>
+        </details>
+      </div>
+
+      <div className="hidden lg:block w-[420px] flex-shrink-0 sticky top-20 self-start">
         <LiveJsonPreview data={value} features={features} />
       </div>
     </div>
   );
 }
+

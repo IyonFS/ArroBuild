@@ -1,25 +1,20 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import AppShell from "@/components/layout/AppShell";
+import DashboardShell from "@/components/dashboard/DashboardShell";
 import UpgradeSection from "@/components/dashboard/UpgradeSection";
+import ProjectList, { type DashboardProject } from "@/components/dashboard/ProjectList";
+import StatCard from "@/components/dashboard/StatCard";
+import QuotaBar from "@/components/dashboard/QuotaBar";
+import WhatsAppSupportTeaser from "@/components/support/WhatsAppSupportTeaser";
+import type { WhatsappQuotaDisplay } from "@/components/support/WhatsAppSupportCard";
+import { deriveQuotaDisplay } from "@/lib/dashboard-quota";
 import { getDisplayName } from "@/lib/display-name";
-import { OPEN_LEARN_IN_NEW_TAB } from "@/lib/learn-links";
 import type { UserPlanStatus } from "@/components/generate/types";
-import { TIER_LABELS } from "@/components/generate/types";
-
-interface ProjectSummary {
-  id: string;
-  idea: string;
-  status: string;
-  createdAt: string;
-  clarifications?: any;
-  presets?: any;
-  _count: { files: number };
-}
+import { PLAN_STATUS_LABELS } from "@/components/generate/types";
 
 interface MeResponse {
   user: {
@@ -29,34 +24,42 @@ interface MeResponse {
     avatarUrl: string | null;
     subscriptionTier: string;
     subscriptionStatus: string;
+    creditBalance?: number;
   } | null;
   tier: UserPlanStatus;
   plan?: UserPlanStatus;
   projectCount: number;
-  projectLimit: number | null;
-  projects: ProjectSummary[];
+  projectLimit: number;
+  monthlyProjectCount?: number;
+  monthlyProjectLimit?: number;
+  monthlyProjectRemaining?: number;
+  dailyProjectCount?: number;
+  dailyProjectLimit?: number;
+  dailyProjectRemaining?: number;
+  creditPool?: number;
+  canForkProject?: boolean;
+  whatsappQuota?: WhatsappQuotaDisplay | null;
+  projects: DashboardProject[];
 }
 
-const STATUS_STYLES: Record<string, { label: string; className: string }> = {
-  DONE: { label: "Selesai", className: "badge-success" },
-  GENERATING: { label: "Proses", className: "badge-info" },
-  PENDING: { label: "Antrian", className: "badge-warning" },
-  FAILED: { label: "Gagal", className: "badge-danger" },
-};
-
-const TIER_LABEL: Record<UserPlanStatus, string> = {
-  none: "Belum berlangganan",
-  starter: "Starter",
-  pro: "Pro",
-  pro_max: "Pro Max",
-};
+const TIER_LABEL = PLAN_STATUS_LABELS;
 
 function LoadingSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
-      <div className="h-16 app-panel skeleton" />
-      <div className="h-48 app-panel skeleton" />
-      <div className="h-32 app-panel skeleton" />
+    <div className="dashboard-app min-h-screen p-6 md:p-8">
+      <div className="space-y-5 max-w-5xl mx-auto">
+        <div className="h-10 w-48 rounded-lg skeleton" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-28 rounded-2xl skeleton dashboard-stat-card" />
+          ))}
+        </div>
+        <div className="h-20 rounded-xl skeleton" />
+        <div className="space-y-3">
+          <div className="h-28 rounded-2xl skeleton dashboard-project-card" />
+          <div className="h-28 rounded-2xl skeleton dashboard-project-card" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -65,28 +68,87 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const upgrade = searchParams.get("upgrade");
+  const mountedRef = useRef(true);
   const [data, setData] = useState<MeResponse | null>(null);
+  const [projects, setProjects] = useState<DashboardProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  function loadProfile() {
-    return fetch("/api/user/me")
-      .then((res) => res.json())
-      .then((json: MeResponse) => {
-        if (!json.user) {
-          router.replace("/login");
-          return;
-        }
-        setData(json);
-      });
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  async function loadProfile(retryAfterRefresh = false) {
+    if (!mountedRef.current) return false;
+    setLoadError(null);
+    const res = await fetch("/api/user/me", { credentials: "include", cache: "no-store" });
+    const json = (await res.json()) as MeResponse & { error?: string };
+
+    if (!mountedRef.current) return false;
+
+    if (json.user) {
+      setData(json);
+      setProjects(json.projects);
+      return true;
+    }
+
+    if (res.status === 401 || res.status === 403) {
+      const supabase = createClient();
+      const { data: authData } = await supabase.auth.getUser();
+
+      if (!mountedRef.current) return false;
+
+      if (authData.user && !retryAfterRefresh) {
+        await supabase.auth.refreshSession();
+        return loadProfile(true);
+      }
+
+      if (!authData.user) {
+        router.replace("/login?next=/dashboard");
+        return false;
+      }
+    }
+
+    if (!res.ok) {
+      if (mountedRef.current) {
+        setLoadError(
+          json.error ??
+            (res.status === 429
+              ? "Terlalu banyak permintaan. Tunggu sebentar lalu muat ulang."
+              : "Gagal memuat profil. Coba muat ulang halaman.")
+        );
+      }
+      return false;
+    }
+
+    router.replace("/login?next=/dashboard");
+    return false;
   }
 
   useEffect(() => {
+    if (upgrade) {
+      setLoading(false);
+      router.replace("/dashboard/upgrade");
+      return;
+    }
+
     loadProfile()
-      .catch(() => router.replace("/login"))
-      .finally(() => setLoading(false));
-  }, [router]);
+      .catch(() => {
+        if (mountedRef.current) {
+          setLoadError("Gagal memuat profil. Periksa koneksi lalu coba lagi.");
+        }
+      })
+      .finally(() => {
+        if (mountedRef.current) setLoading(false);
+      });
+  }, [upgrade, router]);
 
   useEffect(() => {
+    if (upgrade) return;
+
     const payment = searchParams.get("payment");
     const pendingOrder = sessionStorage.getItem("arrobuild_pending_order");
     if (payment === "finish" && pendingOrder) {
@@ -97,21 +159,14 @@ function DashboardContent() {
       })
         .then((r) => r.json())
         .then((d) => {
-          if (d.ok) {
+          if (d.ok && mountedRef.current) {
             sessionStorage.removeItem("arrobuild_pending_order");
-            loadProfile();
+            void loadProfile();
           }
         })
         .catch(() => {});
     }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (upgrade) {
-      const el = document.getElementById("upgrade");
-      el?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [upgrade]);
+  }, [searchParams, upgrade]);
 
   async function handleSignOut() {
     await fetch("/api/auth/signout", { method: "POST" });
@@ -121,211 +176,170 @@ function DashboardContent() {
   }
 
   if (loading) return <LoadingSkeleton />;
+
+  if (loadError) {
+    return (
+      <DashboardShell title="Overview">
+        <div className="max-w-md mx-auto py-16 text-center">
+          <p className="text-body mb-4" style={{ color: "var(--color-text-secondary)" }}>
+            {loadError}
+          </p>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setLoading(true);
+              loadProfile().finally(() => setLoading(false));
+            }}
+          >
+            Muat ulang
+          </button>
+        </div>
+      </DashboardShell>
+    );
+  }
+
   if (!data?.user) return null;
 
   const tierLabel = TIER_LABEL[data.tier];
   const displayName = getDisplayName(data.user.name, data.user.email);
-  const usagePercent =
-    data.projectLimit && data.projectLimit > 0
-      ? Math.min(100, (data.projectCount / data.projectLimit) * 100)
-      : 0;
+  const quota = deriveQuotaDisplay(data);
+  const doneCount = projects.filter((p) => p.status === "DONE").length;
+  const canFork =
+    data.canForkProject ?? (data.plan === "pro" || data.plan === "pro_max");
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6">
-      {/* Account bar */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-6 mb-8 border-b border-[var(--bg-border)]">
-        <div className="flex items-center gap-4 min-w-0">
-          {data.user.avatarUrl ? (
-            <img
-              src={data.user.avatarUrl}
-              alt=""
-              className="w-11 h-11 rounded-full shrink-0"
-            />
-          ) : (
-            <div
-              className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-medium shrink-0"
-              style={{ background: "var(--bg-card)", color: "var(--text-secondary)" }}
-            >
-              {(data.user.name ?? data.user.email)[0]?.toUpperCase()}
-            </div>
-          )}
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-0.5">
-              <h1 className="text-[1.125rem] font-medium text-white truncate">
-                {displayName}
-              </h1>
-              <span className="badge badge-success text-[11px]">{tierLabel}</span>
-            </div>
-            <p className="text-[13px] truncate" style={{ color: "var(--text-tertiary)" }}>
-              {data.user.email}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {data.projects.length > 0 && (
-            <Link href="/generate" className="btn btn-primary btn-sm">
-              Generate baru
-            </Link>
-          )}
-          <Link
-            href="/learn"
-            {...OPEN_LEARN_IN_NEW_TAB}
-            className="btn btn-secondary btn-sm hidden sm:inline-flex"
-          >
-            Learn Hub
-          </Link>
-          <button type="button" onClick={handleSignOut} className="btn btn-ghost btn-sm">
-            Keluar
-          </button>
-        </div>
-      </header>
-
-      {/* Usage — compact, only for limited tiers */}
-      {data.projectLimit !== null && (
-        <div className="app-panel px-4 py-3 mb-8">
-          <div className="flex justify-between text-[13px] mb-2">
-            <span style={{ color: "var(--text-secondary)" }}>Kuota project gratis</span>
-            <span style={{ color: "var(--text-tertiary)" }}>
-              {data.projectCount} dari {data.projectLimit}
-            </span>
-          </div>
-          <div
-            className="h-1.5 rounded-full overflow-hidden"
-            style={{ background: "var(--bg-border)" }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${usagePercent}%`,
-                background: usagePercent >= 100 ? "var(--danger-text)" : "var(--color-lime)",
-              }}
-            />
-          </div>
-          {usagePercent >= 100 && (
-            <p className="text-[12px] mt-2" style={{ color: "var(--warning-text)" }}>
-              Kuota habis — upgrade untuk project tanpa batas.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Projects — primary content */}
-      <section className="mb-10">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <h2 className="text-[15px] font-medium text-white">Project kamu</h2>
-          <span className="text-label">{data.projects.length} total</span>
-        </div>
-
-        {data.projects.length === 0 ? (
-          <div className="app-panel px-6 py-12 text-center">
-            <p className="text-[15px] font-medium text-white mb-1">Belum ada project</p>
-            <p className="text-body text-[13px] mb-6 max-w-xs mx-auto">
-              Mulai dari satu ide — ArroBuild akan susun PRD dan file pendukungnya.
-            </p>
-            <Link href="/generate" className="btn btn-primary btn-sm">
-              Mulai generate
-            </Link>
-          </div>
-        ) : (
-          <div className="app-panel overflow-hidden">
-            {data.projects.map((project) => {
-              const status = STATUS_STYLES[project.status] ?? {
-                label: project.status,
-                className: "badge-info",
-              };
-
-              let productType = "app";
-              let displayIdea = project.idea;
-
-              try {
-                if (project.idea.startsWith("{")) {
-                  const parsed = JSON.parse(project.idea);
-                  productType = parsed.type || "app";
-                  displayIdea = parsed.data?.description || project.idea;
-                }
-              } catch (e) {
-                // Ignore parse errors, fallback to raw idea
-              }
-
-              return (
-                <div key={project.id} className="app-row flex-col sm:flex-row sm:items-center">
-                  <div className="flex-1 min-w-0 w-full">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="badge badge-info text-[10px] uppercase">
-                        {productType}
-                      </span>
-                      <p className="text-[14px] text-white leading-snug truncate">
-                        {displayIdea}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-                      <span className={`badge ${status.className} text-[10px]`}>
-                        {status.label}
-                      </span>
-                      <span>{project._count.files} file</span>
-                      <span>
-                        {new Date(project.createdAt).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 mt-3 sm:mt-0 w-full sm:w-auto shrink-0">
-                    {project.status === "DONE" && project._count.files > 0 && (
-                      <Link
-                        href={`/project/${project.id}`}
-                        className="btn btn-primary btn-sm flex-1 sm:flex-none"
-                      >
-                        Buka
-                      </Link>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        // Pass to generate via sessionStorage
-                        sessionStorage.setItem("arrobuild_fork_idea", project.idea);
-                        sessionStorage.setItem("arrobuild_fork_presets", JSON.stringify(project.presets));
-                        router.push("/generate");
-                      }}
-                      className="btn btn-ghost btn-sm flex-1 sm:flex-none"
-                    >
-                      Fork
-                    </button>
-                    {project.status === "DONE" && project._count.files > 0 && (
-                      <a
-                        href={`/api/export?projectId=${project.id}`}
-                        className="btn btn-secondary btn-sm flex-1 sm:flex-none"
-                      >
-                        Download
-                      </a>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+    <DashboardShell
+      title="Overview"
+      subtitle={`Selamat datang, ${displayName}`}
+      user={data.user}
+      displayName={displayName}
+      tierLabel={tierLabel}
+      tier={data.tier}
+      onSignOut={handleSignOut}
+      headerAction={
+        <Link href="/generate" className="btn btn-primary btn-sm dashboard-header-cta">
+          <span className="hidden sm:inline">Generate baru</span>
+          <span className="sm:hidden">+ Baru</span>
+        </Link>
+      }
+    >
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+        <StatCard label="Project selesai" value={doneCount} hint="Siap dibuka di workspace" />
+        <StatCard label="Total riwayat" value={projects.length} hint="20 terbaru ditampilkan" />
+        {data.creditPool != null && data.creditPool > 0 && (
+          <StatCard
+            label="Kredit tersisa"
+            value={(data.user.creditBalance ?? 0).toLocaleString("id-ID")}
+            accent
+            hint={
+              (data.user.creditBalance ?? 0) > (data.creditPool ?? 0)
+                ? `Pool ${data.creditPool.toLocaleString("id-ID")} + sisa paket sebelumnya`
+                : `Pool bulanan ${data.creditPool.toLocaleString("id-ID")}`
+            }
+          />
         )}
       </section>
 
-      <div id="upgrade">
+      {quota.monthlyLimit > 0 && (
+        <section
+          style={{
+            background: "var(--app-bg-elevated)",
+            border: "0.5px solid var(--app-border-default)",
+            borderRadius: 12,
+            padding: "20px",
+            marginBottom: 32,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+            <p
+              style={{
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--app-text-primary)",
+              }}
+            >
+              Kuota generate
+            </p>
+            <span
+              style={{
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                padding: "4px 12px",
+                borderRadius: 999,
+                background:
+                  data.tier === "pro_max"
+                    ? "rgba(255,176,32,0.12)"
+                    : data.tier === "pro"
+                    ? "rgba(56,189,248,0.12)"
+                    : "rgba(240,243,250,0.07)",
+                color:
+                  data.tier === "pro_max"
+                    ? "var(--app-amber)"
+                    : data.tier === "pro"
+                    ? "var(--app-sky)"
+                    : "var(--app-text-tertiary)",
+                border:
+                  data.tier === "pro_max"
+                    ? "1px solid rgba(255,176,32,0.3)"
+                    : data.tier === "pro"
+                    ? "1px solid rgba(56,189,248,0.3)"
+                    : "1px solid var(--app-border-default)",
+              }}
+            >
+              Paket {tierLabel}
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <QuotaBar
+              label="Kuota project bulan ini"
+              used={quota.monthlyUsed}
+              limit={quota.monthlyLimit}
+              remaining={quota.monthlyRemaining}
+              hint="Generate sukses & antrian dihitung · gagal tidak dihitung"
+            />
+            {quota.dailyLimit > 0 && (
+              <QuotaBar
+                label="Kuota harian"
+                used={quota.dailyUsed}
+                limit={quota.dailyLimit}
+                remaining={quota.dailyRemaining}
+                warnAtFull={false}
+                hint="Reset setiap tengah malam (WIB)"
+              />
+            )}
+          </div>
+        </section>
+      )}
+
+      <WhatsAppSupportTeaser tier={data.tier} quota={data.whatsappQuota ?? null} />
+
+      <ProjectList
+        projects={projects}
+        canFork={canFork}
+        onProjectsChange={setProjects}
+        onRefresh={() => loadProfile()}
+      />
+
+      <div id="upgrade" className="scroll-mt-6">
         <UpgradeSection
           currentTier={data.tier}
           highlightPlan={upgrade}
           onPaymentSuccess={() => loadProfile()}
         />
       </div>
-    </div>
+    </DashboardShell>
   );
 }
 
 export default function DashboardPage() {
   return (
-    <AppShell tone="app" showFooter={false}>
-      <Suspense fallback={<LoadingSkeleton />}>
-        <DashboardContent />
-      </Suspense>
-    </AppShell>
+    <Suspense fallback={<LoadingSkeleton />}>
+      <DashboardContent />
+    </Suspense>
   );
 }

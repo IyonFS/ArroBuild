@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Sparkles, ChevronDown, ChevronRight, Pencil, Package, Wrench } from "lucide-react";
 import type {
   ProductType,
   Presets,
@@ -22,6 +24,7 @@ import {
   PRODUCT_DB_RECOMMENDATIONS,
   DESIGNS_DATA,
 } from "./types";
+import { TechLogo, TechLogoStack, TECH_DISPLAY_NAMES } from "@/lib/ui/tech-logos";
 
 interface Props {
   productType: ProductType;
@@ -33,18 +36,65 @@ interface Props {
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const LANGUAGE_OPTIONS: { id: ProgrammingLanguage; label: string; icon: string }[] = [
-  { id: "javascript-typescript", label: "JS / TS", icon: "⬡" },
-  { id: "python", label: "Python", icon: "🐍" },
-  { id: "php", label: "PHP", icon: "🐘" },
-  { id: "go", label: "Go", icon: "◈" },
-  { id: "dart", label: "Dart", icon: "◆" },
-  { id: "ruby", label: "Ruby", icon: "♦" },
-  { id: "swift", label: "Swift", icon: "◎" },
-  { id: "kotlin", label: "Kotlin", icon: "⬟" },
+const LANGUAGE_OPTIONS: { id: ProgrammingLanguage; label: string }[] = [
+  { id: "javascript-typescript", label: "JS / TS" },
+  { id: "python", label: "Python" },
+  { id: "php", label: "PHP" },
+  { id: "go", label: "Go" },
+  { id: "dart", label: "Dart" },
+  { id: "ruby", label: "Ruby" },
+  { id: "swift", label: "Swift" },
+  { id: "kotlin", label: "Kotlin" },
 ];
 
 type FrameworkGroup = { label: string; items: { id: Framework; label: string; desc: string }[] };
+
+const SINGLE_FRAMEWORK_GROUPS = new Set(["Full-stack", "Mobile", "Biarkan AI"]);
+
+function isFrameworkSelected(
+  groupLabel: string,
+  fwId: Framework,
+  value: Presets
+): boolean {
+  if (groupLabel === "Backend") return value.backendFramework === fwId;
+  return value.framework === fwId;
+}
+
+function handleFrameworkSelect(
+  groupLabel: string,
+  fwId: Framework,
+  value: Presets,
+  onChange: (next: Presets) => void
+) {
+  const patch = { stackBundle: undefined as Presets["stackBundle"] };
+
+  if (SINGLE_FRAMEWORK_GROUPS.has(groupLabel)) {
+    onChange({
+      ...value,
+      ...patch,
+      framework: fwId,
+      backendFramework: undefined,
+    });
+    return;
+  }
+
+  if (groupLabel === "Frontend") {
+    onChange({
+      ...value,
+      ...patch,
+      framework: value.framework === fwId ? value.framework : fwId,
+    });
+    return;
+  }
+
+  if (groupLabel === "Backend") {
+    onChange({
+      ...value,
+      ...patch,
+      backendFramework: value.backendFramework === fwId ? undefined : fwId,
+    });
+  }
+}
 
 const ALL_FRAMEWORK_GROUPS: FrameworkGroup[] = [
   {
@@ -94,10 +144,9 @@ const ALL_FRAMEWORK_GROUPS: FrameworkGroup[] = [
   },
 ];
 
-const DB_CATEGORIES: { label: string; icon: string; items: { id: Database; label: string; desc: string }[] }[] = [
+const DB_CATEGORIES: { label: string; items: { id: Database; label: string; desc: string }[] }[] = [
   {
     label: "SQL / Relasional",
-    icon: "⬛",
     items: [
       { id: "postgresql", label: "PostgreSQL", desc: "Open source, powerful" },
       { id: "mysql", label: "MySQL", desc: "Populer & reliabel" },
@@ -106,7 +155,6 @@ const DB_CATEGORIES: { label: string; icon: string; items: { id: Database; label
   },
   {
     label: "Backend-as-a-Service",
-    icon: "⚡",
     items: [
       { id: "supabase", label: "Supabase", desc: "Postgres + Auth + Storage" },
       { id: "firebase", label: "Firebase", desc: "Google BaaS" },
@@ -116,7 +164,6 @@ const DB_CATEGORIES: { label: string; icon: string; items: { id: Database; label
   },
   {
     label: "NoSQL",
-    icon: "◈",
     items: [
       { id: "mongodb", label: "MongoDB", desc: "Document-based" },
       { id: "redis", label: "Redis", desc: "In-memory cache" },
@@ -124,7 +171,6 @@ const DB_CATEGORIES: { label: string; icon: string; items: { id: Database; label
   },
   {
     label: "Vector (AI)",
-    icon: "✦",
     items: [
       { id: "pgvector", label: "pgvector", desc: "Postgres + vector" },
       { id: "pinecone", label: "Pinecone", desc: "Managed vector DB" },
@@ -134,7 +180,6 @@ const DB_CATEGORIES: { label: string; icon: string; items: { id: Database; label
   },
   {
     label: "Tidak pakai",
-    icon: "○",
     items: [{ id: "none", label: "Tidak pakai DB", desc: "Stateless / external" }],
   },
 ];
@@ -248,91 +293,146 @@ function StackSummaryCard({
     cursor: "Cursor", "claude-code": "Claude Code", windsurf: "Windsurf",
     cline: "Cline", opencode: "OpenCode", custom: "Custom",
   };
+  const DB_LABELS: Record<string, string> = {
+    postgresql: "PostgreSQL", mysql: "MySQL", sqlite: "SQLite", mongodb: "MongoDB",
+    redis: "Redis", supabase: "Supabase", firebase: "Firebase", planetscale: "PlanetScale",
+    turso: "Turso", pgvector: "pgvector", pinecone: "Pinecone", weaviate: "Weaviate",
+    qdrant: "Qdrant", none: "Tidak pakai",
+  };
+  const DEPLOY_LABELS: Record<string, string> = {
+    vercel: "Vercel", netlify: "Netlify", railway: "Railway", "fly-io": "Fly.io",
+    vps: "VPS", docker: "Docker", aws: "AWS/GCP", none: "Tidak pakai",
+  };
+  const ANIM_LABELS: Record<string, string> = {
+    "framer-motion": "Framer Motion", gsap: "GSAP", lottie: "Lottie", rive: "Rive",
+    "css-only": "CSS-only", "ai-recommend": "AI Pilihkan",
+  };
 
-  const rows: { label: string; value: string; highlight?: boolean }[] = [
-    { label: "Framework", value: FRAMEWORK_LABELS[value.framework] ?? value.framework, highlight: true },
+  const rows: { label: string; value: string; techKey?: string; highlight?: boolean }[] = [
+    {
+      label: value.backendFramework ? "Frontend" : "Framework",
+      value: FRAMEWORK_LABELS[value.framework] ?? value.framework,
+      techKey: value.framework,
+      highlight: true,
+    },
+    ...(value.backendFramework
+      ? [{
+          label: "Backend",
+          value: FRAMEWORK_LABELS[value.backendFramework] ?? value.backendFramework,
+          techKey: value.backendFramework,
+          highlight: true,
+        }]
+      : []),
     { label: "Design", value: DESIGN_LABELS[value.design] ?? value.design },
-    { label: "AI Tool", value: AGENT_LABELS[value.agentTool] ?? value.agentTool },
+    { label: "AI Tool", value: AGENT_LABELS[value.agentTool] ?? value.agentTool, techKey: value.agentTool },
   ];
-  if (value.database) rows.push({ label: "Database", value: value.database });
-  if (value.animationLibrary) rows.push({ label: "Animasi", value: value.animationLibrary });
-  if (value.deployment) rows.push({ label: "Deploy", value: value.deployment });
-  if (value.programmingLanguage) rows.push({ label: "Bahasa", value: value.programmingLanguage });
+  if (value.database) {
+    rows.push({
+      label: "Database",
+      value: DB_LABELS[value.database] ?? value.database,
+      techKey: value.database,
+    });
+  }
+  if (value.animationLibrary) {
+    rows.push({
+      label: "Animasi",
+      value: ANIM_LABELS[value.animationLibrary] ?? value.animationLibrary,
+      techKey: value.animationLibrary,
+    });
+  }
+  if (value.deployment) {
+    rows.push({
+      label: "Deploy",
+      value: DEPLOY_LABELS[value.deployment] ?? value.deployment,
+      techKey: value.deployment,
+    });
+  }
+
+  const summaryKey = `${value.stackBundle ?? "custom"}-${value.framework}-${value.database ?? ""}`;
 
   return (
     <div
-      className="rounded-2xl overflow-hidden"
+      className="rounded-xl overflow-hidden"
       style={{
-        background: "var(--color-bg-elevated)",
-        border: "0.5px solid rgba(255,255,255,0.1)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+        background: "var(--app-bg-elevated)",
+        border: "0.5px solid var(--app-border-default)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
       }}
     >
-      {/* Header */}
-      <div className="px-5 py-4" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+      <div className="px-5 py-4" style={{ borderBottom: "0.5px solid var(--app-border-default)" }}>
         <div className="flex items-center gap-2">
-          <span className="text-lg">📦</span>
-          <span className="font-semibold text-base" style={{ color: "var(--color-text-primary)" }}>
+          <Package size={18} strokeWidth={1.75} style={{ color: "var(--app-amber)" }} />
+          <span className="font-unbounded text-[15px] font-bold" style={{ color: "var(--app-text-primary)" }}>
             Stack Kamu
           </span>
           {value.stackBundle && (
             <span
-              className="ml-auto text-xs font-bold px-2.5 py-1 rounded-full"
+              className="ml-auto font-mono text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide"
               style={{
-                background: "rgba(204,255,0,0.1)",
-                color: "var(--color-lime)",
-                fontFamily: "var(--font-jetbrains-mono), monospace",
+                background: "rgba(255,176,32,0.1)",
+                color: "var(--app-amber)",
+                border: "1px solid rgba(255,176,32,0.25)",
               }}
             >
-              {value.stackBundle.replace(/-/g, " ").toUpperCase()}
+              {value.stackBundle.replace(/-/g, " ")}
             </span>
           )}
         </div>
       </div>
 
-      {/* Rows */}
-      <div className="px-5 py-3">
-        {rows.map((row, i) => (
-          <div
-            key={i}
-            className="flex items-center justify-between py-2.5"
-            style={{
-              borderBottom: i < rows.length - 1 ? "0.5px solid rgba(255,255,255,0.04)" : "none",
-            }}
-          >
-            <span
-              className="text-xs font-semibold"
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={summaryKey}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] as const }}
+          className="px-5 py-3"
+        >
+          {rows.map((row, i) => (
+            <div
+              key={row.label}
+              className="flex items-center justify-between py-2.5 gap-3"
               style={{
-                color: "rgba(255,255,255,0.45)",
-                fontFamily: "var(--font-jetbrains-mono), monospace",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
+                borderBottom: i < rows.length - 1 ? "0.5px solid var(--app-border-default)" : "none",
               }}
             >
-              {row.label}
-            </span>
-            <span
-              className="text-sm font-semibold"
-              style={{ color: row.highlight ? "var(--color-text-primary)" : "rgba(255,255,255,0.85)" }}
-            >
-              {row.value}
-            </span>
-          </div>
-        ))}
-      </div>
+              <span
+                className="font-mono text-[11px] font-semibold uppercase tracking-wide shrink-0"
+                style={{ color: "var(--app-text-tertiary)" }}
+              >
+                {row.label}
+              </span>
+              <span className="flex items-center gap-2 min-w-0">
+                {row.techKey && (
+                  <TechLogo
+                    name={TECH_DISPLAY_NAMES[row.techKey] ?? row.value}
+                    size={14}
+                  />
+                )}
+                <span
+                  className="font-mono text-[13px] font-semibold truncate"
+                  style={{ color: row.highlight ? "var(--app-text-primary)" : "var(--app-text-secondary)" }}
+                >
+                  {row.value}
+                </span>
+              </span>
+            </div>
+          ))}
+        </motion.div>
+      </AnimatePresence>
 
-      {/* CTA */}
-      <div className="px-5 pb-5 pt-3">
+      <div className="px-5 pb-5 pt-2">
         <button
+          type="button"
           onClick={onNext}
           disabled={!canProceed}
-          className="w-full py-4 rounded-xl font-bold text-base transition-all duration-200"
+          className="w-full py-3.5 rounded-lg font-mono font-bold text-[14px] transition-all duration-120"
           style={{
-            background: canProceed ? "var(--color-lime)" : "rgba(255,255,255,0.05)",
-            color: canProceed ? "#0A0A0A" : "rgba(255,255,255,0.2)",
+            background: canProceed ? "var(--app-amber)" : "var(--app-bg-hover)",
+            color: canProceed ? "#0D1321" : "var(--app-text-tertiary)",
             cursor: canProceed ? "pointer" : "not-allowed",
-            border: canProceed ? "none" : "0.5px solid rgba(255,255,255,0.06)",
-            boxShadow: canProceed ? "0 4px 20px rgba(204,255,0,0.25)" : "none",
+            border: canProceed ? "none" : "0.5px solid var(--app-border-default)",
           }}
         >
           Lanjut ke Dokumen →
@@ -377,33 +477,32 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
   const showAnimation = !["api", "internal"].includes(productType);
 
   return (
-    <div className="font-inter w-full max-w-6xl mx-auto px-6 py-14">
+    <div className="generate-app w-full max-w-[1100px] mx-auto px-4 sm:px-6 py-10 sm:py-14">
       {/* Header */}
       <div className="mb-10 max-w-3xl">
         <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-5"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-[11px] font-bold tracking-widest uppercase mb-5"
           style={{
-            background: "rgba(204,255,0,0.08)",
-            color: "var(--color-lime)",
-            border: "0.5px solid rgba(204,255,0,0.2)",
-            fontFamily: "var(--font-jetbrains-mono), monospace",
+            background: "rgba(255,176,32,0.08)",
+            color: "var(--app-amber)",
+            border: "0.5px solid rgba(255,176,32,0.2)",
           }}
         >
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--color-lime)" }} />
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--app-amber)" }} />
           Step 3 of 4
         </div>
         <h1
-          className="font-unbounded font-bold mb-3"
+          className="font-unbounded font-extrabold mb-3"
           style={{
             fontSize: "clamp(1.75rem, 3vw, 2.25rem)",
-            letterSpacing: "-0.03em",
-            color: "var(--color-text-primary)",
+            letterSpacing: "-0.02em",
+            color: "var(--app-text-primary)",
             lineHeight: 1.15,
           }}
         >
           Tech stack & preferences
         </h1>
-        <p className="text-base" style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+        <p className="text-base font-mono text-[14px]" style={{ color: "var(--app-text-secondary)", lineHeight: 1.6 }}>
           Pilih paket siap pakai, atau rakit sendiri sesuai kebutuhan.{" "}
           <span style={{ color: "rgba(255,255,255,0.3)" }}>
             AI akan menyesuaikan output dengan stack yang kamu pilih.
@@ -437,6 +536,7 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                     update({
                       stackBundle: bundle.id,
                       framework: bundle.framework,
+                      backendFramework: undefined,
                       database: bundle.database,
                       deployment: bundle.deployment,
                       animationLibrary: bundle.animationLibrary,
@@ -448,11 +548,11 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                   style={{
                     padding: "18px 20px",
                     background: isSelected
-                      ? "rgba(204,255,0,0.05)"
-                      : "var(--color-bg-elevated)",
+                      ? "rgba(255,176,32,0.04)"
+                      : "var(--app-bg-elevated)",
                     border: isSelected
-                      ? "1.5px solid rgba(204,255,0,0.4)"
-                      : "0.5px solid rgba(255,255,255,0.08)",
+                      ? "1.5px solid var(--app-amber)"
+                      : "0.5px solid var(--app-border-default)",
                     transform: isSelected ? "translateY(-2px)" : "none",
                     boxShadow: isSelected
                       ? "0 8px 24px rgba(0,0,0,0.3)"
@@ -461,21 +561,21 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                 >
                   {isRecommended && (
                     <span
-                      className="absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      className="absolute top-3 right-3 inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full"
                       style={{
-                        background: "rgba(204,255,0,0.12)",
-                        color: "var(--color-lime)",
-                        fontFamily: "var(--font-jetbrains-mono), monospace",
-                        border: "0.5px solid rgba(204,255,0,0.2)",
+                        background: "rgba(56,189,248,0.12)",
+                        color: "var(--app-sky)",
+                        border: "1px solid rgba(56,189,248,0.25)",
                       }}
                     >
-                      ✨ Cocok
+                      <Sparkles size={10} strokeWidth={2} />
+                      Cocok
                     </span>
                   )}
                   {isSelected && (
                     <div
                       className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center"
-                      style={{ background: "var(--color-lime)" }}
+                      style={{ background: "var(--app-amber)" }}
                     >
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                         <path d="M1 4L3.5 6.5L9 1" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -483,16 +583,16 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                     </div>
                   )}
 
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-xl">{bundle.icon}</span>
+                  <div className="flex items-center justify-between gap-3 mb-3">
                     <span
                       className="font-semibold text-sm"
                       style={{
-                        color: isSelected ? "var(--color-lime)" : "var(--color-text-primary)",
+                        color: isSelected ? "var(--app-amber)" : "var(--app-text-primary)",
                       }}
                     >
                       {bundle.label}
                     </span>
+                    <TechLogoStack names={bundle.techBadges} size={13} />
                   </div>
 
                   {/* Tech badges */}
@@ -526,12 +626,12 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
               }}
             >
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-xl">🛠️</span>
-                <span className="font-semibold text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
+                <Wrench size={18} strokeWidth={1.75} style={{ color: "var(--app-text-tertiary)" }} />
+                <span className="font-semibold text-sm" style={{ color: "var(--app-text-secondary)" }}>
                   Rakit Sendiri
                 </span>
               </div>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+              <p className="text-xs font-mono" style={{ color: "var(--app-text-tertiary)" }}>
                 Pilih tiap bagian manual
               </p>
             </button>
@@ -540,14 +640,14 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
           {/* Customize from bundle */}
           {value.stackBundle && (
             <button
+              type="button"
               onClick={() => setShowCustomize(!showCustomize)}
-              className="flex items-center gap-2 text-sm mb-6 transition-colors"
-              style={{ color: showCustomize ? "var(--color-lime)" : "rgba(255,255,255,0.4)" }}
+              className="flex items-center gap-2 font-mono text-[13px] mb-6 transition-colors"
+              style={{ color: showCustomize ? "var(--app-amber)" : "var(--app-text-tertiary)" }}
             >
-              <span style={{ fontSize: "12px" }}>{showCustomize ? "▼" : "▶"}</span>
-              <span>
-                {showCustomize ? "Sembunyikan kustomisasi" : "✏️ Sesuaikan dari sini"}
-              </span>
+              {showCustomize ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              <Pencil size={13} strokeWidth={1.75} />
+              <span>{showCustomize ? "Sembunyikan kustomisasi" : "Sesuaikan dari sini"}</span>
             </button>
           )}
 
@@ -567,24 +667,18 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                   return (
                     <button
                       key={lang.id}
+                      type="button"
                       onClick={() => update({ programmingLanguage: isActive ? undefined : lang.id })}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm transition-all duration-150"
-                      style={{
-                        background: isActive ? "var(--color-lime)" : "rgba(255,255,255,0.05)",
-                        color: isActive ? "#0A0A0A" : "rgba(255,255,255,0.55)",
-                        border: isActive ? "none" : "0.5px solid rgba(255,255,255,0.1)",
-                        fontWeight: isActive ? 600 : 400,
-                      }}
+                      className={`generate-chip ${isActive ? "is-selected" : ""}`}
                     >
-                      <span>{lang.icon}</span>
-                      <span>{lang.label}</span>
+                      {lang.label}
                     </button>
                   );
                 })}
               </div>
 
               {/* ── Framework grid ── */}
-              <SectionTitle subtitle="Framework utama yang digunakan">
+              <SectionTitle subtitle="Pilih frontend dan backend secara terpisah, atau satu framework full-stack">
                 Framework
               </SectionTitle>
               <div className="space-y-4 mb-6">
@@ -604,26 +698,30 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {group.items.map((fw) => {
-                        const isActive = value.framework === fw.id;
+                        const isActive = isFrameworkSelected(group.label, fw.id, value);
                         return (
                           <button
+                            type="button"
                             key={fw.id}
-                            onClick={() => update({ framework: fw.id })}
+                            onClick={() => handleFrameworkSelect(group.label, fw.id, value, onChange)}
                             className="text-left rounded-xl px-4 py-3 transition-all duration-150"
                             style={{
                               background: isActive
-                                ? "rgba(204,255,0,0.07)"
+                                ? "rgba(255,176,32,0.07)"
                                 : "rgba(255,255,255,0.03)",
                               border: isActive
-                                ? "1.5px solid rgba(204,255,0,0.4)"
+                                ? "1.5px solid rgba(255,176,32,0.4)"
                                 : "0.5px solid rgba(255,255,255,0.07)",
                             }}
                           >
-                            <div
-                              className="font-semibold text-sm mb-0.5"
-                              style={{ color: isActive ? "var(--color-lime)" : "rgba(255,255,255,0.8)" }}
-                            >
-                              {fw.label}
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <TechLogo name={TECH_DISPLAY_NAMES[fw.id] ?? fw.label} size={14} />
+                              <div
+                                className="font-mono font-semibold text-[13px]"
+                                style={{ color: isActive ? "var(--app-amber)" : "var(--app-text-primary)" }}
+                              >
+                                {fw.label}
+                              </div>
                             </div>
                             <div className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
                               {fw.desc}
@@ -646,23 +744,19 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
                     Rekomendasi untuk{" "}
-                    <span style={{ color: "rgba(204,255,0,0.6)" }}>
+                    <span style={{ color: "rgba(255,176,32,0.6)" }}>
                       {productType}:
                     </span>
                   </span>
                   {recommendedDBs.map((db) => (
                     <button
                       key={db}
+                      type="button"
                       onClick={() => update({ database: db })}
-                      className="text-xs px-2.5 py-1 rounded-full transition-all"
-                      style={{
-                        background: "rgba(204,255,0,0.08)",
-                        color: "var(--color-lime)",
-                        border: "0.5px solid rgba(204,255,0,0.2)",
-                        fontFamily: "var(--font-jetbrains-mono), monospace",
-                      }}
+                      className="generate-chip inline-flex items-center gap-1.5 !text-[11px] !py-1 !px-2.5"
                     >
-                      ✨ {db}
+                      <Sparkles size={10} strokeWidth={2} />
+                      {db}
                     </button>
                   ))}
                 </div>
@@ -671,43 +765,38 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
               <div className="space-y-4 mb-6">
                 {DB_CATEGORIES.map((cat) => (
                   <div key={cat.label}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm">{cat.icon}</span>
-                      <p
-                        className="text-xs font-medium"
-                        style={{
-                          color: "rgba(255,255,255,0.3)",
-                          fontFamily: "var(--font-jetbrains-mono), monospace",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.08em",
-                          fontSize: "10px",
-                        }}
-                      >
-                        {cat.label}
-                      </p>
-                    </div>
+                    <p
+                      className="text-xs font-medium mb-2 font-mono uppercase tracking-wider"
+                      style={{ color: "var(--app-text-tertiary)", fontSize: "10px" }}
+                    >
+                      {cat.label}
+                    </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {cat.items.map((db) => {
                         const isActive = value.database === db.id;
                         return (
                           <button
                             key={db.id}
+                            type="button"
                             onClick={() => update({ database: db.id })}
                             className="text-left rounded-xl px-4 py-3 transition-all duration-150"
                             style={{
                               background: isActive
-                                ? "rgba(204,255,0,0.07)"
-                                : "rgba(255,255,255,0.03)",
+                                ? "rgba(255,176,32,0.07)"
+                                : "var(--app-bg-elevated)",
                               border: isActive
-                                ? "1.5px solid rgba(204,255,0,0.4)"
-                                : "0.5px solid rgba(255,255,255,0.07)",
+                                ? "1.5px solid rgba(255,176,32,0.4)"
+                                : "0.5px solid var(--app-border-default)",
                             }}
                           >
-                            <div
-                              className="font-semibold text-sm mb-0.5"
-                              style={{ color: isActive ? "var(--color-lime)" : "rgba(255,255,255,0.8)" }}
-                            >
-                              {db.label}
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <TechLogo name={TECH_DISPLAY_NAMES[db.id] ?? db.label} size={14} />
+                              <div
+                                className="font-mono font-semibold text-[13px]"
+                                style={{ color: isActive ? "var(--app-amber)" : "var(--app-text-primary)" }}
+                              >
+                                {db.label}
+                              </div>
                             </div>
                             <div className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
                               {db.desc}
@@ -737,15 +826,15 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                           onClick={() => update({ animationLibrary: isActive ? undefined : lib.id })}
                           className="text-left rounded-xl px-4 py-3 transition-all duration-150"
                           style={{
-                            background: isActive ? "rgba(204,255,0,0.07)" : "rgba(255,255,255,0.03)",
+                            background: isActive ? "rgba(255,176,32,0.07)" : "rgba(255,255,255,0.03)",
                             border: isActive
-                              ? "1.5px solid rgba(204,255,0,0.4)"
+                              ? "1.5px solid rgba(255,176,32,0.4)"
                               : "0.5px solid rgba(255,255,255,0.07)",
                           }}
                         >
                           <div
-                            className="font-semibold text-sm mb-0.5"
-                            style={{ color: isActive ? "var(--color-lime)" : "rgba(255,255,255,0.8)" }}
+                            className="font-mono font-semibold text-[13px] mb-0.5"
+                            style={{ color: isActive ? "var(--app-amber)" : "var(--app-text-primary)" }}
                           >
                             {lib.label}
                           </div>
@@ -773,9 +862,9 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                       onClick={() => update({ design: ds.id })}
                       className="text-left rounded-xl overflow-hidden transition-all duration-300 group flex flex-col"
                       style={{
-                        background: isActive ? "rgba(204,255,0,0.04)" : "rgba(255,255,255,0.02)",
+                        background: isActive ? "rgba(255,176,32,0.04)" : "rgba(255,255,255,0.02)",
                         border: isActive
-                          ? "1.5px solid rgba(204,255,0,0.5)"
+                          ? "1.5px solid rgba(255,176,32,0.5)"
                           : "0.5px solid rgba(255,255,255,0.08)",
                         height: "100%",
                       }}
@@ -815,11 +904,11 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                         <div className="flex items-center justify-between mb-1">
                           <span
                             className="font-bold text-sm"
-                            style={{ color: isActive ? "var(--color-lime)" : "var(--color-text-primary)" }}
+                            style={{ color: isActive ? "var(--app-amber)" : "var(--app-text-primary)" }}
                           >
                             {ds.label}
                           </span>
-                          {isActive && <span className="text-xs text-[#CCFF00]">✓</span>}
+                          {isActive && <span className="text-xs" style={{ color: "var(--app-amber)" }}>✓</span>}
                         </div>
                         <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.6)" }}>
                           {ds.desc}
@@ -855,8 +944,8 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                   fontFamily: "var(--font-inter), system-ui, sans-serif",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(204,255,0,0.4)";
-                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(204,255,0,0.04)";
+                  e.currentTarget.style.borderColor = "rgba(255,176,32,0.4)";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,176,32,0.04)";
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
@@ -876,23 +965,18 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                   return (
                     <button
                       key={tool.id}
+                      type="button"
                       onClick={() => update({ agentTool: tool.id })}
-                      className="relative flex items-center gap-2 px-4 py-2.5 rounded-full text-sm transition-all duration-150"
-                      style={{
-                        background: isActive ? "var(--color-lime)" : "rgba(255,255,255,0.05)",
-                        color: isActive ? "#0A0A0A" : "rgba(255,255,255,0.6)",
-                        border: isActive ? "none" : "0.5px solid rgba(255,255,255,0.1)",
-                        fontWeight: isActive ? 600 : 400,
-                      }}
+                      className={`generate-chip inline-flex items-center gap-2 ${isActive ? "is-selected" : ""}`}
                     >
+                      <TechLogo name={TECH_DISPLAY_NAMES[tool.id] ?? tool.label} size={14} />
                       <span>{tool.label}</span>
                       {tool.badge && !isActive && (
                         <span
-                          className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                          className="text-[9px] px-1.5 py-0.5 rounded-full font-bold font-mono"
                           style={{
-                            background: "rgba(204,255,0,0.1)",
-                            color: "var(--color-lime)",
-                            fontFamily: "var(--font-jetbrains-mono), monospace",
+                            background: "rgba(255,176,32,0.1)",
+                            color: "var(--app-amber)",
                           }}
                         >
                           {tool.badge}
@@ -906,24 +990,24 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                 <p
                   className="text-xs mb-6 animate-fade-slide-up"
                   style={{
-                    color: "rgba(204,255,0,0.5)",
+                    color: "rgba(255,176,32,0.5)",
                     fontFamily: "var(--font-jetbrains-mono), monospace",
                   }}
                 >
                   Output akan dioptimasi untuk{" "}
-                  <span style={{ color: "var(--color-lime)" }}>.cursorrules</span>
+                  <span style={{ color: "var(--app-amber)" }}>.cursorrules</span>
                 </p>
               )}
               {value.agentTool === "claude-code" && (
                 <p
                   className="text-xs mb-6 animate-fade-slide-up"
                   style={{
-                    color: "rgba(204,255,0,0.5)",
+                    color: "rgba(255,176,32,0.5)",
                     fontFamily: "var(--font-jetbrains-mono), monospace",
                   }}
                 >
                   Output akan dioptimasi untuk{" "}
-                  <span style={{ color: "var(--color-lime)" }}>CLAUDE.md</span>
+                  <span style={{ color: "var(--app-amber)" }}>CLAUDE.md</span>
                 </p>
               )}
 
@@ -939,15 +1023,11 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                   return (
                     <button
                       key={dep.id}
+                      type="button"
                       onClick={() => update({ deployment: isActive ? undefined : dep.id })}
-                      className="px-4 py-2.5 rounded-full text-sm transition-all duration-150"
-                      style={{
-                        background: isActive ? "var(--color-lime)" : "rgba(255,255,255,0.05)",
-                        color: isActive ? "#0A0A0A" : "rgba(255,255,255,0.6)",
-                        border: isActive ? "none" : "0.5px solid rgba(255,255,255,0.1)",
-                        fontWeight: isActive ? 600 : 400,
-                      }}
+                      className={`generate-chip inline-flex items-center gap-2 ${isActive ? "is-selected" : ""}`}
                     >
+                      <TechLogo name={TECH_DISPLAY_NAMES[dep.id] ?? dep.label} size={14} />
                       {dep.label}
                     </button>
                   );
@@ -963,8 +1043,8 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                 <div
                   className="w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{
-                    background: showTools ? "rgba(204,255,0,0.1)" : "rgba(255,255,255,0.05)",
-                    border: showTools ? "0.5px solid rgba(204,255,0,0.2)" : "0.5px solid rgba(255,255,255,0.08)",
+                    background: showTools ? "rgba(255,176,32,0.1)" : "rgba(255,255,255,0.05)",
+                    border: showTools ? "0.5px solid rgba(255,176,32,0.2)" : "0.5px solid rgba(255,255,255,0.08)",
                   }}
                 >
                   <span
@@ -972,7 +1052,7 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                     style={{
                       transform: showTools ? "rotate(90deg)" : "none",
                       display: "inline-block",
-                      color: showTools ? "var(--color-lime)" : "rgba(255,255,255,0.3)",
+                      color: showTools ? "var(--app-amber)" : "var(--app-text-tertiary)",
                     }}
                   >
                     ▶
@@ -1005,14 +1085,9 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                         return (
                           <button
                             key={vc.id}
+                            type="button"
                             onClick={() => update({ versionControl: isActive ? undefined : vc.id })}
-                            className="px-3.5 py-2 rounded-full text-sm transition-all duration-150"
-                            style={{
-                              background: isActive ? "var(--color-lime)" : "rgba(255,255,255,0.04)",
-                              color: isActive ? "#0A0A0A" : "rgba(255,255,255,0.55)",
-                              border: isActive ? "none" : "0.5px solid rgba(255,255,255,0.08)",
-                              fontWeight: isActive ? 600 : 400,
-                            }}
+                            className={`generate-chip ${isActive ? "is-selected" : ""}`}
                           >
                             {vc.label}
                           </button>
@@ -1035,15 +1110,11 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                         return (
                           <button
                             key={dh.id}
+                            type="button"
                             onClick={() => update({ designHandoffTool: isActive ? undefined : dh.id })}
-                            className="px-3.5 py-2 rounded-full text-sm transition-all duration-150"
-                            style={{
-                              background: isActive ? "var(--color-lime)" : "rgba(255,255,255,0.04)",
-                              color: isActive ? "#0A0A0A" : "rgba(255,255,255,0.55)",
-                              border: isActive ? "none" : "0.5px solid rgba(255,255,255,0.08)",
-                              fontWeight: isActive ? 600 : 400,
-                            }}
+                            className={`generate-chip inline-flex items-center gap-2 ${isActive ? "is-selected" : ""}`}
                           >
+                            <TechLogo name={TECH_DISPLAY_NAMES[dh.id] ?? dh.label} size={14} />
                             {dh.label}
                           </button>
                         );
@@ -1062,15 +1133,11 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                         return (
                           <button
                             key={pm.id}
+                            type="button"
                             onClick={() => update({ projectManagementTool: isActive ? undefined : pm.id })}
-                            className="px-3.5 py-2 rounded-full text-sm transition-all duration-150"
-                            style={{
-                              background: isActive ? "var(--color-lime)" : "rgba(255,255,255,0.04)",
-                              color: isActive ? "#0A0A0A" : "rgba(255,255,255,0.55)",
-                              border: isActive ? "none" : "0.5px solid rgba(255,255,255,0.08)",
-                              fontWeight: isActive ? 600 : 400,
-                            }}
+                            className={`generate-chip inline-flex items-center gap-2 ${isActive ? "is-selected" : ""}`}
                           >
+                            <TechLogo name={TECH_DISPLAY_NAMES[pm.id] ?? pm.label} size={14} />
                             {pm.label}
                           </button>
                         );
@@ -1082,8 +1149,13 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
             </div>
           )}
 
+          {/* Mobile summary */}
+          <div className="mt-8 lg:hidden">
+            <StackSummaryCard value={value} onNext={onNext} canProceed={true} />
+          </div>
+
           {/* Mobile navigation */}
-          <div className="flex gap-3 mt-10 lg:hidden">
+          <div className="flex gap-3 mt-6 lg:hidden">
             <button
               onClick={onBack}
               className="px-6 py-4 rounded-2xl text-base font-semibold transition-all"
@@ -1096,12 +1168,13 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
               ← Kembali
             </button>
             <button
+              type="button"
               onClick={onNext}
-              className="flex-1 py-4 rounded-2xl font-bold text-base transition-all"
+              className="flex-1 py-4 rounded-xl font-mono font-bold text-[14px] transition-all"
               style={{
-                background: "var(--color-lime)",
-                color: "#0A0A0A",
-                boxShadow: "0 4px 20px rgba(204,255,0,0.2)",
+                background: "var(--app-amber)",
+                color: "#0D1321",
+                boxShadow: "0 4px 20px rgba(255,176,32,0.2)",
               }}
             >
               Lanjut →
@@ -1110,7 +1183,7 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
         </div>
 
         {/* ── RIGHT: Sticky Summary ── */}
-        <div className="hidden lg:block w-72 xl:w-80 flex-shrink-0">
+        <div className="hidden lg:block w-[380px] flex-shrink-0">
           <div className="sticky top-24 space-y-4">
             <StackSummaryCard value={value} onNext={onNext} canProceed={true} />
 
@@ -1132,3 +1205,4 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
     </div>
   );
 }
+

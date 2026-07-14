@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { Settings, Zap, Layers, ShieldCheck, Boxes, type LucideIcon } from "lucide-react";
 import type {
   FileKey,
   ProjectStage,
@@ -17,11 +19,17 @@ import {
   TIER_CREDIT_POOL,
   TIER_LABELS,
   PLAN_STATUS_LABELS,
+  MODEL_CLASS_PIPELINE,
   calcDocCredits,
   calcTotalCredits,
   resolvePreviewTier,
   isSubscribed,
+  canAccessDocument,
+  documentsForTier,
+  sanitizeSelectedDocs,
 } from "./types";
+import { DOCUMENT_DEFINITIONS, getMaxDocumentsForTier } from "@/lib/config/documents";
+import { DocIcon, ModelClassIcon } from "@/lib/ui/app-icons";
 
 interface Props {
   value: FileKey[];
@@ -29,7 +37,7 @@ interface Props {
   plan: UserPlanStatus;
   perDocModelClass: PerDocumentModelClass;
   onDocsChange: (v: FileKey[]) => void;
-  onModelClassChange: (overrides: PerDocumentModelClass) => void;
+  onModelClassChange: (doc: FileKey, mc: ModelClass) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -37,35 +45,42 @@ interface Props {
 const SMART_PRESETS: {
   id: string;
   label: string;
-  icon: string;
+  Icon: LucideIcon;
   docs: FileKey[];
   desc: string;
 }[] = [
   {
     id: "starter",
     label: "Quick Start",
-    icon: "✦",
-    docs: ["prd", "context", "plan"],
+    Icon: Zap,
+    docs: ["prd", "architecture", "plan-task"],
     desc: "Ide baru, mau mulai cepat",
   },
   {
     id: "foundation",
     label: "Full Foundation",
-    icon: "✦",
-    docs: ["prd", "context", "plan", "design-system", "agents"],
+    Icon: Layers,
+    docs: ["prd", "architecture", "plan-task", "design-system", "agent-rules"],
     desc: "Sebelum mulai coding serius",
   },
   {
     id: "production",
     label: "Production Ready",
-    icon: "✦",
-    docs: ["prd", "context", "plan", "design-system", "agents", "production-hardening"],
+    Icon: ShieldCheck,
+    docs: [
+      "prd",
+      "architecture",
+      "plan-task",
+      "design-system",
+      "agent-rules",
+      "security-launch",
+    ],
     desc: "Mau launch ke publik",
   },
   {
     id: "complete",
     label: "Complete Suite",
-    icon: "✦",
+    Icon: Boxes,
     docs: [...ALL_FILE_KEYS],
     desc: "Dokumentasi paling lengkap",
   },
@@ -81,13 +96,21 @@ export default function DocumentPickerStep({
   onNext,
   onBack,
 }: Props) {
+  const [advancedMode, setAdvancedMode] = useState(false);
   const tier = resolvePreviewTier(plan);
+  const maxDocs = getMaxDocumentsForTier(tier);
+  const atDocLimit = value.length >= maxDocs;
+
+  const setDocs = (docs: FileKey[]) => onDocsChange(sanitizeSelectedDocs(docs, tier));
+
   const toggle = (key: FileKey) => {
+    if (!canAccessDocument(key, tier)) return;
     if (value.includes(key)) {
       if (key === "prd") return;
-      onDocsChange(value.filter((k) => k !== key));
+      setDocs(value.filter((k) => k !== key));
     } else {
-      onDocsChange([...value, key]);
+      if (atDocLimit) return;
+      setDocs([...value, key]);
     }
   };
 
@@ -97,42 +120,49 @@ export default function DocumentPickerStep({
   );
 
   const availableClasses = TIER_MODEL_CLASSES[tier];
+  const singleClassTier = availableClasses.length === 1;
   const totalCredits = calcTotalCredits(value, tier, perDocModelClass);
   const creditPool = TIER_CREDIT_POOL[tier];
 
   const setDocClass = (doc: FileKey, mc: ModelClass) => {
-    onModelClassChange({ ...perDocModelClass, [doc]: mc });
+    if (!availableClasses.includes(mc)) return;
+    onModelClassChange(doc, mc);
   };
 
-  const coreDocs: FileKey[] = ["prd", "context", "plan", "design-system", "agents"];
-  const extendedDocs: FileKey[] = ["production-hardening", "scale-performance", "growth-quality"];
+  const coreDocs = ALL_FILE_KEYS.filter((k) => DOCUMENT_DEFINITIONS[k].kind === "core");
+  const optionalDocs = ALL_FILE_KEYS.filter((k) => DOCUMENT_DEFINITIONS[k].kind === "optional");
+  const accessibleDocs = documentsForTier(tier);
 
   return (
-    <div className="font-inter w-full max-w-6xl mx-auto px-6 py-14">
-      {/* Header */}
-      <div className="mb-8">
-        <span
-          className="font-mono text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-5 inline-block"
+    <div className="generate-app w-full max-w-[1100px] mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1
+            className="font-unbounded font-extrabold text-[clamp(24px,3vw,28px)] mb-3"
+            style={{ color: "var(--app-text-primary)", letterSpacing: "-0.02em" }}
+          >
+            Pilih dokumen & kelas model AI
+          </h1>
+          <p className="font-mono text-[14px]" style={{ color: "var(--app-text-secondary)", lineHeight: 1.7 }}>
+            Pilih dokumen yang ingin digenerate.
+            {advancedMode
+              ? " Atur kelas model per dokumen di panel kanan."
+              : " Kelas model otomatis sesuai paket — aktifkan mode lanjutan untuk kontrol detail."}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setAdvancedMode((v) => !v)}
+          className="inline-flex items-center gap-2 font-mono text-[12px] font-semibold px-3 py-2 rounded-lg shrink-0 transition-colors"
           style={{
-            background: "rgba(204,255,0,0.08)",
-            color: "var(--color-lime)",
-            border: "0.5px solid rgba(204,255,0,0.25)",
+            color: advancedMode ? "var(--app-amber)" : "var(--app-text-secondary)",
+            background: advancedMode ? "rgba(255,176,32,0.1)" : "var(--app-bg-elevated)",
+            border: advancedMode ? "1px solid rgba(255,176,32,0.35)" : "0.5px solid var(--app-border-default)",
           }}
         >
-          Step 4 of 4 — Dokumen & Model
-        </span>
-        <h2
-          className="font-unbounded font-bold text-2xl sm:text-3xl mb-3"
-          style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
-        >
-          Pilih dokumen & kelas model AI
-        </h2>
-        <p className="font-inter text-base" style={{ color: "var(--color-text-secondary)" }}>
-          Pilih dokumen yang ingin digenerate, lalu atur kelas model per dokumen.{" "}
-          <span style={{ color: "rgba(255,255,255,0.35)" }}>
-            Kelas lebih tinggi = hasil lebih detail, kredit lebih banyak.
-          </span>
-        </p>
+          <Settings size={14} strokeWidth={1.75} />
+          {advancedMode ? "Mode lanjutan aktif" : "Atur model per dokumen"}
+        </button>
       </div>
 
       {/* Two-column layout */}
@@ -141,18 +171,18 @@ export default function DocumentPickerStep({
         <div
           className="rounded-xl overflow-hidden"
           style={{
-            border: "0.5px solid var(--color-border-default)",
-            background: "var(--color-bg-elevated)",
+            border: "0.5px solid var(--app-border-default)",
+            background: "var(--app-bg-elevated)",
           }}
         >
           {/* Smart presets */}
           <div
             className="px-4 py-3"
-            style={{ borderBottom: "0.5px solid var(--color-border-default)" }}
+            style={{ borderBottom: "0.5px solid var(--app-border-default)" }}
           >
             <p
               className="font-mono text-xs font-bold tracking-widest uppercase mb-3"
-              style={{ color: "var(--color-text-tertiary)" }}
+              style={{ color: "var(--app-text-tertiary)" }}
             >
               Smart Preset
             </p>
@@ -163,28 +193,23 @@ export default function DocumentPickerStep({
                   stagePreset &&
                   JSON.stringify([...preset.docs].sort()) ===
                     JSON.stringify([...stagePreset].sort());
+                const PresetIcon = preset.Icon;
                 return (
                   <button
                     key={preset.id}
-                    onClick={() => onDocsChange([...preset.docs])}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg font-mono text-xs transition-all"
-                    style={{
-                      background: isActive ? "rgba(204,255,0,0.1)" : "var(--color-bg-surface)",
-                      border: isActive
-                        ? "0.5px solid rgba(204,255,0,0.4)"
-                        : "0.5px solid var(--color-border-default)",
-                      color: isActive ? "var(--color-lime)" : "var(--color-text-secondary)",
-                    }}
+                    type="button"
+                    onClick={() => setDocs([...preset.docs])}
+                    className={`generate-chip inline-flex items-center gap-2 ${isActive ? "is-selected" : ""}`}
                     title={preset.desc}
                   >
-                    <span>{preset.icon}</span>
+                    <PresetIcon size={14} strokeWidth={1.75} />
                     <span className="font-semibold">{preset.label}</span>
                     {isRecommended && (
                       <span
                         className="text-[10px] font-bold tracking-wide uppercase px-1.5 py-0.5 rounded"
                         style={{
-                          background: "rgba(204,255,0,0.15)",
-                          color: "var(--color-lime)",
+                          background: "rgba(56,189,248,0.12)",
+                          color: "var(--app-sky)",
                         }}
                       >
                         Rekomendasi
@@ -213,7 +238,7 @@ export default function DocumentPickerStep({
             >
               Dokumen Lanjutan
             </p>
-            {extendedDocs.map((key) => renderDocRow(key, false))}
+            {optionalDocs.map((key) => renderDocRow(key, false))}
 
             <div
               className="flex items-center justify-between px-3 py-2 mt-2 rounded-lg"
@@ -222,15 +247,22 @@ export default function DocumentPickerStep({
                 marginTop: 8,
               }}
             >
-              <span
-                className="font-inter font-semibold text-sm"
-                style={{ color: "var(--color-text-secondary)" }}
-              >
-                {value.length} dokumen dipilih
-              </span>
+              <div>
+                <span
+                  className="font-mono font-semibold text-sm"
+                  style={{ color: "var(--app-text-secondary)" }}
+                >
+                  {value.length} / {maxDocs} dokumen dipilih
+                </span>
+                {atDocLimit && (
+                  <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,199,0,0.75)" }}>
+                    Batas maksimum paket {TIER_LABELS[tier]} — hapus satu untuk menambah lainnya
+                  </p>
+                )}
+              </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => onDocsChange([...ALL_FILE_KEYS])}
+                  onClick={() => setDocs([...accessibleDocs])}
                   className="font-mono text-xs px-2.5 py-1.5 rounded transition-all"
                   style={{
                     color: "var(--color-text-tertiary)",
@@ -240,7 +272,7 @@ export default function DocumentPickerStep({
                   Semua
                 </button>
                 <button
-                  onClick={() => onDocsChange(["prd"])}
+                  onClick={() => setDocs(["prd"])}
                   className="font-mono text-xs px-2.5 py-1.5 rounded transition-all"
                   style={{
                     color: "var(--color-text-tertiary)",
@@ -256,12 +288,12 @@ export default function DocumentPickerStep({
 
         {/* RIGHT — Per-document model class + credit estimate */}
         <div className="flex flex-col gap-4">
-          {/* Per-document model class picker */}
+          {advancedMode && (
           <div
             className="rounded-xl overflow-hidden"
             style={{
-              border: "0.5px solid var(--color-border-default)",
-              background: "var(--color-bg-elevated)",
+              border: "0.5px solid var(--app-border-default)",
+              background: "var(--app-bg-elevated)",
             }}
           >
             <div
@@ -269,35 +301,85 @@ export default function DocumentPickerStep({
               style={{ borderBottom: "0.5px solid var(--color-border-default)" }}
             >
               <p
-                className="font-mono text-xs font-bold tracking-widest uppercase"
+                className="font-mono text-xs font-bold tracking-widest uppercase mb-2"
                 style={{ color: "var(--color-text-tertiary)" }}
               >
                 Model AI per Dokumen
               </p>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+                Atur <strong>kelas model</strong> untuk tiap dokumen. Kelas menentukan model AI
+                yang dipakai dan biaya kredit.
+              </p>
             </div>
 
             <div className="p-3">
-              {/* Class legend */}
-              <div className="flex flex-wrap gap-2 mb-4 px-1">
+              {/* Tier + availability banner */}
+              <div
+                className="rounded-lg px-3 py-2.5 mb-4"
+                style={{
+                  background: "rgba(255,176,32,0.05)",
+                  border: "0.5px solid rgba(255,176,32,0.15)",
+                }}
+              >
+                <p className="text-xs font-semibold" style={{ color: "var(--app-amber)" }}>
+                  Paket {isSubscribed(plan) ? TIER_LABELS[tier] : "Preview Base"}
+                </p>
+                <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
+                  {singleClassTier
+                    ? "Hanya kelas Hemat — Gemini Flash & DeepSeek. Upgrade ke Pro untuk Menengah/Flagship."
+                    : `Kelas tersedia: ${availableClasses
+                        .map((id) => MODEL_CLASSES.find((c) => c.id === id)?.label ?? id)
+                        .join(" · ")}`}
+                </p>
+              </div>
+
+              {/* Class reference cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                 {MODEL_CLASSES.map((mc) => {
                   const isAvailable = availableClasses.includes(mc.id);
                   return (
                     <div
                       key={mc.id}
-                      className="flex items-center gap-1.5 text-[10px]"
+                      className="rounded-lg px-3 py-2.5"
                       style={{
-                        color: isAvailable ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+                        background: isAvailable
+                          ? "rgba(255,255,255,0.03)"
+                          : "rgba(255,255,255,0.01)",
+                        border: isAvailable
+                          ? "0.5px solid rgba(255,255,255,0.1)"
+                          : "0.5px solid rgba(255,255,255,0.05)",
+                        opacity: isAvailable ? 1 : 0.55,
                       }}
-                      title={`${mc.exampleModels} — ${mc.creditsPer1kTokens} kredit/1k token`}
                     >
-                      <span>{mc.icon}</span>
-                      <span className="font-semibold">{mc.label}</span>
-                      <span style={{ color: "rgba(255,255,255,0.25)" }}>
-                        {mc.creditsPer1kTokens}×
-                      </span>
-                      {!isAvailable && (
-                        <span style={{ color: "rgba(255,199,0,0.5)" }}>🔒</span>
-                      )}
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className="text-xs font-semibold inline-flex items-center gap-1.5"
+                          style={{ color: isAvailable ? "var(--color-text-primary)" : "rgba(255,255,255,0.35)" }}
+                        >
+                          <ModelClassIcon modelClass={mc.id} size={12} />
+                          {mc.label}
+                          {!isAvailable && (
+                            <span className="ml-1.5 text-[10px]" style={{ color: "#F59E0B" }}>
+                              🔒
+                            </span>
+                          )}
+                        </span>
+                        <span
+                          className="text-[10px] font-bold"
+                          style={{
+                            color: "rgba(255,255,255,0.35)",
+                            fontFamily: "var(--font-jetbrains-mono), monospace",
+                          }}
+                        >
+                          {mc.creditsPer1kTokens}× kredit
+                        </span>
+                      </div>
+                      <p
+                        className="text-[10px] mt-1 leading-snug"
+                        style={{ color: "rgba(255,255,255,0.4)" }}
+                      >
+                        {MODEL_CLASS_PIPELINE[mc.id]}
+                      </p>
                     </div>
                   );
                 })}
@@ -312,108 +394,149 @@ export default function DocumentPickerStep({
                   Pilih dokumen di kiri untuk mengatur model
                 </p>
               ) : (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2">
                   {value.map((doc) => {
                     const meta = FILE_META[doc];
                     const currentClass =
                       perDocModelClass[doc] ?? DOC_DEFAULT_MODEL_CLASS[doc][tier];
+                    const classInfo = MODEL_CLASSES.find((c) => c.id === currentClass);
                     const credits = calcDocCredits(doc, tier, currentClass);
+                    const defaultClass = DOC_DEFAULT_MODEL_CLASS[doc][tier];
 
                     return (
                       <div
                         key={doc}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
-                        style={{ background: "rgba(255,255,255,0.02)" }}
+                        className="rounded-lg px-3 py-3"
+                        style={{
+                          background: "rgba(255,255,255,0.02)",
+                          border: "0.5px solid rgba(255,255,255,0.06)",
+                        }}
                       >
-                        {/* Doc name */}
-                        <span
-                          className="text-sm font-medium flex-shrink-0 min-w-[120px]"
-                          style={{ color: "var(--color-text-primary)" }}
-                        >
-                          {meta.icon} {meta.label.length > 18 ? meta.label.slice(0, 16) + "…" : meta.label}
-                        </span>
-
-                        {/* Class selector buttons */}
-                        <div className="flex gap-1 flex-1">
-                          {MODEL_CLASSES.map((mc) => {
-                            const isSelected = currentClass === mc.id;
-                            const isAvailable = availableClasses.includes(mc.id);
-                            const isDefault = DOC_DEFAULT_MODEL_CLASS[doc][tier] === mc.id;
-
-                            return (
-                              <button
-                                key={mc.id}
-                                onClick={() => isAvailable && setDocClass(doc, mc.id)}
-                                disabled={!isAvailable}
-                                className="flex-1 text-[10px] font-bold py-1.5 rounded-md transition-all relative"
-                                style={{
-                                  background: isSelected
-                                    ? mc.id === "hemat"
-                                      ? "rgba(34,197,94,0.15)"
-                                      : mc.id === "menengah"
-                                      ? "rgba(59,130,246,0.15)"
-                                      : mc.id === "flagship"
-                                      ? "rgba(168,85,247,0.15)"
-                                      : "rgba(255,199,0,0.15)"
-                                    : "transparent",
-                                  border: isSelected
-                                    ? `1px solid ${
-                                        mc.id === "hemat"
-                                          ? "rgba(34,197,94,0.4)"
-                                          : mc.id === "menengah"
-                                          ? "rgba(59,130,246,0.4)"
-                                          : mc.id === "flagship"
-                                          ? "rgba(168,85,247,0.4)"
-                                          : "rgba(255,199,0,0.4)"
-                                      }`
-                                    : "0.5px solid rgba(255,255,255,0.08)",
-                                  color: isSelected
-                                    ? mc.id === "hemat"
-                                      ? "#22C55E"
-                                      : mc.id === "menengah"
-                                      ? "#60A5FA"
-                                      : mc.id === "flagship"
-                                      ? "#A855F7"
-                                      : "#FFC700"
-                                    : isAvailable
-                                    ? "rgba(255,255,255,0.35)"
-                                    : "rgba(255,255,255,0.15)",
-                                  cursor: isAvailable ? "pointer" : "not-allowed",
-                                  opacity: isAvailable ? 1 : 0.5,
-                                  fontFamily: "var(--font-jetbrains-mono), monospace",
-                                }}
-                                title={
-                                  isAvailable
-                                    ? `${mc.label} — ${mc.exampleModels}`
-                                    : `🔒 Upgrade ke ${plan === "none" || plan === "starter" ? "Pro" : "Pro Max"}`
-                                }
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div>
+                            <span
+                              className="text-sm font-medium inline-flex items-center gap-1.5"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
+                              <DocIcon doc={doc} size={14} />
+                              {meta.label}
+                            </span>
+                            {defaultClass === currentClass && (
+                              <span
+                                className="ml-2 text-[10px] font-bold uppercase tracking-wide"
+                                style={{ color: "rgba(255,176,32,0.6)" }}
                               >
-                                {mc.icon}
-                                {!isAvailable && (
-                                  <span className="ml-0.5">🔒</span>
-                                )}
-                                {isDefault && !isSelected && isAvailable && (
-                                  <span
-                                    className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full"
-                                    style={{ background: "rgba(204,255,0,0.5)" }}
-                                    title="Default"
-                                  />
-                                )}
-                              </button>
-                            );
-                          })}
+                                default
+                              </span>
+                            )}
+                          </div>
+                          <span
+                            className="text-[11px] font-bold flex-shrink-0"
+                            style={{
+                              color: "rgba(255,255,255,0.4)",
+                              fontFamily: "var(--font-jetbrains-mono), monospace",
+                            }}
+                          >
+                            {credits} kr
+                          </span>
                         </div>
 
-                        {/* Credit cost */}
-                        <span
-                          className="text-[11px] font-bold flex-shrink-0 min-w-[50px] text-right"
-                          style={{
-                            color: "rgba(255,255,255,0.4)",
-                            fontFamily: "var(--font-jetbrains-mono), monospace",
-                          }}
+                        {singleClassTier ? (
+                          <div
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                            style={{
+                              background: "rgba(34,197,94,0.12)",
+                              border: "0.5px solid rgba(34,197,94,0.3)",
+                              color: "#22C55E",
+                            }}
+                          >
+                            <span className="font-bold">⚡ Hemat</span>
+                            <span style={{ color: "rgba(255,255,255,0.45)" }}>
+                              {MODEL_CLASS_PIPELINE.hemat}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {MODEL_CLASSES.map((mc) => {
+                              const isSelected = currentClass === mc.id;
+                              const isAvailable = availableClasses.includes(mc.id);
+                              const isDefault = defaultClass === mc.id;
+
+                              return (
+                                <button
+                                  type="button"
+                                  key={mc.id}
+                                  onClick={() => setDocClass(doc, mc.id)}
+                                  disabled={!isAvailable}
+                                  className="flex flex-col items-start px-2.5 py-2 rounded-lg transition-all min-w-[88px]"
+                                  style={{
+                                    background: isSelected
+                                      ? mc.id === "hemat"
+                                        ? "rgba(34,197,94,0.15)"
+                                        : mc.id === "menengah"
+                                        ? "rgba(59,130,246,0.15)"
+                                        : mc.id === "flagship"
+                                        ? "rgba(168,85,247,0.15)"
+                                        : "rgba(255,199,0,0.15)"
+                                      : "rgba(255,255,255,0.02)",
+                                    border: isSelected
+                                      ? `1px solid ${
+                                          mc.id === "hemat"
+                                            ? "rgba(34,197,94,0.4)"
+                                            : mc.id === "menengah"
+                                            ? "rgba(59,130,246,0.4)"
+                                            : mc.id === "flagship"
+                                            ? "rgba(168,85,247,0.4)"
+                                            : "rgba(255,199,0,0.4)"
+                                        }`
+                                      : "0.5px solid rgba(255,255,255,0.08)",
+                                    color: isSelected
+                                      ? mc.id === "hemat"
+                                        ? "#22C55E"
+                                        : mc.id === "menengah"
+                                        ? "#60A5FA"
+                                        : mc.id === "flagship"
+                                        ? "#A855F7"
+                                        : "#FFC700"
+                                      : isAvailable
+                                      ? "rgba(255,255,255,0.55)"
+                                      : "rgba(255,255,255,0.2)",
+                                    cursor: isAvailable ? "pointer" : "not-allowed",
+                                    opacity: isAvailable ? 1 : 0.45,
+                                  }}
+                                  title={
+                                    isAvailable
+                                      ? MODEL_CLASS_PIPELINE[mc.id]
+                                      : `Upgrade untuk akses ${mc.label}`
+                                  }
+                                >
+                                  <span className="text-[11px] font-bold inline-flex items-center gap-1">
+                                    <ModelClassIcon modelClass={mc.id} size={11} />
+                                    {mc.label}
+                                    {!isAvailable && <span className="ml-1">🔒</span>}
+                                    {isDefault && isAvailable && !isSelected && (
+                                      <span className="ml-1 text-[9px] opacity-60">· rec</span>
+                                    )}
+                                  </span>
+                                  <span
+                                    className="text-[9px] mt-0.5 text-left leading-tight"
+                                    style={{ color: "rgba(255,255,255,0.35)" }}
+                                  >
+                                    {mc.exampleModels}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        <p
+                          className="text-[10px] mt-2"
+                          style={{ color: "rgba(255,255,255,0.35)" }}
                         >
-                          {credits} kr
-                        </span>
+                          Model: {MODEL_CLASS_PIPELINE[currentClass]}
+                          {classInfo ? ` · ${classInfo.desc}` : ""}
+                        </p>
                       </div>
                     );
                   })}
@@ -421,6 +544,7 @@ export default function DocumentPickerStep({
               )}
             </div>
           </div>
+          )}
 
           {/* Credit estimate card */}
           <div
@@ -446,10 +570,11 @@ export default function DocumentPickerStep({
                 return (
                   <div key={doc} className="flex items-center justify-between">
                     <span
-                      className="text-xs"
+                      className="text-xs inline-flex items-center gap-1.5"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      {meta.icon} {meta.label}
+                      <DocIcon doc={doc} size={12} />
+                      {meta.label}
                       <span
                         className="ml-1.5 text-[10px]"
                         style={{ color: "rgba(255,255,255,0.25)" }}
@@ -479,10 +604,11 @@ export default function DocumentPickerStep({
                   Total kredit
                 </span>
                 <span
-                  className="text-lg font-bold"
+                  className="font-unbounded text-[32px] font-extrabold"
                   style={{
-                    color: "var(--color-lime)",
-                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                    color: "var(--app-amber)",
+                    fontFamily: "var(--font-unbounded), sans-serif",
+                    lineHeight: 1,
                   }}
                 >
                   {totalCredits}
@@ -520,7 +646,7 @@ export default function DocumentPickerStep({
                           ? "#EF4444"
                           : totalCredits / creditPool > 0.5
                           ? "#F59E0B"
-                          : "var(--color-lime)",
+                          : "var(--app-amber)",
                     }}
                   />
                 </div>
@@ -554,7 +680,7 @@ export default function DocumentPickerStep({
           disabled={value.length === 0}
           className="flex-1 py-4 rounded-xl font-inter font-bold text-base transition-all"
           style={{
-            background: value.length > 0 ? "var(--color-lime)" : "var(--color-bg-elevated)",
+            background: value.length > 0 ? "var(--app-amber)" : "var(--color-bg-elevated)",
             color: value.length > 0 ? "#0A0A0A" : "var(--color-text-disabled)",
             border: value.length > 0 ? "none" : "0.5px solid var(--color-border-default)",
             cursor: value.length > 0 ? "pointer" : "not-allowed",
@@ -572,25 +698,31 @@ export default function DocumentPickerStep({
 
   function renderDocRow(key: FileKey, _isCore: boolean) {
     const meta = FILE_META[key];
-    const isSelected = value.includes(key);
+    const locked = !canAccessDocument(key, tier);
+    const isSelected = !locked && value.includes(key);
     const isRequired = key === "prd";
+    const blockedByLimit = !isSelected && atDocLimit && !locked;
+    const minTier = DOCUMENT_DEFINITIONS[key].minTier;
 
     return (
       <button
         key={key}
         onClick={() => toggle(key)}
+        disabled={locked || blockedByLimit}
         className="flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-all w-full mb-0.5"
         style={{
-          background: isSelected ? "rgba(204,255,0,0.05)" : "transparent",
+          background: isSelected ? "rgba(255,176,32,0.05)" : "transparent",
           border: isSelected
-            ? "0.5px solid rgba(204,255,0,0.2)"
+            ? "0.5px solid rgba(255,176,32,0.2)"
             : "0.5px solid transparent",
+          opacity: locked ? 0.55 : blockedByLimit ? 0.4 : 1,
+          cursor: locked || blockedByLimit ? "not-allowed" : "pointer",
         }}
       >
         <div
           className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-all"
           style={{
-            background: isSelected ? "var(--color-lime)" : "transparent",
+            background: isSelected ? "var(--app-amber)" : "transparent",
             border: isSelected ? "none" : "0.5px solid var(--color-border-strong)",
           }}
         >
@@ -609,24 +741,54 @@ export default function DocumentPickerStep({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span
-              className="font-inter font-semibold text-sm"
+              className="font-inter font-semibold text-sm flex items-center gap-1.5"
               style={{
                 color: isSelected
-                  ? "var(--color-text-primary)"
-                  : "var(--color-text-secondary)",
+                  ? "var(--app-text-primary)"
+                  : "var(--app-text-secondary)",
               }}
             >
-              {meta.icon} {meta.label}
+              <DocIcon doc={key} size={14} />
+              {meta.label}
             </span>
+            {!advancedMode && isSelected && (
+              <span
+                className="font-mono text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide inline-flex items-center gap-1"
+                style={{
+                  background: "rgba(255,176,32,0.1)",
+                  color: "var(--app-amber)",
+                  border: "1px solid rgba(255,176,32,0.25)",
+                }}
+              >
+                <ModelClassIcon
+                  modelClass={perDocModelClass[key] ?? DOC_DEFAULT_MODEL_CLASS[key][tier]}
+                  size={10}
+                />
+                {MODEL_CLASSES.find(
+                  (c) => c.id === (perDocModelClass[key] ?? DOC_DEFAULT_MODEL_CLASS[key][tier])
+                )?.label}
+              </span>
+            )}
             {isRequired && (
               <span
                 className="font-mono text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide"
                 style={{
-                  background: "rgba(204,255,0,0.1)",
-                  color: "var(--color-lime)",
+                  background: "rgba(255,176,32,0.1)",
+                  color: "var(--app-amber)",
                 }}
               >
                 wajib
+              </span>
+            )}
+            {locked && (
+              <span
+                className="font-mono text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide"
+                style={{
+                  background: "rgba(255,199,0,0.1)",
+                  color: "#F59E0B",
+                }}
+              >
+                🔒 {TIER_LABELS[minTier]}
               </span>
             )}
           </div>
@@ -634,10 +796,11 @@ export default function DocumentPickerStep({
             className="font-inter text-xs mt-1"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            {meta.phase}
+            {locked ? `Upgrade ke ${TIER_LABELS[minTier]} untuk akses` : meta.description}
           </p>
         </div>
       </button>
     );
   }
 }
+

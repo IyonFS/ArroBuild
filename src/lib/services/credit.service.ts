@@ -345,6 +345,40 @@ export const CreditService = {
     }
   },
 
+  async commitFreeRevision(
+    userId: string,
+    projectId: string,
+    metadata?: Record<string, unknown>
+  ): Promise<CreditCommit> {
+    const sumBalance = await sumLedgerBalance(userId);
+
+    const revisionEntry = await prisma.creditLedger.create({
+      data: {
+        userId,
+        type: "REVISION" as CreditLedgerType,
+        amount: 0,
+        projectId,
+        balanceAfter: sumBalance,
+        metadata: {
+          ...metadata,
+          freeRevision: true,
+        },
+      },
+    });
+
+    logger.info("revision_free_committed", {
+      userId,
+      projectId,
+      transactionId: revisionEntry.id,
+    });
+
+    return {
+      transactionId: revisionEntry.id,
+      balanceAfter: sumBalance,
+      actualCreditsUsed: 0,
+    };
+  },
+
   async releaseReservation(
     userId: string,
     reservationId: string,
@@ -436,6 +470,81 @@ export const CreditService = {
       tier: user.tier,
       creditsAdded: config.creditsPerMonth,
     });
+  },
+
+  async chargeToolCredits(
+    userId: string,
+    credits: number,
+    toolId: string,
+    metadata?: Record<string, unknown>
+  ): Promise<CreditCommit> {
+    const currentBalance = await sumLedgerBalance(userId);
+    if (currentBalance < credits) {
+      throw new CreditServiceError(
+        "INSUFFICIENT_CREDITS",
+        `Kredit tidak cukup. Dibutuhkan ${credits}, tersedia ${currentBalance}`,
+        402
+      );
+    }
+
+    const newBalance = currentBalance - credits;
+    const entry = await prisma.creditLedger.create({
+      data: {
+        userId,
+        type: "TOOL_USAGE",
+        amount: -credits,
+        balanceAfter: newBalance,
+        metadata: {
+          tool: toolId,
+          ...(metadata ?? {}),
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { creditBalance: newBalance },
+    });
+
+    logger.info("tool_credits_charged", { userId, toolId, credits, balanceAfter: newBalance });
+
+    return {
+      transactionId: entry.id,
+      balanceAfter: newBalance,
+      actualCreditsUsed: credits,
+    };
+  },
+
+  async topupCredits(
+    userId: string,
+    credits: number,
+    paymentId?: string,
+    metadata?: Record<string, unknown>
+  ): Promise<CreditCommit> {
+    const currentBalance = await sumLedgerBalance(userId);
+    const newBalance = currentBalance + credits;
+
+    const entry = await prisma.creditLedger.create({
+      data: {
+        userId,
+        type: "TOPUP",
+        amount: credits,
+        paymentId,
+        balanceAfter: newBalance,
+        metadata: (metadata ?? {}) as import("@prisma/client").Prisma.InputJsonValue,
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { creditBalance: newBalance },
+    });
+
+    return {
+      transactionId: entry.id,
+      balanceAfter: newBalance,
+      actualCreditsUsed: credits,
+    };
   },
 
   async applyRollover(userId: string): Promise<number> {

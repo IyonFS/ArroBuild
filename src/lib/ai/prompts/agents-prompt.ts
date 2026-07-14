@@ -40,7 +40,7 @@ const AGENT_TOOL_FORMATS: Record<AgentToolPreset, { fileName: string; format: st
 };
 
 const DEPTH_INSTRUCTIONS: Record<V3Tier, string> = {
-  FREE: ``, // Tidak tersedia untuk FREE
+  STARTER: ``,
   PRO: `
 Buat agents.md dengan:
 - AI Agent Role Definition: persona dan tanggung jawab agent
@@ -90,22 +90,23 @@ export function buildAgentsPrompt(
 
   const instruction = tier === "PRO_MAX" ? DEPTH_INSTRUCTIONS.PRO_MAX : DEPTH_INSTRUCTIONS.PRO;
 
-  return `You are a principal engineer specializing in AI-assisted development.
+  return `Anda adalah principal engineer yang ahli pengembangan berbantuan AI.
 
-Generate an **agents.md** file — this is the AI coding agent's "instruction manual" for this project.
+Generate file **agent-rules.md** — buku pedoman untuk AI coding agent di project ini.
 
 ${base}
 
-Target Tool: ${input.presets.agentTool} (output format: ${toolConfig.format})
+Target Tool: ${input.presets.agentTool} (format: ${toolConfig.format})
 ${contextBlock}
 ---
 
 ${instruction}
 ${toolInstruction}
 
-=== OUTPUT RULES ===
-- Output ONLY raw markdown. No code block wrapping.
-- Start directly with: # AI Agent Instructions — [product name]
-- Be extremely specific — avoid generic advice.
-- Every rule must be actionable.`;
+=== ATURAN OUTPUT ===
+- Output HANYA raw markdown. Tanpa code fence pembungkus.
+- BAHASA: ikuti bahasa Idea di <user_input>. Jika idea Indonesia → semua heading & aturan dalam bahasa Indonesia.
+- Mulai dengan heading utama sesuai bahasa idea, contoh Indonesia: # Instruksi AI Agent — [nama produk]
+- Spesifik untuk stack & konteks project — hindari saran generik.
+- Setiap aturan harus actionable (bisa langsung diikuti agent).`;
 }

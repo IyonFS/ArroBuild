@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useCallback } from "react";
 import ProductTypeStep from "@/components/generate/ProductTypeStep";
 import ContextStep from "@/components/generate/ContextStep";
 import StackStep from "@/components/generate/StackStep";
@@ -14,6 +15,7 @@ import ModeSelectStep, {
 import InterviewStep, {
   type InterviewResult,
 } from "@/components/generate/InterviewStep";
+import DraftRestoreDialog from "@/components/generate/DraftRestoreDialog";
 import type {
   ProductType,
   ProjectStage,
@@ -23,6 +25,7 @@ import type {
   UserPlanStatus,
   FileKey,
   Feature,
+  ModelClass,
   PerDocumentModelClass,
 } from "@/components/generate/types";
 import {
@@ -31,6 +34,8 @@ import {
   resolvePreviewTier,
   calcTotalCredits,
   isSubscribed,
+  TIER_MODEL_CLASSES,
+  sanitizeSelectedDocs,
 } from "@/components/generate/types";
 import AppShell from "@/components/layout/AppShell";
 import {
@@ -40,6 +45,8 @@ import {
   writeGenerateDraft,
   type GenerateDraft,
 } from "@/lib/generate-draft";
+import { sanitizePerDocumentModelClass } from "@/lib/config/documents";
+import { normalizeLegacyModelId } from "@/lib/legacy-model-ids";
 
 type Step =
   | "mode"
@@ -55,6 +62,7 @@ type Step =
 const STEP_LABELS = ["Tipe", "Cerita", "Stack", "Dokumen"];
 
 export default function GeneratePage() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>("mode");
   const [intakeMode, setIntakeMode] = useState<IntakeMode | null>(null);
 
@@ -85,55 +93,70 @@ export default function GeneratePage() {
   // Step 4
   const [selectedDocs, setSelectedDocs] = useState<FileKey[]>([
     "prd",
-    "context",
-    "plan",
-    "design-system",
-    "agents",
+    "architecture",
+    "plan-task",
   ]);
-  const [selectedModelId, setSelectedModelId] = useState("gemini-2.5-flash");
+  const [selectedModelId, setSelectedModelId] = useState("gemini-3.1-flash-lite");
   const [perDocModelClass, setPerDocModelClass] = useState<PerDocumentModelClass>({});
   const [plan, setPlan] = useState<UserPlanStatus>("none");
   const [creditBalance, setCreditBalance] = useState(0);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const serverDraftIdRef = useRef<string | undefined>(undefined);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Output
   const [projectId, setProjectId] = useState<string | null>(null);
   const [generatedFiles, setGeneratedFiles] = useState<GeneratedFiles>({});
 
-  // Limits
-  const [projectCount, setProjectCount] = useState<number>(0);
-  const [projectLimit, setProjectLimit] = useState<number | null>(null);
+  // Limits (monthly + daily from server)
+  const [monthlyProjectCount, setMonthlyProjectCount] = useState(0);
+  const [monthlyProjectLimit, setMonthlyProjectLimit] = useState<number | null>(null);
+  const [dailyProjectCount, setDailyProjectCount] = useState(0);
+  const [dailyProjectLimit, setDailyProjectLimit] = useState<number | null>(null);
+
+  const applyUserMe = (data: {
+    tier?: UserPlanStatus;
+    plan?: UserPlanStatus;
+    monthlyProjectCount?: number;
+    monthlyProjectLimit?: number | null;
+    dailyProjectCount?: number;
+    dailyProjectLimit?: number;
+    user?: { creditBalance?: number; hasActiveSubscription?: boolean };
+  }) => {
+    const userPlan = data.plan ?? data.tier ?? "none";
+    setPlan(userPlan);
+    setCreditBalance(data.user?.creditBalance ?? 0);
+    setHasActiveSubscription(Boolean(data.user?.hasActiveSubscription));
+    setMonthlyProjectCount(data.monthlyProjectCount ?? 0);
+    setMonthlyProjectLimit(data.monthlyProjectLimit ?? null);
+    setDailyProjectCount(data.dailyProjectCount ?? 0);
+    setDailyProjectLimit(data.dailyProjectLimit ?? null);
+    setIsLoggedIn(true);
+
+    if (isSubscribed(userPlan)) {
+      const models = getModelsForTier(userPlan);
+      if (!models.some((m) => m.id === selectedModelId)) {
+        setSelectedModelId(models[0]?.id ?? "gemini-3.1-flash-lite");
+      }
+    }
+  };
 
   const [pendingDraft, setPendingDraft] = useState<GenerateDraft | null>(null);
   const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
   const skipAutosave = useRef(true);
 
+  // Pastikan scroll body tidak tertinggal terkunci dari modal/dialog lain
+  useEffect(() => {
+    document.body.style.overflow = "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   useEffect(() => {
     fetch("/api/user/me")
       .then((res) => res.json())
-      .then(
-        (data: {
-          tier?: UserPlanStatus;
-          plan?: UserPlanStatus;
-          projectCount?: number;
-          projectLimit?: number | null;
-          user?: { creditBalance?: number; hasActiveSubscription?: boolean };
-        }) => {
-          const userPlan = data.plan ?? data.tier ?? "none";
-          setPlan(userPlan);
-          setCreditBalance(data.user?.creditBalance ?? 0);
-          setHasActiveSubscription(Boolean(data.user?.hasActiveSubscription));
-          setProjectCount(data.projectCount ?? 0);
-          setProjectLimit(data.projectLimit ?? null);
-
-          if (isSubscribed(userPlan)) {
-            const models = getModelsForTier(userPlan);
-            if (!models.some((m) => m.id === selectedModelId)) {
-              setSelectedModelId(models[0]?.id ?? "gemini-2.5-flash");
-            }
-          }
-        }
-      )
+      .then((data) => applyUserMe(data))
       .catch(() => {});
 
     // Check for fork data
@@ -177,6 +200,20 @@ export default function GeneratePage() {
     skipAutosave.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const previewTier = resolvePreviewTier(plan);
+    setPerDocModelClass((prev) => sanitizePerDocumentModelClass(prev, previewTier));
+  }, [plan]);
+
+  const handlePerDocModelClassChange = useCallback(
+    (doc: FileKey, mc: ModelClass) => {
+      const previewTier = resolvePreviewTier(plan);
+      if (!TIER_MODEL_CLASSES[previewTier].includes(mc)) return;
+      setPerDocModelClass((prev) => ({ ...prev, [doc]: mc }));
+    },
+    [plan]
+  );
 
   // Autosave form draft (debounce) — skip generating/preview
   useEffect(() => {
@@ -222,9 +259,24 @@ export default function GeneratePage() {
     if (draft.contextData) setContextData(draft.contextData);
     if (draft.features) setFeatures(draft.features);
     if (draft.presets) setPresets(draft.presets);
-    if (draft.selectedDocs) setSelectedDocs(draft.selectedDocs);
-    if (draft.selectedModelId) setSelectedModelId(draft.selectedModelId);
-    if (draft.perDocModelClass) setPerDocModelClass(draft.perDocModelClass);
+    if (draft.selectedDocs) {
+      setSelectedDocs(
+        sanitizeSelectedDocs(draft.selectedDocs, resolvePreviewTier(plan))
+      );
+    }
+    if (draft.selectedModelId) {
+      setSelectedModelId(
+        normalizeLegacyModelId(draft.selectedModelId) ?? "gemini-3.1-flash-lite"
+      );
+    }
+    if (draft.perDocModelClass) {
+      setPerDocModelClass(
+        sanitizePerDocumentModelClass(
+          draft.perDocModelClass,
+          resolvePreviewTier(plan)
+        )
+      );
+    }
 
     const restoreStep = draft.step as Step | undefined;
     const allowed: Step[] = [
@@ -246,27 +298,16 @@ export default function GeneratePage() {
   const discardDraft = () => {
     clearGenerateDraft();
     setPendingDraft(null);
+    serverDraftIdRef.current = undefined;
   };
 
   const refreshCredits = () => {
     fetch("/api/user/me")
       .then((res) => res.json())
-      .then(
-        (data: {
-          tier?: UserPlanStatus;
-          plan?: UserPlanStatus;
-          user?: { creditBalance?: number; hasActiveSubscription?: boolean };
-        }) => {
-          if (data.plan || data.tier) setPlan(data.plan ?? data.tier ?? "none");
-          if (typeof data.user?.creditBalance === "number") {
-            setCreditBalance(data.user.creditBalance);
-          }
-          if (typeof data.user?.hasActiveSubscription === "boolean") {
-            setHasActiveSubscription(data.user.hasActiveSubscription);
-          }
-        }
-      )
-      .catch(() => {});
+      .then((data) => applyUserMe(data))
+      .catch(() => {
+        setIsLoggedIn(false);
+      });
   };
 
   // Refresh balance when entering review so paywall isn't stale after interview spend
@@ -274,10 +315,34 @@ export default function GeneratePage() {
     if (step === "confirm" || step === "docs") refreshCredits();
   }, [step]);
 
+  useEffect(() => {
+    refreshCredits();
+  }, []);
+
+  // Drop tier-locked docs when plan loads or changes (e.g. security-launch on Pro)
+  useEffect(() => {
+    const tier = resolvePreviewTier(plan);
+    setSelectedDocs((prev) => {
+      const next = sanitizeSelectedDocs(prev, tier);
+      return next.length === prev.length && next.every((k, i) => k === prev[i])
+        ? prev
+        : next;
+    });
+  }, [plan]);
+
   // When stage changes, auto-apply smart preset for docs
+  const handleSelectedDocsChange = useCallback(
+    (docs: FileKey[]) => {
+      setSelectedDocs(sanitizeSelectedDocs(docs, resolvePreviewTier(plan)));
+    },
+    [plan]
+  );
+
   const handleStageChange = (s: ProjectStage) => {
     setStage(s);
-    setSelectedDocs([...STAGE_PRESETS[s]]);
+    setSelectedDocs(
+      sanitizeSelectedDocs([...STAGE_PRESETS[s]], resolvePreviewTier(plan))
+    );
   };
 
   const handleModeSelect = (mode: IntakeMode) => {
@@ -290,7 +355,12 @@ export default function GeneratePage() {
     if (result.productType) setProductType(result.productType);
     if (result.stage) {
       setStage(result.stage);
-      setSelectedDocs([...STAGE_PRESETS[result.stage]]);
+      setSelectedDocs(
+        sanitizeSelectedDocs(
+          [...STAGE_PRESETS[result.stage]],
+          resolvePreviewTier(plan)
+        )
+      );
     }
     setContextData(result.contextData);
     setFeatures(result.features);
@@ -346,6 +416,7 @@ export default function GeneratePage() {
     // Stack & preferences
     const stack: Record<string, string> = {};
     if (presets.framework) stack.framework = presets.framework;
+    if (presets.backendFramework) stack.backendFramework = presets.backendFramework;
     if (presets.design) stack.design = presets.design;
     if (presets.agentTool) stack.agentTool = presets.agentTool;
     if (presets.programmingLanguage) stack.programmingLanguage = presets.programmingLanguage;
@@ -368,6 +439,54 @@ export default function GeneratePage() {
     const km = buildKnowledgeModel();
     return JSON.stringify(km, null, 2);
   };
+
+  // Server-side draft sync (debounced, logged-in only)
+  useEffect(() => {
+    if (!isLoggedIn || skipAutosave.current) return;
+    if (step === "generating" || step === "preview" || step === "interview") return;
+    if (pendingDraft) return;
+    if (!productType && features.length === 0) return;
+
+    const timer = window.setTimeout(() => {
+      const planData = {
+        ...buildKnowledgeModel(),
+        selectedDocs,
+        perDocumentModelClass: perDocModelClass,
+        intakeMode,
+        step,
+      };
+      fetch("/api/project/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draftId: serverDraftIdRef.current,
+          idea: buildIdeaString(),
+          planData,
+          clarifications: {},
+          presets,
+        }),
+      })
+        .then((r) => r.json())
+        .then((d: { id?: string }) => {
+          if (d.id) serverDraftIdRef.current = d.id;
+        })
+        .catch(() => {});
+    }, 1500);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    isLoggedIn,
+    step,
+    intakeMode,
+    productType,
+    stage,
+    contextData,
+    features,
+    presets,
+    selectedDocs,
+    perDocModelClass,
+    pendingDraft,
+  ]);
 
   // Summary string for confirm screen
   const buildContextSummary = (): string => {
@@ -400,8 +519,8 @@ export default function GeneratePage() {
       designHandoffTool: undefined,
       projectManagementTool: undefined,
     });
-    setSelectedDocs(["prd", "context", "plan", "design-system", "agents"]);
-    setSelectedModelId("gemini-2.5-flash");
+    setSelectedDocs(["prd", "architecture", "plan-task", "design-system", "agent-rules"]);
+    setSelectedModelId("gemini-3.1-flash-lite");
     setPerDocModelClass({});
     setProjectId(null);
     setGeneratedFiles({});
@@ -409,6 +528,7 @@ export default function GeneratePage() {
     setPendingDraft(null);
     setDraftSavedAt(null);
     clearGenerateDraft();
+    serverDraftIdRef.current = undefined;
     setStep("mode");
   };
 
@@ -419,19 +539,25 @@ export default function GeneratePage() {
   const stepSummaries: Record<string, string> = {
     "product-type": productType ?? "",
     context: contextData.targetUser ? contextData.targetUser.split(" ").slice(0, 2).join(" ") : "",
-    stack: presets.framework,
+    stack: presets.backendFramework
+      ? `${presets.framework} + ${presets.backendFramework}`
+      : presets.framework,
     docs: `${selectedDocs.length} dok`,
   };
 
   return (
     <AppShell tone="app" showFooter={false} padded={false}>
-      <div className="relative">
+      <div
+        className={`generate-app relative w-full min-h-screen overflow-x-hidden${
+          pendingDraft ? " generate-app--draft-open" : ""
+        }`}
+      >
         {/* ── Sub-header step bar ── */}
         <header
-          className="sticky top-[60px] z-40 border-b"
+          className="sticky top-0 z-40 border-b"
           style={{
-            borderColor: "var(--color-border-default)",
-            background: "rgba(10,10,10,0.9)",
+            borderColor: "var(--app-border-default)",
+            background: "rgba(13,19,33,0.95)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
           }}
@@ -476,28 +602,28 @@ export default function GeneratePage() {
                             height: 28,
                             borderRadius: "50%",
                             background: isCompleted
-                              ? "rgba(204,255,0,0.12)"
+                              ? "var(--app-blue)"
                               : isActive
-                              ? "rgba(204,255,0,0.08)"
+                              ? "rgba(255,176,32,0.1)"
                               : "transparent",
                             border: isCompleted
-                              ? "1.5px solid rgba(204,255,0,0.5)"
+                              ? "none"
                               : isActive
-                              ? "1.5px solid rgba(204,255,0,0.6)"
-                              : "0.5px solid rgba(255,255,255,0.12)",
-                            boxShadow: isActive ? "0 0 12px rgba(204,255,0,0.15)" : "none",
+                              ? "2px solid var(--app-amber)"
+                              : "1px solid var(--app-border-default)",
+                            boxShadow: isActive ? "0 0 12px rgba(255,176,32,0.18)" : "none",
                           }}
                         >
                           {isCompleted ? (
-                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                              <path d="M2 6l3 3 5-5" stroke="#CCFF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           ) : (
                             <span
                               style={{
                                 fontSize: 11,
                                 fontWeight: isActive ? 700 : 500,
-                                color: isActive ? "var(--color-lime)" : "rgba(255,255,255,0.3)",
+                                color: isActive ? "var(--app-amber)" : "rgba(240,243,250,0.3)",
                                 fontFamily: "var(--font-jetbrains-mono), monospace",
                               }}
                             >
@@ -513,10 +639,10 @@ export default function GeneratePage() {
                               fontSize: 12,
                               fontWeight: isActive ? 600 : 500,
                               color: isActive
-                                ? "var(--color-text-primary)"
+                                ? "var(--app-text-primary)"
                                 : isCompleted
-                                ? "var(--color-lime)"
-                                : "rgba(255,255,255,0.3)",
+                                ? "var(--app-sky)"
+                                : "var(--app-text-tertiary)",
                               fontFamily: "var(--font-inter), system-ui, sans-serif",
                               letterSpacing: "-0.01em",
                             }}
@@ -545,8 +671,11 @@ export default function GeneratePage() {
                           className="w-8 sm:w-12 h-px transition-all duration-500"
                           style={{
                             background: i < stepIndex
-                              ? "rgba(204,255,0,0.35)"
-                              : "rgba(255,255,255,0.08)",
+                              ? "var(--app-blue)"
+                              : i === stepIndex
+                              ? "var(--app-border-default)"
+                              : "var(--app-border-default)",
+                            borderStyle: i < stepIndex ? "solid" : "dashed",
                           }}
                         />
                       )}
@@ -568,7 +697,7 @@ export default function GeneratePage() {
             {step === "interview" && (
               <span
                 className="text-xs flex-1 text-center"
-                style={{ color: "var(--color-lime)", fontFamily: "var(--font-inter), system-ui, sans-serif" }}
+                style={{ color: "var(--app-sky)", fontFamily: "var(--font-jetbrains-mono), monospace" }}
               >
                 Mode Dipandu AI
               </span>
@@ -592,7 +721,7 @@ export default function GeneratePage() {
             {step === "preview" && (
               <span
                 className="text-xs flex-1 text-center"
-                style={{ color: "var(--color-lime)", fontFamily: "var(--font-inter), system-ui, sans-serif" }}
+                style={{ color: "var(--app-sky)", fontFamily: "var(--font-jetbrains-mono), monospace" }}
               >
                 ✦ Docs siap!
               </span>
@@ -605,10 +734,11 @@ export default function GeneratePage() {
                 step !== "preview" &&
                 !pendingDraft && (
                   <span
-                    className="hidden sm:inline text-[10px]"
+                    className="hidden sm:inline font-mono text-[11px] px-2 py-0.5 rounded-full"
                     style={{
-                      color: "rgba(204,255,0,0.55)",
-                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                      color: "var(--app-sky)",
+                      background: "rgba(56,189,248,0.1)",
+                      border: "1px solid rgba(56,189,248,0.25)",
                     }}
                   >
                     Draft tersimpan
@@ -618,13 +748,13 @@ export default function GeneratePage() {
                 <>
                   <div
                     className="w-16 h-1 rounded-full overflow-hidden"
-                    style={{ background: "rgba(255,255,255,0.08)" }}
+                    style={{ background: "var(--app-bg-hover)" }}
                   >
                     <div
                       className="h-full transition-all duration-500 rounded-full"
                       style={{
                         width: `${((stepIndex + 1) / 4) * 100}%`,
-                        background: "var(--color-lime)",
+                        background: "var(--app-amber)",
                       }}
                     />
                   </div>
@@ -645,65 +775,22 @@ export default function GeneratePage() {
           </div>
         </header>
 
-        {/* Draft restore banner */}
+        {/* Draft restore — portal ke body agar overlay tidak bentrok dengan konten step */}
         {pendingDraft && (
-          <div
-            className="sticky top-[124px] z-30 px-4 py-3"
-            style={{
-              background: "rgba(204,255,0,0.08)",
-              borderBottom: "1px solid rgba(204,255,0,0.25)",
-            }}
-          >
-            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <p
-                  className="text-sm font-semibold"
-                  style={{ color: "var(--color-lime)" }}
-                >
-                  Draft tersimpan ditemukan
-                </p>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ color: "rgba(255,255,255,0.5)" }}
-                >
-                  Disimpan{" "}
-                  {new Date(pendingDraft.savedAt).toLocaleString("id-ID")} · lanjut
-                  dari step sebelumnya?
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={discardDraft}
-                  className="px-4 py-2 text-sm font-medium"
-                  style={{
-                    borderRadius: 10,
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    color: "rgba(255,255,255,0.6)",
-                  }}
-                >
-                  Buang
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyDraft(pendingDraft)}
-                  className="px-4 py-2 text-sm font-bold"
-                  style={{
-                    borderRadius: 10,
-                    background: "var(--color-lime)",
-                    color: "#0A0A0A",
-                  }}
-                >
-                  Lanjutkan draft
-                </button>
-              </div>
-            </div>
-          </div>
+          <DraftRestoreDialog
+            savedAt={pendingDraft.savedAt}
+            onContinue={() => applyDraft(pendingDraft)}
+            onDiscard={discardDraft}
+          />
         )}
 
-
         {/* ── Main content ── */}
-        <main className="relative z-10">
+        <div
+          className={`relative z-10 w-full${
+            pendingDraft ? " pointer-events-none select-none" : ""
+          }`}
+        >
+          <div key={step} className="animate-fade-slide-up w-full">
           {step === "mode" && <ModeSelectStep onSelect={handleModeSelect} />}
 
           {step === "interview" && (
@@ -756,8 +843,8 @@ export default function GeneratePage() {
               stage={stage}
               plan={plan}
               perDocModelClass={perDocModelClass}
-              onDocsChange={setSelectedDocs}
-              onModelClassChange={setPerDocModelClass}
+              onDocsChange={handleSelectedDocsChange}
+              onModelClassChange={handlePerDocModelClassChange}
               onNext={() => setStep("confirm")}
               onBack={() => setStep("stack")}
             />
@@ -774,7 +861,15 @@ export default function GeneratePage() {
               plan={plan}
               creditBalance={creditBalance}
               hasActiveSubscription={hasActiveSubscription}
-              limitReached={projectLimit !== null && projectCount >= projectLimit}
+              limitReached={
+                monthlyProjectLimit !== null &&
+                monthlyProjectCount >= monthlyProjectLimit
+              }
+              dailyLimitReached={
+                dailyProjectLimit !== null && dailyProjectCount >= dailyProjectLimit
+              }
+              dailyProjectCount={dailyProjectCount}
+              dailyProjectLimit={dailyProjectLimit ?? 0}
               onEdit={(s) => setStep(s)}
               onGenerate={() => {
                 refreshCredits();
@@ -805,7 +900,11 @@ export default function GeneratePage() {
                 clearGenerateDraft();
                 setDraftSavedAt(null);
                 setGeneratedFiles(files);
-                setStep("preview");
+                if (projectId) {
+                  router.push(`/project/${projectId}`);
+                } else {
+                  setStep("preview");
+                }
               }}
               onError={() => setStep("confirm")}
             />
@@ -818,7 +917,8 @@ export default function GeneratePage() {
               onRestart={handleReset}
             />
           )}
-        </main>
+          </div>
+        </div>
       </div>
     </AppShell>
   );

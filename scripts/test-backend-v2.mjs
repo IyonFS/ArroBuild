@@ -161,6 +161,8 @@ async function main() {
     presets: { framework: "nextjs", design: "linear", agentTool: "cursor" },
     tier: "starter",
     estimatedCredits: 8,
+    perDocumentModelClass: {},
+    selectedDocs: ["prd", "architecture", "plan-task"],
   };
   const genNoSub = await api("/api/generate", {
     method: "POST",
@@ -169,6 +171,8 @@ async function main() {
   });
   if (genNoSub.status === 402 || genNoSub.status === 403) {
     ok(`generate blocked without subscription (${genNoSub.status})`);
+  } else if (genNoSub.status === 422) {
+    fail("generate paywall", `422 validation: ${genNoSub.text?.slice?.(0, 200)}`);
   } else if (genNoSub.status === 401) {
     fail("generate paywall", "cookie auth not accepted by generate route");
   } else {

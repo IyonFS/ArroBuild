@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { GeneratedFiles, FileKey } from "./types";
-import { FILE_META } from "./types";
-import EmailCaptureModal from "./EmailCaptureModal";
+import { FILE_META, ALL_FILE_KEYS } from "./types";
+import { DocIcon } from "@/lib/ui/app-icons";
 import { useToast } from "@/components/ui/Toast";
 import { trackEvent } from "@/lib/analytics";
 import { OPEN_LEARN_IN_NEW_TAB } from "@/lib/learn-links";
@@ -16,19 +18,7 @@ interface DocPreviewProps {
   onRestart: () => void;
 }
 
-// Dynamic: show whatever files were generated (tier-dependent)
-const ALL_POSSIBLE_KEYS: FileKey[] = [
-  "prd",
-  "context",
-  "plan",
-  "design-system",
-  "agents",
-  "production-hardening",
-  "scale-performance",
-  "growth-quality",
-];
-
-// ─── Copy Button ──────────────────────────────────────────────────────────────
+const ALL_POSSIBLE_KEYS: FileKey[] = [...ALL_FILE_KEYS];
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -51,13 +41,13 @@ function CopyButton({ text }: { text: string }) {
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path
               d="M2 6l3 3 5-5"
-              stroke="var(--color-lime)"
+              stroke="var(--app-amber)"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
-          <span style={{ color: "var(--color-lime)" }}>Copied!</span>
+          <span style={{ color: "var(--app-amber)" }}>Copied!</span>
         </>
       ) : (
         <>
@@ -72,49 +62,41 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-// ─── Markdown renderer styles ─────────────────────────────────────────────────
-
 const markdownStyles = `
-  .md-content h1 { font-family: var(--font-unbounded, 'Unbounded'), sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--color-text-primary); margin: 1.5rem 0 0.75rem; letter-spacing: -0.03em; line-height: 1.2; }
-  .md-content h2 { font-family: var(--font-jetbrains-mono, monospace); font-size: 1rem; font-weight: 600; color: var(--color-text-primary); margin: 1.5rem 0 0.5rem; border-bottom: 0.5px solid var(--color-border-default); padding-bottom: 6px; }
-  .md-content h3 { font-family: var(--font-jetbrains-mono, monospace); font-size: 0.9rem; font-weight: 600; color: var(--color-text-secondary); margin: 1.1rem 0 0.4rem; }
-  .md-content h4 { font-family: var(--font-jetbrains-mono, monospace); font-size: 0.85rem; font-weight: 600; color: var(--color-text-tertiary); margin: 0.9rem 0 0.35rem; }
-  .md-content p { font-family: var(--font-jetbrains-mono, monospace); font-size: 13px; line-height: 1.75; color: var(--color-text-secondary); margin: 0.5rem 0; }
-  .md-content code { font-family: var(--font-jetbrains-mono, monospace); font-size: 12px; padding: 1px 6px; border-radius: 4px; background: rgba(204,255,0,0.06); color: var(--color-lime); border: 0.5px solid rgba(204,255,0,0.2); white-space: pre-wrap; word-break: break-all; }
-  .md-content pre { background: #0D0D0D; border: 0.5px solid var(--color-border-default); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; overflow-x: auto; }
+  .md-content h1 { font-family: var(--font-unbounded, 'Unbounded'), sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--color-text-primary); margin: 1.5rem 0 0.75rem; letter-spacing: -0.03em; line-height: 1.25; }
+  .md-content h2 { font-family: var(--font-jetbrains-mono, monospace); font-size: 0.95rem; font-weight: 600; color: var(--color-text-primary); margin: 1.4rem 0 0.5rem; border-bottom: 0.5px solid var(--color-border-default); padding-bottom: 6px; }
+  .md-content h3 { font-family: var(--font-jetbrains-mono, monospace); font-size: 0.88rem; font-weight: 600; color: var(--color-text-secondary); margin: 1.1rem 0 0.4rem; }
+  .md-content h4 { font-family: var(--font-jetbrains-mono, monospace); font-size: 0.84rem; font-weight: 600; color: var(--color-text-tertiary); margin: 0.9rem 0 0.35rem; }
+  .md-content p { font-family: var(--font-jetbrains-mono, monospace); font-size: 13px; line-height: 1.8; color: var(--color-text-secondary); margin: 0.55rem 0; }
+  .md-content code { font-family: var(--font-jetbrains-mono, monospace); font-size: 12px; padding: 2px 6px; border-radius: 4px; background: rgba(255,176,32,0.08); color: var(--app-amber); border: 0.5px solid rgba(255,176,32,0.22); white-space: pre-wrap; word-break: break-all; }
+  .md-content pre { background: #2A2A2A; border: 0.5px solid var(--color-border-default); border-radius: 10px; padding: 1rem 1.1rem; margin: 0.85rem 0; overflow-x: auto; }
   .md-content pre code { background: none; border: none; padding: 0; font-size: 12px; color: var(--color-text-primary); white-space: pre; word-break: normal; }
   .md-content ul, .md-content ol { margin: 0.5rem 0 0.5rem 1.5rem; }
-  .md-content li { font-family: var(--font-jetbrains-mono, monospace); font-size: 13px; line-height: 1.75; color: var(--color-text-secondary); margin: 0.2rem 0; }
-  .md-content li::marker { color: var(--color-lime); }
-  .md-content blockquote { border-left: 2.5px solid var(--color-lime); padding: 0.5rem 1rem; margin: 0.75rem 0; background: rgba(204,255,0,0.04); border-radius: 0 6px 6px 0; }
+  .md-content li { font-family: var(--font-jetbrains-mono, monospace); font-size: 13px; line-height: 1.75; color: var(--color-text-secondary); margin: 0.25rem 0; }
+  .md-content li::marker { color: var(--app-amber); }
+  .md-content blockquote { border-left: 2.5px solid var(--app-amber); padding: 0.55rem 1rem; margin: 0.75rem 0; background: rgba(255,176,32,0.05); border-radius: 0 8px 8px 0; }
   .md-content blockquote p { color: var(--color-text-secondary); margin: 0; }
   .md-content hr { border: none; border-top: 0.5px solid var(--color-border-default); margin: 1.25rem 0; }
   .md-content table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 12px; font-family: var(--font-jetbrains-mono, monospace); }
-  .md-content thead tr { background: var(--color-bg-elevated); }
+  .md-content thead tr { background: var(--color-bg-hover); }
   .md-content th { padding: 8px 12px; text-align: left; font-weight: 600; color: var(--color-text-primary); border: 0.5px solid var(--color-border-default); }
   .md-content td { padding: 8px 12px; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-default); }
-  .md-content tr:nth-child(even) { background: rgba(255,255,255,0.02); }
-  .md-content a { color: var(--color-lime); text-decoration: none; }
+  .md-content tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+  .md-content a { color: var(--app-amber); text-decoration: none; }
   .md-content a:hover { text-decoration: underline; }
   .md-content strong { color: var(--color-text-primary); font-weight: 600; }
   .md-content em { color: var(--color-text-secondary); font-style: italic; }
-  .md-content input[type="checkbox"] { accent-color: var(--color-lime); margin-right: 6px; }
+  .md-content input[type="checkbox"] { accent-color: var(--app-amber); margin-right: 6px; }
 `;
-
-// ─── DocPreview ───────────────────────────────────────────────────────────────
 
 export default function DocPreview({ projectId, files, onRestart }: DocPreviewProps) {
   const { toast } = useToast();
   const availableKeys = ALL_POSSIBLE_KEYS.filter((k) => files[k]);
-  const [activeKey, setActiveKey] = useState<FileKey>(availableKeys[0] ?? "context");
+  const [activeKey, setActiveKey] = useState<FileKey>(availableKeys[0] ?? "prd");
   const [showRaw, setShowRaw] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [emailCaptured, setEmailCaptured] = useState(false);
 
   const activeContent = files[activeKey] ?? "";
   const meta = FILE_META[activeKey];
-
-  // ─── Download logic ─────────────────────────────────────────────────────────
 
   const triggerDownload = useCallback(async () => {
     if (!projectId) {
@@ -139,7 +121,6 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
       toast("✓ File berhasil didownload!", "success");
     } catch (err) {
       console.error("Export error:", err);
-      // Fallback: download file aktif saja
       const blob = new Blob([activeContent], { type: "text/markdown" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -153,69 +134,62 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
   }, [projectId, activeContent, activeKey, toast]);
 
   function handleDownloadClick() {
-    if (emailCaptured || !projectId) {
-      // Email sudah dicapture sebelumnya, langsung download
-      triggerDownload();
-    } else {
-      setShowEmailModal(true);
-    }
-  }
-
-  function handleEmailConfirm() {
-    setShowEmailModal(false);
-    setEmailCaptured(true);
-    toast("Email tersimpan! Mendownload...", "success");
-    triggerDownload();
+    void triggerDownload();
   }
 
   return (
-    <div className="animate-fade-in-up">
-      {/* Email capture modal */}
-      {showEmailModal && projectId && (
-        <EmailCaptureModal
-          projectId={projectId}
-          onConfirm={handleEmailConfirm}
-          onClose={() => setShowEmailModal(false)}
-        />
-      )}
-
-      {/* Header */}
-      <div className="mb-8">
-        {/* Success banner */}
+    <div className="generate-app max-w-[900px] mx-auto px-5 sm:px-6 py-8 sm:py-12">
+      {/* Success + actions */}
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="rounded-xl mb-6 overflow-hidden"
+        style={{
+          background: "var(--app-bg-elevated)",
+          border: "0.5px solid var(--app-border-default)",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.18)",
+        }}
+      >
         <div
-          className="flex items-start justify-between gap-4 px-5 py-4 rounded-xl mb-5"
-          style={{
-            background: "rgba(204,255,0,0.05)",
-            border: "0.5px solid rgba(204,255,0,0.2)",
-          }}
+          className="px-5 sm:px-6 py-5 sm:py-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5"
+          style={{ borderLeft: "3px solid var(--app-amber)" }}
         >
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span style={{ color: "var(--color-lime)", fontSize: 16 }}>✦</span>
-              <span
-                className="font-mono text-[10px] font-bold tracking-widest uppercase"
-                style={{ color: "var(--color-lime)" }}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 18, delay: 0.1 }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[10px] font-bold tracking-widest uppercase"
+                style={{
+                  background: "rgba(255,176,32,0.12)",
+                  color: "var(--app-amber)",
+                  border: "0.5px solid rgba(255,176,32,0.25)",
+                }}
               >
+                <CheckCircle2 size={12} strokeWidth={2.5} />
                 Docs siap!
-              </span>
+              </motion.span>
             </div>
             <h1
-              className="font-unbounded font-bold text-xl mb-1"
+              className="font-unbounded font-bold text-xl sm:text-2xl mb-1.5"
               style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
             >
               {availableKeys.length} dokumen berhasil digenerate
             </h1>
-            <p className="font-mono text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+            <p className="font-mono text-sm" style={{ color: "var(--color-text-secondary)" }}>
               Siap dipakai di AI agent kamu.
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0">
             {projectId && (
               <a
                 id="preview-workspace-btn"
                 href={`/project/${projectId}`}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-mono font-bold text-sm transition-all"
-                style={{ background: "var(--color-lime)", color: "#0A0A0A" }}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-mono font-bold text-sm transition-all"
+                style={{ background: "var(--app-amber)", color: "#0D1321" }}
               >
                 Buka di workspace
               </a>
@@ -223,11 +197,11 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
             <button
               id="preview-download-btn"
               onClick={handleDownloadClick}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-mono font-bold text-sm transition-all"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-mono font-bold text-sm transition-all"
               style={{
-                background: projectId ? "var(--color-bg-elevated)" : "var(--color-lime)",
-                color: projectId ? "var(--color-text-primary)" : "#0A0A0A",
-                border: projectId ? "0.5px solid var(--color-border-default)" : "none",
+                background: projectId ? "var(--app-bg-surface)" : "var(--app-amber)",
+                color: projectId ? "var(--app-text-primary)" : "#0D1321",
+                border: projectId ? "0.5px solid var(--app-border-strong)" : "none",
               }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -242,7 +216,7 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
               onClick={onRestart}
               className="px-4 py-2.5 rounded-lg font-mono text-sm transition-all"
               style={{
-                background: "var(--color-bg-elevated)",
+                background: "var(--color-bg-surface)",
                 color: "var(--color-text-secondary)",
                 border: "0.5px solid var(--color-border-default)",
               }}
@@ -251,74 +225,78 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
             </button>
           </div>
         </div>
+      </motion.section>
 
-        {/* Quick Start guide */}
-        <div
-          className="px-4 py-3 rounded-xl mb-4"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "0.5px solid var(--color-border-default)",
-          }}
+      {/* Quick Start */}
+      <section
+        className="rounded-xl px-5 py-4 mb-6"
+        style={{
+          background: "var(--app-bg-surface)",
+          border: "0.5px solid var(--app-border-default)",
+        }}
+      >
+        <p
+          className="font-mono text-[10px] font-bold tracking-widest uppercase mb-3"
+          style={{ color: "var(--app-text-tertiary)" }}
         >
-          <p
-            className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2"
-            style={{ color: "var(--color-text-tertiary)" }}
+          Quick Start
+        </p>
+        <ol className="flex flex-col gap-2">
+          {[
+            "Extract ZIP ke root folder proyekmu",
+            "Buka AI agent-mu, paste file rules (.cursorrules / CLAUDE.md)",
+            "Mulai coding — AI sudah punya konteks proyekmu!",
+          ].map((step, i) => (
+            <li key={i} className="flex items-start gap-2.5">
+              <span
+                className="font-mono text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                style={{
+                  background: "rgba(56,189,248,0.12)",
+                  color: "var(--app-sky)",
+                  border: "0.5px solid rgba(56,189,248,0.25)",
+                }}
+              >
+                {i + 1}
+              </span>
+              <span
+                className="font-mono text-sm"
+                style={{ color: "var(--app-text-secondary)", lineHeight: 1.65 }}
+              >
+                {step}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <div
+          className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 mt-4 pt-4"
+          style={{ borderTop: "0.5px solid var(--app-border-default)" }}
+        >
+          <a
+            href="/learn"
+            {...OPEN_LEARN_IN_NEW_TAB}
+            className="font-mono text-xs flex items-center gap-1.5 transition-colors hover:opacity-80"
+            style={{ color: "var(--app-sky)" }}
           >
-            — Quick Start
-          </p>
-          <ol className="flex flex-col gap-1.5">
-            {[
-              "Extract ZIP ke root folder proyekmu",
-              "Buka AI agent-mu, paste file rules (.cursorrules / CLAUDE.md)",
-              "Mulai coding — AI sudah punya konteks proyekmu!",
-            ].map((step, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span
-                  className="font-mono text-[10px] font-bold w-4 h-4 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{
-                    background: "rgba(204,255,0,0.1)",
-                    color: "var(--color-lime)",
-                  }}
-                >
-                  {i + 1}
-                </span>
-                <span
-                  className="font-mono text-xs"
-                  style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}
-                >
-                  {step}
-                </span>
-              </li>
-            ))}
-          </ol>
-          <div
-            className="flex flex-wrap gap-3 mt-3 pt-3"
-            style={{ borderTop: "0.5px solid var(--color-border-default)" }}
+            → Cara pakai context.md di Claude Code
+          </a>
+          <a
+            href="/learn"
+            {...OPEN_LEARN_IN_NEW_TAB}
+            className="font-mono text-xs flex items-center gap-1.5 transition-colors hover:opacity-80"
+            style={{ color: "var(--app-sky)" }}
           >
-            <a
-              href="/learn"
-              {...OPEN_LEARN_IN_NEW_TAB}
-              className="font-mono text-xs flex items-center gap-1.5 transition-colors"
-              style={{ color: "var(--color-lime)" }}
-            >
-              → Cara pakai context.md di Claude Code
-            </a>
-            <a
-              href="/learn"
-              {...OPEN_LEARN_IN_NEW_TAB}
-              className="font-mono text-xs flex items-center gap-1.5 transition-colors"
-              style={{ color: "var(--color-lime)" }}
-            >
-              → Setup .cursorrules yang benar
-            </a>
-          </div>
+            → Setup .cursorrules yang benar
+          </a>
         </div>
-      </div>
+      </section>
 
-      {/* Tab navigation */}
+      {/* Tabs */}
       <div
-        className="flex gap-1 mb-4 p-1 rounded-lg overflow-x-auto"
-        style={{ background: "var(--color-bg-elevated)", border: "0.5px solid var(--color-border-default)" }}
+        className="flex gap-1 mb-4 p-1 rounded-xl overflow-x-auto"
+        style={{
+          background: "var(--color-bg-surface)",
+          border: "0.5px solid var(--color-border-default)",
+        }}
       >
         {availableKeys.map((key) => {
           const m = FILE_META[key];
@@ -332,36 +310,45 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
                 setActiveKey(key);
                 setShowRaw(false);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all duration-150"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-150"
               style={{
-                color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                background: isActive ? "var(--color-bg-surface)" : "transparent",
-                border: isActive ? "0.5px solid var(--color-border-default)" : "0.5px solid transparent",
+                color: isActive ? "var(--color-text-primary)" : "var(--color-text-tertiary)",
+                background: isActive ? "var(--color-bg-elevated)" : "transparent",
+                border: isActive ? "0.5px solid var(--color-border-strong)" : "0.5px solid transparent",
+                boxShadow: isActive ? "0 2px 8px rgba(0,0,0,0.12)" : "none",
               }}
             >
-              <span>{m.icon}</span>
-              <span>{m.label}</span>
+              <DocIcon doc={key} size={14} style={{ color: isActive ? "var(--app-amber)" : "var(--app-text-tertiary)" }} />
+              <span className="font-mono text-xs sm:text-sm">{m.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Content card */}
-      <div className="card" style={{ padding: 0 }}>
-        {/* File header */}
+      {/* Preview card */}
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: "var(--color-bg-elevated)",
+          border: "0.5px solid var(--color-border-default)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+        }}
+      >
         <div
-          className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: "0.5px solid var(--color-border-default)" }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 sm:px-6 py-4"
+          style={{
+            borderBottom: "0.5px solid var(--color-border-default)",
+            background: "var(--color-bg-surface)",
+          }}
         >
-          <div className="flex items-center gap-3">
-            <span className="text-xl">{meta.icon}</span>
-            <div>
-              <p className="text-h3">{meta.label}</p>
-              <p className="text-caption">{activeKey}.md</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <DocIcon doc={activeKey} size={20} className="shrink-0" style={{ color: "var(--app-amber)" }} />
+            <div className="min-w-0">
+              <p className="text-h3 truncate">{meta.label}</p>
+              <p className="text-caption font-mono">{activeKey}.md</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Raw toggle */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               id={`toggle-raw-${activeKey}`}
               onClick={() => {
@@ -376,8 +363,13 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
           </div>
         </div>
 
-        {/* Markdown / Raw content */}
-        <div className="px-6 py-6 overflow-auto" style={{ maxHeight: "60vh" }}>
+        <div
+          className="px-5 sm:px-6 py-5 sm:py-6 overflow-auto"
+          style={{
+            maxHeight: "min(62vh, 720px)",
+            background: "var(--color-bg-elevated)",
+          }}
+        >
           {activeContent ? (
             showRaw ? (
               <pre
@@ -387,7 +379,7 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
                   color: "var(--color-text-secondary)",
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
-                  lineHeight: 1.6,
+                  lineHeight: 1.7,
                   margin: 0,
                 }}
               >
@@ -396,7 +388,7 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
             ) : (
               <>
                 <style>{markdownStyles}</style>
-                <div className="md-content">
+                <div className="md-content max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {activeContent}
                   </ReactMarkdown>
@@ -409,10 +401,9 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
         </div>
       </div>
 
-      {/* Word / char count */}
       {activeContent && (
         <p
-          className="font-mono text-[11px] mt-3"
+          className="font-mono text-[11px] mt-3 text-center sm:text-left"
           style={{ color: "var(--color-text-tertiary)" }}
         >
           {activeContent.split(/\s+/).filter(Boolean).length} words ·{" "}
@@ -422,3 +413,4 @@ export default function DocPreview({ projectId, files, onRestart }: DocPreviewPr
     </div>
   );
 }
+

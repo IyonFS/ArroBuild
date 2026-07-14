@@ -71,11 +71,36 @@ export function findSection(
   sectionName: string
 ): DocSection | undefined {
   const needle = sectionName.trim().toLowerCase();
-  return sections.find(
+  if (!needle) return undefined;
+
+  const exact = sections.find((s) => s.title.trim().toLowerCase() === needle);
+  if (exact) return exact;
+
+  const partial = sections.find(
     (s) =>
-      s.title.toLowerCase() === needle ||
-      s.title.toLowerCase().includes(needle)
+      s.title.trim().toLowerCase().includes(needle) ||
+      needle.includes(s.title.trim().toLowerCase())
   );
+  if (partial) return partial;
+
+  // Fuzzy: strip parenthetical suffixes e.g. "(User Flow)"
+  const simplified = needle.replace(/\s*\([^)]*\)\s*$/, "").trim();
+  if (simplified !== needle) {
+    return sections.find(
+      (s) =>
+        s.title.trim().toLowerCase() === simplified ||
+        s.title.trim().toLowerCase().startsWith(simplified)
+    );
+  }
+
+  return undefined;
+}
+
+export function findSectionByStartLine(
+  sections: DocSection[],
+  startLine: number
+): DocSection | undefined {
+  return sections.find((s) => s.startLine === startLine);
 }
 
 export function replaceSection(

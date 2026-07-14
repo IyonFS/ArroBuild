@@ -10,7 +10,7 @@ import { SparklesIcon, MenuIcon, CloseIcon } from "./icons";
 
 const NAV_LINKS = [
   { href: "/learn", label: "Belajar" },
-  { href: "/tools/portfolio", label: "Mini Tools" },
+  { href: "/tools", label: "Mini Tools" },
   { href: "/generate", label: "Buat Web" },
   { href: "/#pricing", label: "Harga" },
   { href: "/docs", label: "Dokumentasi" },
@@ -31,6 +31,11 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -49,18 +54,19 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
     try {
       const supabase = createClient();
 
-      supabase.auth.getUser().then(({ data }) => {
-        if (data.user) {
+      supabase.auth.getSession().then(({ data }) => {
+        const authUser = data.session?.user;
+        if (authUser) {
           setUser({
             name:
-              (data.user.user_metadata?.full_name as string | undefined) ??
-              (data.user.user_metadata?.name as string | undefined) ??
+              (authUser.user_metadata?.full_name as string | undefined) ??
+              (authUser.user_metadata?.name as string | undefined) ??
               null,
-            email: data.user.email ?? "",
-            avatarUrl: (data.user.user_metadata?.avatar_url as string) ?? null,
+            email: authUser.email ?? "",
+            avatarUrl: (authUser.user_metadata?.avatar_url as string) ?? null,
           });
         }
-      });
+      }).catch(() => {});
 
       const {
         data: { subscription },
@@ -202,7 +208,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
               flexShrink: 0,
             }}
           >
-            {user ? (
+            {mounted && user ? (
               <Link
                 href="/dashboard"
                 className="hidden sm:inline-flex btn btn-secondary btn-sm"
@@ -247,7 +253,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
                   {navUserLabel}
                 </span>
               </Link>
-            ) : (
+            ) : mounted ? (
               <>
                 <Link
                   href="/login"
@@ -256,16 +262,24 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
                   Masuk
                 </Link>
               </>
+            ) : (
+              <span
+                className="hidden sm:inline-flex btn btn-ghost btn-sm"
+                style={{ opacity: 0.5, pointerEvents: "none" }}
+                aria-hidden
+              >
+                Masuk
+              </span>
             )}
 
             {!hideGenerateCta && (
               <Link
-                href="/generate"
+                href={mounted && user ? "/generate" : "/signup"}
                 className="hidden sm:inline-flex btn btn-primary btn-sm"
                 style={{ gap: 6 }}
               >
                 <SparklesIcon />
-                Buat Web
+                {mounted && user ? "Buat Web" : "Daftar"}
               </Link>
             )}
 

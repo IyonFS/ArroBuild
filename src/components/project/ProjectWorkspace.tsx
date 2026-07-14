@@ -3,16 +3,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ALL_FILE_KEYS, FILE_META, type FileKey } from "@/components/generate/types";
+import { normalizeDocumentKey } from "@/lib/config/documents";
 import { buildFeatIndex } from "@/lib/ai/section-revise";
+import { buildExportTree, renderExportTreeAscii } from "@/lib/export-tree";
 import FileSidebar, { type WorkspaceFile } from "./FileSidebar";
 import DocumentPanel from "./DocumentPanel";
 import RevisePanel from "./RevisePanel";
+import WhatsAppSupportModal from "@/components/support/WhatsAppSupportModal";
+import type { WhatsappQuotaDisplay } from "@/components/support/WhatsAppSupportCard";
+import type { UserPlanStatus } from "@/components/generate/types";
 
 interface ProjectPayload {
   id: string;
   idea: string;
   status: string;
   createdAt: string;
+  presets?: { agentTool?: string };
   files: WorkspaceFile[];
 }
 
@@ -34,6 +40,11 @@ export default function ProjectWorkspace({ projectId }: Props) {
   const [creditHint, setCreditHint] = useState<string | null>(null);
   const [leftWidth, setLeftWidth] = useState(260);
   const [rightWidth, setRightWidth] = useState(340);
+  const [exportPreviewOpen, setExportPreviewOpen] = useState(false);
+  const [waModalOpen, setWaModalOpen] = useState(false);
+  const [userTier, setUserTier] = useState<UserPlanStatus>("none");
+  const [whatsappQuota, setWhatsappQuota] = useState<WhatsappQuotaDisplay | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
   const draggingRef = useRef<"left" | "right" | null>(null);
   const leftWidthRef = useRef(260);
   const rightWidthRef = useRef(340);
@@ -118,8 +129,12 @@ export default function ProjectWorkspace({ projectId }: Props) {
       }
       const p = data.project as ProjectPayload;
       const ordered = [...(p.files ?? [])].sort((a, b) => {
-        const ia = ALL_FILE_KEYS.indexOf(a.fileKey as FileKey);
-        const ib = ALL_FILE_KEYS.indexOf(b.fileKey as FileKey);
+        const ia = ALL_FILE_KEYS.indexOf(
+          (normalizeDocumentKey(a.fileKey) ?? a.fileKey) as FileKey
+        );
+        const ib = ALL_FILE_KEYS.indexOf(
+          (normalizeDocumentKey(b.fileKey) ?? b.fileKey) as FileKey
+        );
         return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
       });
       setProject(p);
@@ -136,6 +151,17 @@ export default function ProjectWorkspace({ projectId }: Props) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    fetch("/api/user/me")
+      .then((res) => res.json())
+      .then((data) => {
+        setUserTier(data.plan ?? data.tier ?? "none");
+        setWhatsappQuota(data.whatsappQuota ?? null);
+        setUserEmail(data.user?.email ?? "");
+      })
+      .catch(() => {});
+  }, []);
+
   const activeFile = files.find((f) => f.fileKey === activeKey) ?? null;
 
   const featIndex = useMemo(
@@ -145,6 +171,18 @@ export default function ProjectWorkspace({ projectId }: Props) {
       ),
     [files]
   );
+
+  const exportTreePreview = useMemo(() => {
+    if (!project) return "";
+    const tree = buildExportTree(
+      files.map((f) => ({ fileName: f.fileName, fileKey: f.fileKey })),
+      {
+        agentTool: project.presets?.agentTool,
+        folderName: `arrobuild-${projectId.slice(0, 8)}`,
+      }
+    );
+    return renderExportTreeAscii(tree);
+  }, [files, project, projectId]);
 
   const featCounts = useMemo(() => {
     const unique: Record<string, Set<string>> = {};
@@ -169,6 +207,14 @@ export default function ProjectWorkspace({ projectId }: Props) {
     setActiveKey(other.fileKey);
     setScrollToLine(other.line);
     setMobileTab("doc");
+  };
+
+  const handleFileSaved = (newContent: string, version: number) => {
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.fileKey === activeKey ? { ...f, content: newContent, version } : f
+      )
+    );
   };
 
   const handleAccepted = (
@@ -239,8 +285,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
           className="px-5 py-3 text-sm font-semibold"
           style={{
             borderRadius: 12,
-            background: "var(--color-lime)",
-            color: "#0A0A0A",
+            background: "var(--app-amber)",
+            color: "#0D1321",
           }}
         >
           Kembali ke dashboard
@@ -250,15 +296,18 @@ export default function ProjectWorkspace({ projectId }: Props) {
   }
 
   const activeMeta = activeFile
-    ? FILE_META[activeFile.fileKey as FileKey]
+    ? FILE_META[
+        (normalizeDocumentKey(activeFile.fileKey) ??
+          activeFile.fileKey) as FileKey
+      ]
     : null;
 
   return (
     <div
-      className="flex flex-col"
+      className="workspace-app flex flex-col"
       style={{
         height: "100dvh",
-        background: "#070707",
+        background: "var(--app-bg-base)",
       }}
     >
       {/* Workspace chrome — no marketing nav */}
@@ -292,8 +341,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
                 className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5"
                 style={{
                   borderRadius: 999,
-                  background: "rgba(204,255,0,0.1)",
-                  color: "var(--color-lime)",
+                  background: "rgba(255,176,32,0.1)",
+                  color: "var(--app-amber)",
                   fontFamily: "var(--font-jetbrains-mono), monospace",
                 }}
               >
@@ -310,8 +359,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
               </span>
             </div>
             <p
-              className="text-sm font-medium truncate"
-              style={{ color: "var(--color-text-primary)" }}
+              className="font-unbounded font-bold text-sm truncate"
+              style={{ color: "var(--app-text-primary)" }}
               title={ideaPreview}
             >
               {ideaPreview}
@@ -320,7 +369,7 @@ export default function ProjectWorkspace({ projectId }: Props) {
               <p
                 className="text-[11px] mt-0.5 truncate"
                 style={{
-                  color: "var(--color-lime)",
+                  color: "var(--app-amber)",
                   fontFamily: "var(--font-jetbrains-mono), monospace",
                 }}
               >
@@ -338,20 +387,46 @@ export default function ProjectWorkspace({ projectId }: Props) {
                 className="text-[11px] hidden lg:inline px-2.5 py-1.5"
                 style={{
                   borderRadius: 8,
-                  background: "rgba(204,255,0,0.06)",
-                  color: "rgba(204,255,0,0.75)",
+                  background: "rgba(255,176,32,0.06)",
+                  color: "rgba(255,176,32,0.85)",
                   fontFamily: "var(--font-jetbrains-mono), monospace",
                 }}
               >
                 {creditHint}
               </span>
             )}
-            <a
-              href={`/api/export?projectId=${projectId}`}
+            {(userTier === "pro" || userTier === "pro_max") && (
+              <button
+                type="button"
+                onClick={() => setWaModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
+                style={{
+                  borderRadius: 12,
+                  background: "rgba(37,211,102,0.12)",
+                  border: "1px solid rgba(37,211,102,0.35)",
+                  color: "#25D366",
+                }}
+                title="Chat founder via WhatsApp"
+              >
+                <span aria-hidden>WA</span>
+                <span className="hidden md:inline">Founder</span>
+                {whatsappQuota && whatsappQuota.limit > 0 && (
+                  <span
+                    className="text-[10px] font-mono px-1.5 py-0.5 rounded"
+                    style={{ background: "rgba(0,0,0,0.25)" }}
+                  >
+                    {whatsappQuota.remaining}
+                  </span>
+                )}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setExportPreviewOpen(true)}
               className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold transition-opacity hover:opacity-90"
               style={{
                 borderRadius: 12,
-                background: "var(--color-lime)",
+                background: "var(--app-amber)",
                 color: "#0A0A0A",
               }}
             >
@@ -362,15 +437,21 @@ export default function ProjectWorkspace({ projectId }: Props) {
               </svg>
               <span className="hidden sm:inline">Unduh ZIP</span>
               <span className="sm:hidden">ZIP</span>
-            </a>
+            </button>
           </div>
         </div>
       </header>
 
       {/* Mobile tabs */}
       <div
-        className="flex lg:hidden flex-shrink-0 px-3 gap-1 py-2"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        className="flex lg:hidden flex-shrink-0 px-2 gap-1 py-2 sticky top-0 z-20"
+        style={{
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "rgba(10,10,10,0.95)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
+        }}
       >
         {(
           [
@@ -383,13 +464,13 @@ export default function ProjectWorkspace({ projectId }: Props) {
             key={id}
             type="button"
             onClick={() => setMobileTab(id)}
-            className="flex-1 py-2.5 text-xs font-semibold"
+            className="flex-1 py-2.5 text-xs font-semibold min-h-[44px] transition-colors duration-200"
             style={{
               borderRadius: 10,
               color:
                 mobileTab === id ? "#0A0A0A" : "rgba(255,255,255,0.5)",
               background:
-                mobileTab === id ? "var(--color-lime)" : "rgba(255,255,255,0.04)",
+                mobileTab === id ? "var(--app-amber)" : "rgba(255,255,255,0.04)",
             }}
           >
             {label}
@@ -436,9 +517,10 @@ export default function ProjectWorkspace({ projectId }: Props) {
       </div>
 
       {/* 3 resizable panels */}
-      <div className="flex-1 min-h-0 p-3 sm:p-4 pt-2">
+      <div className="flex-1 min-h-0 p-2 sm:p-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {/* Mobile: single panel */}
         <div className="h-full min-h-0 lg:hidden">
+          <div key={mobileTab} className="h-full min-h-0 animate-fade-slide-up">
           {mobileTab === "files" && (
             <section
               className="h-full min-h-0 overflow-hidden"
@@ -470,9 +552,11 @@ export default function ProjectWorkspace({ projectId }: Props) {
               }}
             >
               <DocumentPanel
+                projectId={projectId}
                 file={activeFile}
                 scrollToLine={scrollToLine}
                 onFeatClick={handleFeatClick}
+                onSaved={handleFileSaved}
               />
             </section>
           )}
@@ -482,7 +566,7 @@ export default function ProjectWorkspace({ projectId }: Props) {
               style={{
                 borderRadius: 16,
                 background: "rgba(18,18,18,0.95)",
-                border: "1px solid rgba(204,255,0,0.12)",
+                border: "1px solid rgba(255,176,32,0.12)",
               }}
             >
               <RevisePanel
@@ -492,6 +576,7 @@ export default function ProjectWorkspace({ projectId }: Props) {
               />
             </section>
           )}
+          </div>
         </div>
 
         {/* Desktop: resizable columns */}
@@ -530,7 +615,7 @@ export default function ProjectWorkspace({ projectId }: Props) {
           >
             <div
               className="h-12 w-1 rounded-full transition-all group-hover:h-20 group-hover:w-1.5"
-              style={{ background: "rgba(204,255,0,0.35)" }}
+              style={{ background: "rgba(255,176,32,0.35)" }}
             />
           </div>
 
@@ -544,9 +629,11 @@ export default function ProjectWorkspace({ projectId }: Props) {
             }}
           >
             <DocumentPanel
+              projectId={projectId}
               file={activeFile}
               scrollToLine={scrollToLine}
               onFeatClick={handleFeatClick}
+              onSaved={handleFileSaved}
             />
           </section>
 
@@ -560,7 +647,7 @@ export default function ProjectWorkspace({ projectId }: Props) {
           >
             <div
               className="h-12 w-1 rounded-full transition-all group-hover:h-20 group-hover:w-1.5"
-              style={{ background: "rgba(204,255,0,0.35)" }}
+              style={{ background: "rgba(255,176,32,0.35)" }}
             />
           </div>
 
@@ -570,8 +657,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
               width: rightWidth,
               borderRadius: 16,
               background: "rgba(18,18,18,0.95)",
-              border: "1px solid rgba(204,255,0,0.12)",
-              boxShadow: "0 0 24px rgba(204,255,0,0.04)",
+              border: "1px solid rgba(255,176,32,0.12)",
+              boxShadow: "0 0 24px rgba(255,176,32,0.04)",
             }}
           >
             <RevisePanel
@@ -582,6 +669,71 @@ export default function ProjectWorkspace({ projectId }: Props) {
           </section>
         </div>
       </div>
+
+      {exportPreviewOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={() => setExportPreviewOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl p-5"
+            style={{
+              background: "var(--color-bg-elevated)",
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3
+              className="text-sm font-bold mb-2"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Preview struktur ZIP
+            </h3>
+            <pre
+              className="text-[11px] p-3 rounded-xl overflow-x-auto mb-4"
+              style={{
+                background: "rgba(0,0,0,0.4)",
+                color: "rgba(255,176,32,0.85)",
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+              }}
+            >
+              {exportTreePreview}
+            </pre>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setExportPreviewOpen(false)}
+                className="px-4 py-2 text-xs rounded-lg"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: "var(--color-text-secondary)",
+                }}
+              >
+                Batal
+              </button>
+              <a
+                href={`/api/export?projectId=${projectId}`}
+                className="px-4 py-2 text-xs font-bold rounded-lg"
+                style={{ background: "var(--app-amber)", color: "#0A0A0A" }}
+              >
+                Unduh ZIP
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <WhatsAppSupportModal
+        open={waModalOpen}
+        onClose={() => setWaModalOpen(false)}
+        tier={userTier}
+        quota={whatsappQuota}
+        userEmail={userEmail}
+        projectId={projectId}
+        projectLabel={productLabel}
+        onQuotaChange={setWhatsappQuota}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { GoogleIcon } from "@/components/marketing/icons";
 import { PRICING_TIERS } from "@/lib/pricing";
@@ -26,19 +27,19 @@ interface AuthFormProps {
 
 const COPY = {
   login: {
-    title: "Masuk",
-    subtitle: "Pakai email atau Google — project kamu tersimpan di dashboard.",
+    title: "Masuk ke ArroBuild",
+    subtitle: "Lanjut generate atau lihat project yang udah kamu compile.",
     submit: "Masuk",
-    google: "Lanjutkan dengan Google",
+    google: "Lanjut dengan Google",
     altPrompt: "Belum punya akun?",
-    altLink: "Daftar gratis",
+    altLink: "Daftar",
     altHref: "/signup",
   },
   signup: {
-    title: "Buat akun",
-    subtitle: "Daftar dengan email atau Google. Gratis untuk mulai.",
+    title: "Buat akun baru",
+    subtitle: "Learn Hub & Mini Tools tetap gratis. Akun untuk simpan project dan generate dokumen.",
     submit: "Buat akun",
-    google: "Daftar dengan Google",
+    google: "Lanjut dengan Google",
     altPrompt: "Sudah punya akun?",
     altLink: "Masuk",
     altHref: "/login",
@@ -113,9 +114,7 @@ export default function AuthForm({ mode, plan, error }: AuthFormProps) {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: {
-            emailRedirectTo: redirectTo,
-          },
+          options: { emailRedirectTo: redirectTo },
         });
 
         if (signUpError) {
@@ -147,7 +146,6 @@ export default function AuthForm({ mode, plan, error }: AuthFormProps) {
       }
 
       await fetch("/api/user/me");
-
       router.push(getPostAuthRedirect(plan));
       router.refresh();
     } finally {
@@ -156,180 +154,260 @@ export default function AuthForm({ mode, plan, error }: AuthFormProps) {
   }
 
   return (
-    <div className="w-full max-w-[400px]">
-      <div className="mb-8">
-        <h1 className="text-[1.375rem] font-medium text-white mb-2">{copy.title}</h1>
-        <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-          {copy.subtitle}
-        </p>
-      </div>
-
-      {selectedPlan && (
-        <div className="app-panel px-4 py-3 mb-5">
-          <p className="text-label mb-1">Paket dipilih</p>
-          <p className="text-[14px] font-medium text-white">
-            {selectedPlan.name}{" "}
-            <span style={{ color: "var(--text-tertiary)" }}>
-              · {selectedPlan.price}
-              {selectedPlan.period}
-            </span>
-          </p>
-        </div>
-      )}
-
-      {infoMsg && (
-        <div
-          className="mb-4 px-3 py-2.5 rounded-lg text-[13px] border"
-          style={{
-            color: "var(--success-text)",
-            background: "var(--success-bg)",
-            borderColor: "var(--success-border)",
-          }}
-        >
-          {infoMsg}
-        </div>
-      )}
-
-      {(authError || error) && !infoMsg && (
-        <div
-          className="mb-4 px-3 py-2.5 rounded-lg text-[13px] border"
-          style={{
-            color: "var(--danger-text)",
-            background: "var(--danger-bg)",
-            borderColor: "var(--danger-border)",
-          }}
-        >
-          {authError || error}
-        </div>
-      )}
-
-      <form onSubmit={handleEmailSubmit} className="space-y-4" noValidate>
-        <div>
-          <label htmlFor="auth-email" className="text-label block mb-1.5">
-            Email
-          </label>
-          <input
-            id="auth-email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setAuthError("");
-            }}
-            placeholder="kamu@example.com"
-            disabled={isBusy}
-            className="input"
-            required
-          />
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <label htmlFor="auth-password" className="text-label">
-              Password
-            </label>
-            {mode === "login" && (
+    <motion.div
+      className="auth-app w-full blueprint-panel rounded-xl overflow-hidden"
+      style={{
+        background: "var(--app-bg-elevated)",
+        border: "0.5px solid var(--app-border-default)",
+        clipPath: "polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)",
+      }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="px-6 py-7 sm:px-7 sm:py-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={mode}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15 }}
+          >
+            <h1
+              className="font-unbounded font-extrabold text-[22px] mb-2"
+              style={{ color: "var(--app-text-primary)", letterSpacing: "-0.02em" }}
+            >
+              {copy.title}
+            </h1>
+            <p
+              className="font-mono text-[13px] leading-relaxed mb-5"
+              style={{ color: "var(--app-text-secondary)" }}
+            >
+              {copy.subtitle}
+            </p>
+            <p className="font-mono text-[12px] mb-6" style={{ color: "var(--app-text-tertiary)" }}>
+              {copy.altPrompt}{" "}
               <Link
-                href="/forgot-password"
-                className="text-[12px] underline underline-offset-2"
-                style={{ color: "var(--text-tertiary)" }}
+                href={plan ? `${copy.altHref}?plan=${plan}` : copy.altHref}
+                className="underline underline-offset-2"
+                style={{ color: "var(--app-sky)" }}
               >
-                Lupa password?
+                {copy.altLink}
               </Link>
-            )}
-          </div>
-          <input
-            id="auth-password"
-            type="password"
-            autoComplete={mode === "signup" ? "new-password" : "current-password"}
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setAuthError("");
-            }}
-            placeholder={mode === "signup" ? "Min. 8 karakter" : "Password kamu"}
-            disabled={isBusy}
-            className="input"
-            required
-            minLength={8}
-          />
-        </div>
+            </p>
+          </motion.div>
+        </AnimatePresence>
 
-        {mode === "signup" && (
+        {selectedPlan && (
+          <div
+            className="px-4 py-3 mb-5 rounded-lg"
+            style={{
+              background: "var(--app-bg-hover)",
+              border: "0.5px solid var(--app-border-default)",
+            }}
+          >
+            <p className="font-mono text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--app-text-tertiary)" }}>
+              Paket dipilih
+            </p>
+            <p className="font-mono text-[14px] font-semibold" style={{ color: "var(--app-text-primary)" }}>
+              {selectedPlan.name}{" "}
+              <span style={{ color: "var(--app-text-tertiary)" }}>
+                · {selectedPlan.price}
+                {selectedPlan.period}
+              </span>
+            </p>
+          </div>
+        )}
+
+        {infoMsg && (
+          <div
+            className="mb-4 px-3 py-2.5 rounded-lg font-mono text-[13px]"
+            style={{
+              color: "#22C55E",
+              background: "rgba(34,197,94,0.1)",
+              border: "0.5px solid rgba(34,197,94,0.25)",
+            }}
+          >
+            {infoMsg}
+          </div>
+        )}
+
+        {(authError || error) && !infoMsg && (
+          <div
+            className="mb-4 px-3 py-2.5 rounded-lg font-mono text-[13px]"
+            style={{
+              color: "#EF4444",
+              background: "rgba(239,68,68,0.1)",
+              border: "0.5px solid rgba(239,68,68,0.25)",
+            }}
+          >
+            {authError || error}
+          </div>
+        )}
+
+        <form onSubmit={handleEmailSubmit} className="space-y-4" noValidate>
           <div>
-            <label htmlFor="auth-confirm" className="text-label block mb-1.5">
-              Konfirmasi password
+            <label htmlFor="auth-email" className="font-mono text-[12px] font-semibold block mb-1.5" style={{ color: "var(--app-text-secondary)" }}>
+              Email
             </label>
             <input
-              id="auth-confirm"
-              type="password"
-              autoComplete="new-password"
-              value={confirmPassword}
+              id="auth-email"
+              type="email"
+              autoComplete="email"
+              value={email}
               onChange={(e) => {
-                setConfirmPassword(e.target.value);
+                setEmail(e.target.value);
                 setAuthError("");
               }}
-              placeholder="Ulangi password"
               disabled={isBusy}
-              className="input"
+              className="w-full px-4 py-3 rounded-lg font-mono text-[13px] outline-none transition-shadow"
+              style={{
+                background: "var(--app-bg-base)",
+                border: "0.5px solid var(--app-border-default)",
+                color: "var(--app-text-primary)",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--app-amber)";
+                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,176,32,0.12)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--app-border-default)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+              required
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <label htmlFor="auth-password" className="font-mono text-[12px] font-semibold" style={{ color: "var(--app-text-secondary)" }}>
+                Password
+              </label>
+              {mode === "login" && (
+                <Link
+                  href="/forgot-password"
+                  className="font-mono text-[11px] underline underline-offset-2"
+                  style={{ color: "var(--app-text-tertiary)" }}
+                >
+                  Lupa password?
+                </Link>
+              )}
+            </div>
+            <input
+              id="auth-password"
+              type="password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setAuthError("");
+              }}
+              placeholder={mode === "signup" ? "Min. 8 karakter" : undefined}
+              disabled={isBusy}
+              className="w-full px-4 py-3 rounded-lg font-mono text-[13px] outline-none transition-shadow"
+              style={{
+                background: "var(--app-bg-base)",
+                border: "0.5px solid var(--app-border-default)",
+                color: "var(--app-text-primary)",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--app-amber)";
+                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,176,32,0.12)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--app-border-default)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
               required
               minLength={8}
             />
           </div>
-        )}
+
+          {mode === "signup" && (
+            <div>
+              <label htmlFor="auth-confirm" className="font-mono text-[12px] font-semibold block mb-1.5" style={{ color: "var(--app-text-secondary)" }}>
+                Konfirmasi password
+              </label>
+              <input
+                id="auth-confirm"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setAuthError("");
+                }}
+                disabled={isBusy}
+                className="w-full px-4 py-3 rounded-lg font-mono text-[13px] outline-none transition-shadow"
+                style={{
+                  background: "var(--app-bg-base)",
+                  border: "0.5px solid var(--app-border-default)",
+                  color: "var(--app-text-primary)",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "var(--app-amber)";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,176,32,0.12)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--app-border-default)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+                required
+                minLength={8}
+              />
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isBusy}
+            className="w-full py-3.5 rounded-lg font-mono text-[14px] font-bold transition-opacity disabled:opacity-50"
+            style={{ background: "var(--app-amber)", color: "#0D1321" }}
+          >
+            {loading === "form" ? "Memproses..." : copy.submit}
+          </button>
+        </form>
+
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 h-px" style={{ background: "var(--app-border-default)" }} />
+          <span className="font-mono text-[11px]" style={{ color: "var(--app-text-tertiary)" }}>
+            atau
+          </span>
+          <div className="flex-1 h-px" style={{ background: "var(--app-border-default)" }} />
+        </div>
 
         <button
-          type="submit"
+          type="button"
+          onClick={handleGoogleAuth}
           disabled={isBusy}
-          className="btn btn-primary w-full"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-mono text-[13px] font-semibold transition-colors disabled:opacity-50"
+          style={{
+            background: "transparent",
+            border: "0.5px solid var(--app-border-default)",
+            color: "var(--app-text-primary)",
+          }}
         >
-          {loading === "form" ? "Memproses..." : copy.submit}
+          <GoogleIcon />
+          {loading === "google" ? "Mengalihkan..." : copy.google}
         </button>
-      </form>
 
-      <div className="flex items-center gap-3 my-6">
-        <div className="flex-1 h-px" style={{ background: "var(--bg-border)" }} />
-        <span className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-          atau
-        </span>
-        <div className="flex-1 h-px" style={{ background: "var(--bg-border)" }} />
+        {mode === "signup" && (
+          <p
+            className="font-mono text-[12px] text-center leading-relaxed mt-6"
+            style={{ color: "var(--app-text-tertiary)" }}
+          >
+            Dengan daftar, kamu setuju{" "}
+            <Link href="/terms" className="underline underline-offset-2" style={{ color: "var(--app-amber)" }}>
+              Syarat & Ketentuan
+            </Link>{" "}
+            dan{" "}
+            <Link href="/privacy" className="underline underline-offset-2" style={{ color: "var(--app-amber)" }}>
+              Kebijakan Privasi
+            </Link>
+          </p>
+        )}
       </div>
-
-      <button
-        type="button"
-        onClick={handleGoogleAuth}
-        disabled={isBusy}
-        className="btn btn-secondary w-full"
-      >
-        <GoogleIcon />
-        {loading === "google" ? "Mengalihkan..." : copy.google}
-      </button>
-
-      <p
-        className="text-[13px] text-center leading-relaxed mt-6"
-        style={{ color: "var(--text-tertiary)" }}
-      >
-        {copy.altPrompt}{" "}
-        <Link
-          href={plan ? `${copy.altHref}?plan=${plan}` : copy.altHref}
-          className="underline underline-offset-2"
-          style={{ color: "var(--text-secondary)" }}
-        >
-          {copy.altLink}
-        </Link>
-      </p>
-
-      <p
-        className="text-[12px] text-center mt-8 pt-6 border-t border-[var(--bg-border)]"
-        style={{ color: "var(--text-tertiary)" }}
-      >
-        Atau{" "}
-        <Link href="/generate" className="underline underline-offset-2" style={{ color: "var(--text-secondary)" }}>
-          generate PRD gratis
-        </Link>{" "}
-        tanpa akun.
-      </p>
-    </div>
+    </motion.div>
   );
 }

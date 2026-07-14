@@ -111,7 +111,7 @@ export default function EmailCaptureModal({
         {/* Icon */}
         <div
           className="flex items-center justify-center w-12 h-12 rounded-xl mb-5"
-          style={{ background: "rgba(204,255,0,0.08)", border: "0.5px solid rgba(204,255,0,0.25)" }}>
+          style={{ background: "rgba(255,176,32,0.08)", border: "0.5px solid rgba(255,176,32,0.25)" }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-lime)" strokeWidth={1.8}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
@@ -259,3 +259,4 @@ export default function EmailCaptureModal({
     </div>
   );
 }
+

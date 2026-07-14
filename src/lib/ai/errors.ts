@@ -15,7 +15,7 @@ export function formatGenerationError(err: unknown): string {
       raw.includes("FreeTier") ||
       raw.includes("limit: 20")
     ) {
-      return "Kuota API Gemini gratis habis (20 request/hari per model). Coba lagi besok, atau pilih model DeepSeek di langkah Presets.";
+      return "Kuota API Gemini gratis habis (20 request/hari). Sistem otomatis mencoba DeepSeek — pastikan DEEPSEEK_API_KEY sudah diisi di .env.local.";
     }
     const retryMatch = raw.match(/retry in (\d+(?:\.\d+)?)\s*s/i);
     if (retryMatch) {
@@ -23,6 +23,15 @@ export function formatGenerationError(err: unknown): string {
       return `Rate limit API AI tercapai. Tunggu ~${secs} detik lalu coba lagi.`;
     }
     return "Rate limit API AI tercapai. Tunggu sebentar lalu coba lagi.";
+  }
+
+  // Model deprecated / unavailable for this API key
+  if (
+    raw.includes("no longer available") ||
+    raw.includes("is not found for API") ||
+    raw.includes("\"status\":\"NOT_FOUND\"")
+  ) {
+    return "Model AI tidak tersedia untuk akun ini. Sistem akan mencoba model lain — coba generate lagi.";
   }
 
   // Missing API keys
