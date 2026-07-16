@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { generate } from "@/lib/ai/generator";
-import { resolveModelForClass } from "@/lib/ai-gateway/model-router";
+import { generateWithFallback } from "@/lib/ai/generate-with-fallback";
 import { getSupabaseUser, syncDbUser } from "@/lib/auth";
 import { MINI_TOOLS, type MiniToolId } from "@/lib/config/mini-tools";
+import { CreditService } from "@/lib/services/credit.service";
 import {
   assertMiniToolAccess,
+  reserveMiniToolCredits,
   runMiniToolCharge,
+  settleMiniToolReservation,
 } from "@/lib/services/mini-tools.service";
 import { TierCapabilityError } from "@/lib/services/tier-capabilities";
 
@@ -16,7 +18,10 @@ export const maxDuration = 120;
 const BodySchema = z.object({
   toolId: z.string(),
   input: z.record(z.string(), z.string()),
+  reserve: z.boolean().optional(),
 });
+
+const TOOLS_WITH_RESERVE: MiniToolId[] = ["readme-generator"];
 
 export async function POST(req: NextRequest) {
   const supabaseUser = await getSupabaseUser();
@@ -62,17 +67,36 @@ export async function POST(req: NextRequest) {
     throw err;
   }
 
+  const useReserve = TOOLS_WITH_RESERVE.includes(toolId);
+  let reservationId: string | null = null;
+
   try {
-    const routed = resolveModelForClass(tool.modelClass);
+    if (useReserve) {
+      const reservation = await reserveMiniToolCredits(dbUser.id, toolId, {
+        mode: parsed.data.input.mode,
+        templateId: parsed.data.input.templateId,
+      });
+      reservationId = reservation.reservationId;
+    }
+
     const prompt = tool.buildPrompt(parsed.data.input);
-    const output = await generate(prompt, {
-      model: routed.modelName,
-      provider: routed.provider,
+    const output = await generateWithFallback(prompt, {
+      modelClass: tool.modelClass,
       temperature: 0.6,
       maxOutputTokens: tool.maxOutputTokens,
     });
 
-    const { balanceAfter } = await runMiniToolCharge(dbUser.id, toolId);
+    let balanceAfter: number;
+    if (useReserve && reservationId) {
+      const settled = await settleMiniToolReservation(dbUser.id, reservationId, toolId, {
+        mode: parsed.data.input.mode,
+        templateId: parsed.data.input.templateId,
+      });
+      balanceAfter = settled.balanceAfter;
+    } else {
+      const charged = await runMiniToolCharge(dbUser.id, toolId);
+      balanceAfter = charged.balanceAfter;
+    }
 
     return NextResponse.json({
       output,
@@ -81,6 +105,14 @@ export async function POST(req: NextRequest) {
       toolId,
     });
   } catch (err) {
+    if (reservationId) {
+      await CreditService.releaseReservation(
+        dbUser.id,
+        reservationId,
+        "readme_generation_failed"
+      ).catch(() => {});
+    }
+
     if (err instanceof TierCapabilityError) {
       return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
     }

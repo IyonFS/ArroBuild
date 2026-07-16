@@ -107,11 +107,11 @@ export const TOOL_SHOWCASE_META: Record<MiniToolId, Omit<ShowcaseToolMeta, "name
   },
   "readme-generator": {
     id: "readme-generator",
-    tagline: "README + script setup siap pakai",
+    tagline: "README profesional dengan gaya pilihanmu",
     href: "/tools/readme-generator",
     icon: FileCode2,
     accent: "sky",
-    filterKeys: ["all", "prime"],
+    filterKeys: ["all", "core", "prime"],
   },
   "landing-copy": {
     id: "landing-copy",

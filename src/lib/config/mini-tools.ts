@@ -1,5 +1,9 @@
 import type { ModelClassId } from "@/lib/config/tiers";
 import { TIER, type TierId } from "@/lib/config/tiers";
+import {
+  buildReadmePrompt,
+  recordToReadmeInput,
+} from "@/lib/config/readme-prompt";
 
 export type MiniToolId =
   | "prompt-doctor"
@@ -49,11 +53,6 @@ const STITCH_SYSTEM = `You compose a paste-ready prompt for Google Stitch (Googl
 Use design tokens, typography, spacing, and product context provided.
 Structure: product summary, screen goal, layout, components, color/type tokens, interaction notes, export hint (Tailwind/HTML).
 Output ONLY the Stitch prompt.`;
-
-const README_SYSTEM = `Generate a production-ready README.md plus a shell setup block.
-Include: project overview, prerequisites, install steps, env vars table, dev commands, folder structure, license placeholder.
-Also output a second fenced block labeled SETUP_SCRIPT with a bash script for first-time setup.
-Use markdown for README; setup script in plain bash inside \`\`\`bash block after README.`;
 
 const LANDING_COPY_SYSTEM = `You are a conversion copywriter for indie SaaS landing pages.
 From the PRD/context, write: hero headline + subhead, 3 value props (title + 1 sentence), social proof placeholder line, primary CTA text, FAQ (3 Q&A).
@@ -140,29 +139,19 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
   },
   "readme-generator": {
     id: "readme-generator",
-    name: "README + Setup Script",
-    description: "Generate README.md dan script setup dari arsitektur.",
-    credits: 6,
+    name: "README Generator",
+    description: "Generate README.md profesional dengan gaya pilihanmu.",
+    credits: 2,
     modelClass: "HEMAT",
-    maxOutputTokens: 3000,
-    minTier: TIER.PRO_MAX,
+    maxOutputTokens: 2000,
+    minTier: TIER.PRO,
     fields: [
-      {
-        key: "architecture",
-        label: "Cuplikan architecture / stack",
-        type: "textarea",
-        placeholder: "Paste dari 02-architecture.md...",
-        required: true,
-      },
-      {
-        key: "projectName",
-        label: "Nama proyek",
-        type: "text",
-        placeholder: "My App",
-      },
+      { key: "mode", label: "Mode", type: "text", required: true },
+      { key: "category", label: "Kategori", type: "text", required: true },
+      { key: "templateId", label: "Template", type: "text", required: true },
+      { key: "projectName", label: "Nama proyek", type: "text", required: true },
     ],
-    buildPrompt: (input) =>
-      `${README_SYSTEM}\n\nProject: ${input.projectName || "Project"}\n\nArchitecture:\n${input.architecture ?? ""}`,
+    buildPrompt: (input) => buildReadmePrompt(recordToReadmeInput(input)),
   },
   "landing-copy": {
     id: "landing-copy",

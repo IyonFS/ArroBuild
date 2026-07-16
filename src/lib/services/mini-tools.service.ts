@@ -15,7 +15,7 @@ import { CreditService, CreditServiceError } from "@/lib/services/credit.service
 const PRO_DEFAULT_TOOLS: MiniToolId[] = [
   "prompt-doctor",
   "mvp-scope-cutter",
-  "stitch-composer",
+  "readme-generator",
 ];
 
 export async function assertMiniToolAccess(
@@ -93,6 +93,46 @@ export async function runMiniToolCharge(
   const tool = MINI_TOOLS[toolId];
   try {
     return await CreditService.chargeToolCredits(userId, tool.credits, toolId);
+  } catch (err) {
+    if (err instanceof CreditServiceError) {
+      throw new TierCapabilityError(err.code, err.message, err.statusCode);
+    }
+    throw err;
+  }
+}
+
+export async function reserveMiniToolCredits(
+  userId: string,
+  toolId: MiniToolId,
+  metadata?: Record<string, unknown>
+) {
+  const tool = MINI_TOOLS[toolId];
+  const projectId = `tool-${toolId}-${Date.now()}`;
+  try {
+    return await CreditService.reserveCredit(userId, tool.credits, projectId, {
+      tool: toolId,
+      ...metadata,
+    });
+  } catch (err) {
+    if (err instanceof CreditServiceError) {
+      throw new TierCapabilityError(err.code, err.message, err.statusCode);
+    }
+    throw err;
+  }
+}
+
+export async function settleMiniToolReservation(
+  userId: string,
+  reservationId: string,
+  toolId: MiniToolId,
+  metadata?: Record<string, unknown>
+): Promise<{ balanceAfter: number }> {
+  const tool = MINI_TOOLS[toolId];
+  try {
+    await CreditService.releaseReservation(userId, reservationId, "tool_settling").catch(
+      () => {}
+    );
+    return await CreditService.chargeToolCredits(userId, tool.credits, toolId, metadata);
   } catch (err) {
     if (err instanceof CreditServiceError) {
       throw new TierCapabilityError(err.code, err.message, err.statusCode);

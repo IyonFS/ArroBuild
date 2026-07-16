@@ -1715,6 +1715,26 @@ html.learn-custom-cursor-active .learn-shell * {
   color: var(--app-text-primary);
 }
 
+.readme-generator-app {
+  /* Remap v2 vars used oleh mini-tools supaya nyambung ke Neon Blueprint app scope */
+  --color-lime: var(--app-amber);
+  --color-lime-dim: var(--app-amber-dim);
+  --color-bg-base: var(--app-bg-base);
+  --color-bg-surface: var(--app-bg-surface);
+  --color-bg-elevated: var(--app-bg-elevated);
+  --color-bg-hover: var(--app-bg-hover);
+  --color-text-primary: var(--app-text-primary);
+  --color-text-secondary: var(--app-text-secondary);
+  --color-text-tertiary: var(--app-text-tertiary);
+  --color-text-disabled: rgba(240, 243, 250, 0.22);
+  --color-border-default: var(--app-border-default);
+  --color-border-strong: var(--app-border-strong);
+  --color-border-focus: var(--app-amber);
+
+  background: var(--app-bg-base);
+  color: var(--app-text-primary);
+}
+
 .workspace-file-item {
   border-left: 3px solid transparent;
   transition: background 120ms ease, border-color 120ms ease;
