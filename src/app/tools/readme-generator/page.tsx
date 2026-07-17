@@ -91,56 +91,63 @@ export default function ReadmeGeneratorPage() {
 
   return (
     <AppShell tone="marketing" showFooter padded={false}>
-      <div className="tools-app min-h-screen readme-generator-app">
+      <div className="tools-app min-h-screen">
         <section
-          className="relative overflow-hidden border-b"
+          className="relative border-b"
           style={{
             borderColor: "rgba(240,243,250,0.08)",
-            background: "var(--app-bg-blueprint, #131A2C)",
+            background: "#131A2C",
             backgroundImage: "var(--app-blueprint-texture, var(--lp-blueprint-texture))",
-            backgroundSize: "var(--app-blueprint-size, 40px 40px)",
+            backgroundSize: "var(--app-blueprint-size, 32px 32px)",
           }}
         >
-          <div className="relative z-10 mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
+          <div className="relative z-10 mx-auto max-w-6xl px-4 pb-12 pt-10 sm:px-6 sm:pb-14 sm:pt-12">
             <Link
               href="/tools"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                marginBottom: 16,
                 fontFamily: "var(--font-jetbrains-mono), monospace",
                 fontSize: 13,
                 color: "rgba(240,243,250,0.45)",
                 textDecoration: "none",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "var(--app-sky)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "rgba(240,243,250,0.45)";
               }}
             >
               <ArrowLeft size={14} />
               Semua mini tools
             </Link>
 
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "6px 12px",
-                borderRadius: 6,
-                fontFamily: "var(--font-jetbrains-mono), monospace",
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                background: "rgba(56,189,248,0.1)",
-                border: "0.5px solid rgba(56,189,248,0.35)",
-                color: "var(--app-sky)",
-              }}
-            >
-              Mini Tools · {TOOL.credits} kredit
-            </span>
+            <div style={{ marginTop: 20, marginBottom: 16 }}>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 12px",
+                  borderRadius: 6,
+                  fontFamily: "var(--font-jetbrains-mono), monospace",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  background: "rgba(56,189,248,0.1)",
+                  border: "0.5px solid rgba(56,189,248,0.35)",
+                  color: "var(--app-sky)",
+                }}
+              >
+                Mini Tools · {TOOL.credits} kredit
+              </span>
+            </div>
 
             <h1
-              className="mb-4 mt-4 font-unbounded text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl"
+              className="mb-3 font-unbounded text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl"
               style={{ color: "var(--app-text-primary)", fontWeight: 800 }}
             >
               README Generator
@@ -188,7 +195,12 @@ export default function ReadmeGeneratorPage() {
                     }))
                   }
                   onBack={() => goTo(1)}
-                  onNext={() => goTo(3, 2)}
+                  onNext={() => {
+                    if (!state.category) {
+                      setState((s) => ({ ...s, category: "repository" }));
+                    }
+                    goTo(3, 2);
+                  }}
                 />
               )}
 
@@ -197,13 +209,24 @@ export default function ReadmeGeneratorPage() {
                   repoUrl={state.repoUrl}
                   confirmedTechStack={state.confirmedTechStack}
                   manual={state.manual}
-                  onRepoUrlChange={(repoUrl) => setState((s) => ({ ...s, repoUrl }))}
+                  useOldReadme={state.useOldReadme}
+                  existingReadme={state.existingReadme}
+                  onRepoUrlChange={(repoUrl) =>
+                    setState((s) => ({
+                      ...s,
+                      repoUrl,
+                      existingReadme: null,
+                      useOldReadme: null,
+                      confirmedTechStack: "",
+                    }))
+                  }
                   onDetected={(data) =>
                     setState((s) => ({
                       ...s,
                       projectName: data.projectName,
                       confirmedTechStack: data.techStack,
                       existingReadme: data.existingReadme,
+                      useOldReadme: data.existingReadme ? null : false,
                       manual: {
                         ...s.manual,
                         projectName: data.projectName,
@@ -213,7 +236,11 @@ export default function ReadmeGeneratorPage() {
                     }))
                   }
                   onTechStackChange={(confirmedTechStack) =>
-                    setState((s) => ({ ...s, confirmedTechStack }))
+                    setState((s) => ({
+                      ...s,
+                      confirmedTechStack,
+                      manual: { ...s.manual, techStack: confirmedTechStack },
+                    }))
                   }
                   onManualChange={(manual) => setState((s) => ({ ...s, manual }))}
                   onUseOldReadme={(use) => setState((s) => ({ ...s, useOldReadme: use }))}
@@ -222,7 +249,12 @@ export default function ReadmeGeneratorPage() {
                     goTo(2);
                   }}
                   onBack={() => goTo(1)}
-                  onNext={() => goTo(3, 2)}
+                  onNext={() => {
+                    if (!state.category) {
+                      setState((s) => ({ ...s, category: "repository" }));
+                    }
+                    goTo(3, 2);
+                  }}
                 />
               )}
 
@@ -231,7 +263,12 @@ export default function ReadmeGeneratorPage() {
                   value={state.manual}
                   onChange={(manual) => setState((s) => ({ ...s, manual }))}
                   onBack={() => goTo(1)}
-                  onNext={() => goTo(3, 2)}
+                  onNext={() => {
+                    if (!state.category) {
+                      setState((s) => ({ ...s, category: "repository" }));
+                    }
+                    goTo(3, 2);
+                  }}
                 />
               )}
 

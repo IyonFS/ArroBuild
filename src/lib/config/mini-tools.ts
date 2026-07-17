@@ -1,6 +1,10 @@
 import type { ModelClassId } from "@/lib/config/tiers";
 import { TIER, type TierId } from "@/lib/config/tiers";
 import {
+  buildCopyStudioPrompt,
+  COPY_STUDIO_CREDITS,
+} from "@/lib/config/copy-studio-prompt";
+import {
   buildReadmePrompt,
   recordToReadmeInput,
 } from "@/lib/config/readme-prompt";
@@ -10,7 +14,7 @@ export type MiniToolId =
   | "mvp-scope-cutter"
   | "stitch-composer"
   | "readme-generator"
-  | "landing-copy"
+  | "copy-studio"
   | "schema-visualizer";
 
 export interface MiniToolDefinition {
@@ -53,10 +57,6 @@ const STITCH_SYSTEM = `You compose a paste-ready prompt for Google Stitch (Googl
 Use design tokens, typography, spacing, and product context provided.
 Structure: product summary, screen goal, layout, components, color/type tokens, interaction notes, export hint (Tailwind/HTML).
 Output ONLY the Stitch prompt.`;
-
-const LANDING_COPY_SYSTEM = `You are a conversion copywriter for indie SaaS landing pages.
-From the PRD/context, write: hero headline + subhead, 3 value props (title + 1 sentence), social proof placeholder line, primary CTA text, FAQ (3 Q&A).
-Format as clean markdown sections. Same language as input.`;
 
 const SCHEMA_SYSTEM = `You are a database architect. From the architecture/schema description, output:
 1. Mermaid erDiagram block (valid syntax)
@@ -153,25 +153,22 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     ],
     buildPrompt: (input) => buildReadmePrompt(recordToReadmeInput(input)),
   },
-  "landing-copy": {
-    id: "landing-copy",
-    name: "Landing Page Copy",
-    description: "Hero, value props, dan FAQ dari PRD.",
-    credits: 108,
+  "copy-studio": {
+    id: "copy-studio",
+    name: "Copy Studio",
+    description:
+      "Script copy landing page per section — dari template, diskusi, atau screenshot.",
+    credits: COPY_STUDIO_CREDITS.template,
     modelClass: "MENENGAH",
     maxOutputTokens: 2500,
-    minTier: TIER.PRO_MAX,
+    minTier: TIER.PRO,
     fields: [
-      {
-        key: "prd",
-        label: "PRD / deskripsi produk",
-        type: "textarea",
-        placeholder: "Paste ringkasan PRD atau value proposition...",
-        required: true,
-      },
+      { key: "mode", label: "Mode", type: "text", required: true },
+      { key: "productName", label: "Nama produk", type: "text" },
+      { key: "targetUser", label: "Target user", type: "text" },
+      { key: "mainValue", label: "Value utama", type: "textarea" },
     ],
-    buildPrompt: (input) =>
-      `${LANDING_COPY_SYSTEM}\n\nPRD:\n${input.prd ?? ""}`,
+    buildPrompt: (input) => buildCopyStudioPrompt(input),
   },
   "schema-visualizer": {
     id: "schema-visualizer",

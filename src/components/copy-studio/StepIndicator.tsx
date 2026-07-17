@@ -1,21 +1,22 @@
 "use client";
 
-import type { Step } from "./types";
+import type { WizardStep } from "./types";
 
 interface Props {
-  currentStep: Step;
+  currentStep: WizardStep;
   onGoTo: (step: 1 | 2 | 3) => void;
   completedSteps: Set<number>;
 }
 
 const STEPS = [
-  { num: 1 as const, label: "Identitas" },
+  { num: 1 as const, label: "Mode" },
   { num: 2 as const, label: "Konten" },
-  { num: 3 as const, label: "Desain" },
+  { num: 3 as const, label: "Generate" },
 ];
 
 export default function StepIndicator({ currentStep, onGoTo, completedSteps }: Props) {
-  const currentNum = currentStep === "result" ? 4 : (currentStep as number);
+  const isResult = currentStep === "result";
+  const currentNum = isResult ? 4 : (currentStep as number);
 
   return (
     <div className="w-full">
@@ -24,7 +25,7 @@ export default function StepIndicator({ currentStep, onGoTo, completedSteps }: P
           className="h-px transition-all duration-500"
           style={{
             background: "var(--app-sky)",
-            width: `${((currentNum - 1) / 3) * 100}%`,
+            width: isResult ? "100%" : `${((currentNum - 1) / 3) * 100}%`,
           }}
         />
       </div>
@@ -51,9 +52,7 @@ export default function StepIndicator({ currentStep, onGoTo, completedSteps }: P
                 className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold sm:h-7 sm:w-7 sm:text-[11px]"
                 style={{
                   background: active || done ? "rgba(56,189,248,0.15)" : "transparent",
-                  border: `1.5px solid ${
-                    active || done ? "var(--app-sky)" : "var(--color-border-default)"
-                  }`,
+                  border: `1.5px solid ${active || done ? "var(--app-sky)" : "var(--color-border-default)"}`,
                   color: active || done ? "var(--app-sky)" : "var(--color-text-tertiary)",
                 }}
               >

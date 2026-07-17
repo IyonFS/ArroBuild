@@ -88,13 +88,20 @@ function SkillInput({
           <span
             key={skill}
             className="flex items-center gap-1 font-mono text-xs px-2.5 py-1 rounded-lg"
-            style={{ background: "rgba(255,176,32,0.1)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.3)" }}
+            style={{
+              background: "rgba(255,176,32,0.1)",
+              color: "var(--app-amber)",
+              border: "0.5px solid rgba(255,176,32,0.3)",
+            }}
           >
             {skill}
             <button
-              onClick={(e) => { e.stopPropagation(); remove(skill); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                remove(skill);
+              }}
               className="ml-0.5 opacity-60 hover:opacity-100"
-              style={{ color: "var(--color-lime)", lineHeight: 1 }}
+              style={{ color: "var(--app-amber)", lineHeight: 1 }}
             >
               ✕
             </button>
@@ -188,7 +195,7 @@ function ProyekCard({
         <div className="flex items-center gap-3">
           <span
             className="font-mono text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(255,176,32,0.1)", color: "var(--color-lime)" }}
+            style={{ background: "rgba(255,176,32,0.1)", color: "var(--app-amber)" }}
           >
             {index + 1}
           </span>
@@ -261,7 +268,7 @@ function ProyekCard({
                   style={{
                     background: proyek.tipe === t ? "rgba(255,176,32,0.1)" : "var(--color-bg-surface)",
                     border: proyek.tipe === t ? "0.5px solid rgba(255,176,32,0.4)" : "0.5px solid var(--color-border-default)",
-                    color: proyek.tipe === t ? "var(--color-lime)" : "var(--color-text-secondary)",
+                    color: proyek.tipe === t ? "var(--app-amber)" : "var(--color-text-secondary)",
                   }}
                 >
                   {t}
@@ -355,22 +362,18 @@ export default function KontenStep({ profesi, value, onChange, onNext, onBack }:
   const canNext = filledProyek.length >= 1;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      {/* Header */}
+    <div className="mx-auto max-w-2xl">
       <div className="mb-8">
-        <span
-          className="font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full mb-4 inline-block"
-          style={{ background: "rgba(255,176,32,0.08)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.25)" }}
-        >
-          Step 2 of 3 — Konten
-        </span>
         <h2
-          className="font-unbounded font-bold text-xl sm:text-2xl mb-2"
-          style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
+          className="mb-2 font-unbounded text-xl font-bold sm:text-[22px]"
+          style={{ color: "var(--color-text-primary)" }}
         >
           Skills & proyek
         </h2>
-        <p className="font-mono text-sm" style={{ color: "var(--color-text-secondary)" }}>
+        <p
+          className="font-mono text-[13.5px] leading-relaxed"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
           Isi proyek dan skill yang ingin ditampilkan di portfolio.
         </p>
       </div>
@@ -441,23 +444,42 @@ export default function KontenStep({ profesi, value, onChange, onNext, onBack }:
                 border: "0.5px dashed var(--color-border-strong)",
                 color: "var(--color-text-tertiary)",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,176,32,0.3)"; e.currentTarget.style.color = "var(--color-lime)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border-strong)"; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,176,32,0.3)";
+                e.currentTarget.style.color = "var(--app-amber)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--color-border-strong)";
+                e.currentTarget.style.color = "var(--color-text-tertiary)";
+              }}
             >
               + Tambah Proyek
             </button>
           )}
         </div>
 
-        {/* Layanan — optional accordion */}
         <div>
           <button
-            onClick={() => { setShowLayanan((v) => !v); if (!showLayanan && value.layanan.length === 0) addLayanan(); }}
-            className="font-mono text-xs flex items-center gap-2 transition-colors"
+            type="button"
+            onClick={() => {
+              setShowLayanan((v) => !v);
+              if (!showLayanan && value.layanan.length === 0) addLayanan();
+            }}
+            className="flex items-center gap-2 font-mono text-xs transition-colors"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            <span style={{ transform: showLayanan ? "rotate(90deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▶</span>
-            {showLayanan ? "Sembunyikan" : "▼ Tambah layanan / services (untuk yang terima freelance)"}
+            <span
+              style={{
+                transform: showLayanan ? "rotate(90deg)" : "none",
+                display: "inline-block",
+                transition: "transform 0.2s",
+              }}
+            >
+              ▶
+            </span>
+            {showLayanan
+              ? "Sembunyikan layanan"
+              : "Tambah layanan / services (untuk freelance)"}
           </button>
 
           {showLayanan && (
@@ -520,27 +542,17 @@ export default function KontenStep({ profesi, value, onChange, onNext, onBack }:
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="px-5 py-3 rounded-xl font-mono text-sm transition-all"
-          style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)", border: "0.5px solid var(--color-border-default)" }}
-        >
+      <div className="flex justify-between gap-3">
+        <button type="button" className="btn btn-ghost" onClick={onBack}>
           ← Kembali
         </button>
         <button
+          type="button"
+          className="btn btn-primary"
           onClick={onNext}
           disabled={!canNext}
-          className="flex-1 py-3 rounded-xl font-mono font-bold text-sm transition-all"
-          style={{
-            background: canNext ? "var(--color-lime)" : "var(--color-bg-elevated)",
-            color: canNext ? "#0D1321" : "var(--color-text-disabled, rgba(255,255,255,0.2))",
-            border: canNext ? "none" : "0.5px solid var(--color-border-default)",
-            cursor: canNext ? "pointer" : "not-allowed",
-          }}
         >
-          {canNext ? "Lanjut ke Desain →" : "Isi minimal 1 proyek dulu"}
+          {canNext ? "Lanjut →" : "Isi minimal 1 proyek dulu"}
         </button>
       </div>
     </div>

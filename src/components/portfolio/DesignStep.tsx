@@ -43,22 +43,18 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
   const previewText = value.themeId === "custom" ? (value.customText || "#FFFFFF") : (activeTheme?.text || "#FFFFFF");
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      {/* Header */}
+    <div className="mx-auto max-w-2xl">
       <div className="mb-8">
-        <span
-          className="font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full mb-4 inline-block"
-          style={{ background: "rgba(255,176,32,0.08)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.25)" }}
-        >
-          Step 3 of 3 — Desain
-        </span>
         <h2
-          className="font-unbounded font-bold text-xl sm:text-2xl mb-2"
-          style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
+          className="mb-2 font-unbounded text-xl font-bold sm:text-[22px]"
+          style={{ color: "var(--color-text-primary)" }}
         >
           Tampilan & visual
         </h2>
-        <p className="font-mono text-sm" style={{ color: "var(--color-text-secondary)" }}>
+        <p
+          className="font-mono text-[13.5px] leading-relaxed"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
           Pilih warna, font, dan layout portfolio-mu.
         </p>
       </div>
@@ -89,7 +85,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                     <div className="w-4 h-4 rounded" style={{ background: theme.text, border: "0.5px solid rgba(255,255,255,0.1)" }} />
                   </div>
                   <div>
-                    <p className="font-mono text-[11px] font-semibold" style={{ color: active ? "var(--color-lime)" : "var(--color-text-primary)" }}>
+                    <p className="font-mono text-[11px] font-semibold" style={{ color: active ? "var(--app-amber)" : "var(--color-text-primary)" }}>
                       {theme.name}
                     </p>
                     <p className="font-mono text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
@@ -108,10 +104,9 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
             style={{
               background: value.themeId === "custom" ? "rgba(255,176,32,0.08)" : "var(--color-bg-elevated)",
               border: value.themeId === "custom" ? "1px solid rgba(255,176,32,0.45)" : "0.5px solid var(--color-border-default)",
-              color: value.themeId === "custom" ? "var(--color-lime)" : "var(--color-text-secondary)",
+              color: value.themeId === "custom" ? "var(--app-amber)" : "var(--color-text-secondary)",
             }}
           >
-            <span>✏️</span>
             <span>Custom — input HEX manual</span>
           </button>
 
@@ -206,15 +201,15 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                   <div
                     className="w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0"
                     style={{
-                      borderColor: active ? "var(--color-lime)" : "var(--color-border-strong)",
-                      background: active ? "var(--color-lime)" : "transparent",
+                      borderColor: active ? "var(--app-amber)" : "var(--color-border-strong)",
+                      background: active ? "var(--app-amber)" : "transparent",
                     }}
                   >
                     {active && <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#0D1321" }} />}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-sm font-semibold" style={{ color: active ? "var(--color-lime)" : "var(--color-text-primary)" }}>
+                      <span className="font-mono text-sm font-semibold" style={{ color: active ? "var(--app-amber)" : "var(--color-text-primary)" }}>
                         {fp.label}
                       </span>
                       {fp.id !== "ai-pick" && (
@@ -249,7 +244,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                   style={{
                     background: active ? "rgba(255,176,32,0.08)" : "var(--color-bg-elevated)",
                     border: active ? "1px solid rgba(255,176,32,0.45)" : "0.5px solid var(--color-border-default)",
-                    color: active ? "var(--color-lime)" : "var(--color-text-secondary)",
+                    color: active ? "var(--app-amber)" : "var(--color-text-secondary)",
                   }}
                 >
                   {vibe}
@@ -262,7 +257,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
               style={{
                 background: !value.vibe ? "rgba(255,176,32,0.08)" : "var(--color-bg-elevated)",
                 border: !value.vibe ? "1px solid rgba(255,176,32,0.45)" : "0.5px solid var(--color-border-default)",
-                color: !value.vibe ? "var(--color-lime)" : "var(--color-text-secondary)",
+                color: !value.vibe ? "var(--app-amber)" : "var(--color-text-secondary)",
               }}
             >
               🤖 Biarkan AI pilih
@@ -305,21 +300,21 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                     >
                       {id === "centered" ? (
                         <div className="w-full flex flex-col items-center justify-center gap-0.5">
-                          <div className="h-1.5 w-10 rounded" style={{ background: active ? "var(--color-lime)" : "rgba(255,255,255,0.2)" }} />
+                          <div className="h-1.5 w-10 rounded" style={{ background: active ? "var(--app-amber)" : "rgba(255,255,255,0.2)" }} />
                           <div className="h-1 w-7 rounded" style={{ background: "rgba(255,255,255,0.15)" }} />
                           <div className="h-1 w-6 rounded" style={{ background: "rgba(255,255,255,0.1)" }} />
                         </div>
                       ) : (
                         <>
                           <div className="flex-1 flex flex-col justify-center gap-0.5 pl-1">
-                            <div className="h-1.5 w-full rounded" style={{ background: active ? "var(--color-lime)" : "rgba(255,255,255,0.2)" }} />
+                            <div className="h-1.5 w-full rounded" style={{ background: active ? "var(--app-amber)" : "rgba(255,255,255,0.2)" }} />
                             <div className="h-1 w-3/4 rounded" style={{ background: "rgba(255,255,255,0.15)" }} />
                           </div>
                           <div className="w-6 rounded m-0.5" style={{ background: "rgba(255,255,255,0.1)" }} />
                         </>
                       )}
                     </div>
-                    <p className="font-mono text-xs font-semibold" style={{ color: active ? "var(--color-lime)" : "var(--color-text-primary)" }}>
+                    <p className="font-mono text-xs font-semibold" style={{ color: active ? "var(--app-amber)" : "var(--color-text-primary)" }}>
                       {label}
                     </p>
                     <p className="font-mono text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
@@ -347,7 +342,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                     style={{
                       background: active ? "rgba(255,176,32,0.08)" : "var(--color-bg-surface)",
                       border: active ? "0.5px solid rgba(255,176,32,0.4)" : "0.5px solid var(--color-border-default)",
-                      color: active ? "var(--color-lime)" : "var(--color-text-secondary)",
+                      color: active ? "var(--app-amber)" : "var(--color-text-secondary)",
                     }}
                   >
                     {label}
@@ -373,7 +368,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                     style={{
                       background: active ? "rgba(255,176,32,0.08)" : "var(--color-bg-surface)",
                       border: active ? "0.5px solid rgba(255,176,32,0.4)" : "0.5px solid var(--color-border-default)",
-                      color: active ? "var(--color-lime)" : "var(--color-text-secondary)",
+                      color: active ? "var(--app-amber)" : "var(--color-text-secondary)",
                       borderRadius: id === "sharp" ? 4 : id === "slightly-rounded" ? 8 : 10,
                     }}
                   >
@@ -411,7 +406,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                     <div
                       className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all"
                       style={{
-                        background: checked ? "var(--color-lime)" : "transparent",
+                        background: checked ? "var(--app-amber)" : "transparent",
                         border: checked ? "none" : "0.5px solid var(--color-border-strong)",
                       }}
                     >
@@ -424,7 +419,7 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
                     <span style={{ color: checked ? "var(--color-text-primary)" : "var(--color-text-tertiary)" }}>
                       {label}
                       {required && (
-                        <span className="ml-1 font-bold" style={{ color: "var(--color-lime)" }}>
+                        <span className="ml-1 font-bold" style={{ color: "var(--app-amber)" }}>
                           *
                         </span>
                       )}
@@ -437,20 +432,11 @@ export default function DesignStep({ value, onChange, onNext, onBack }: Props) {
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="px-5 py-3 rounded-xl font-mono text-sm transition-all"
-          style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)", border: "0.5px solid var(--color-border-default)" }}
-        >
+      <div className="flex justify-between gap-3">
+        <button type="button" className="btn btn-ghost" onClick={onBack}>
           ← Kembali
         </button>
-        <button
-          onClick={onNext}
-          className="flex-1 py-3 rounded-xl font-mono font-bold text-sm transition-all"
-          style={{ background: "var(--color-lime)", color: "#0D1321" }}
-        >
+        <button type="button" className="btn btn-primary" onClick={onNext}>
           Generate Prompt →
         </button>
       </div>

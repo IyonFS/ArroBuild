@@ -72,7 +72,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
   };
 
   const borderColor: Record<ToastType, string> = {
-    success: "rgba(204,255,0,0.2)",
+    success: "rgba(255,176,32,0.2)",
     error: "rgba(248,113,113,0.3)",
     info: "var(--bg-border)",
   };

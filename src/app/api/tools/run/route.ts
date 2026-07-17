@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { generateWithFallback } from "@/lib/ai/generate-with-fallback";
+import {
+  generateVision,
+  isOpenRouterConfigured,
+} from "@/lib/ai/openrouter-vision";
 import { getSupabaseUser, syncDbUser } from "@/lib/auth";
+import {
+  buildScreenshotVisionPrompt,
+  estimateCopyStudioCredits,
+} from "@/lib/config/copy-studio-prompt";
 import { MINI_TOOLS, type MiniToolId } from "@/lib/config/mini-tools";
 import { CreditService } from "@/lib/services/credit.service";
 import {
@@ -15,13 +23,34 @@ import { TierCapabilityError } from "@/lib/services/tier-capabilities";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
+const ImageSchema = z.object({
+  sectionLabel: z.string().optional(),
+  dataUrl: z.string().min(32).max(6_000_000),
+});
+
 const BodySchema = z.object({
   toolId: z.string(),
   input: z.record(z.string(), z.string()),
+  images: z.array(ImageSchema).max(12).optional(),
   reserve: z.boolean().optional(),
 });
 
-const TOOLS_WITH_RESERVE: MiniToolId[] = ["readme-generator"];
+const TOOLS_WITH_RESERVE: MiniToolId[] = ["readme-generator", "copy-studio"];
+
+function resolveCredits(
+  toolId: MiniToolId,
+  input: Record<string, string>,
+  imageCount: number
+): number {
+  if (toolId === "copy-studio") {
+    return estimateCopyStudioCredits({
+      mode: input.mode ?? "scratch",
+      scratchSubMode: input.scratchSubMode,
+      sectionCount: imageCount > 0 ? imageCount : Number(input.sectionCount || 1),
+    });
+  }
+  return MINI_TOOLS[toolId].credits;
+}
 
 export async function POST(req: NextRequest) {
   const supabaseUser = await getSupabaseUser();
@@ -58,6 +87,27 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const images = parsed.data.images ?? [];
+
+  if (toolId === "copy-studio" && parsed.data.input.mode === "screenshot") {
+    if (images.length === 0) {
+      return NextResponse.json(
+        { error: "Mode Screenshot membutuhkan minimal 1 gambar." },
+        { status: 422 }
+      );
+    }
+    if (!isOpenRouterConfigured()) {
+      return NextResponse.json(
+        {
+          error:
+            "Vision belum dikonfigurasi (OPENROUTER_API_KEY). Hubungi admin atau coba mode Template.",
+          code: "VISION_NOT_CONFIGURED",
+        },
+        { status: 503 }
+      );
+    }
+  }
+
   try {
     await assertMiniToolAccess(dbUser.id, toolId);
   } catch (err) {
@@ -67,40 +117,73 @@ export async function POST(req: NextRequest) {
     throw err;
   }
 
+  const creditsNeeded = resolveCredits(toolId, parsed.data.input, images.length);
   const useReserve = TOOLS_WITH_RESERVE.includes(toolId);
   let reservationId: string | null = null;
 
   try {
     if (useReserve) {
-      const reservation = await reserveMiniToolCredits(dbUser.id, toolId, {
-        mode: parsed.data.input.mode,
-        templateId: parsed.data.input.templateId,
-      });
+      const reservation = await reserveMiniToolCredits(
+        dbUser.id,
+        toolId,
+        {
+          mode: parsed.data.input.mode,
+          templateId: parsed.data.input.templateId,
+          sectionCount: images.length || undefined,
+        },
+        creditsNeeded
+      );
       reservationId = reservation.reservationId;
     }
 
-    const prompt = tool.buildPrompt(parsed.data.input);
-    const output = await generateWithFallback(prompt, {
-      modelClass: tool.modelClass,
-      temperature: 0.6,
-      maxOutputTokens: tool.maxOutputTokens,
-    });
+    let output: string;
+
+    if (toolId === "copy-studio" && parsed.data.input.mode === "screenshot") {
+      const visionPrompt = buildScreenshotVisionPrompt({
+        productName: parsed.data.input.productName,
+        targetUser: parsed.data.input.targetUser,
+        mainValue: parsed.data.input.mainValue,
+        sectionLabels: images.map(
+          (img, i) => img.sectionLabel?.trim() || `Section ${i + 1}`
+        ),
+      });
+      output = await generateVision({
+        prompt: visionPrompt,
+        images: images.map((img) => ({ url: img.dataUrl })),
+        temperature: 0.4,
+        maxOutputTokens: Math.min(tool.maxOutputTokens * 2, 6000),
+      });
+    } else {
+      const prompt = tool.buildPrompt(parsed.data.input);
+      output = await generateWithFallback(prompt, {
+        modelClass: tool.modelClass,
+        temperature: 0.6,
+        maxOutputTokens: tool.maxOutputTokens,
+      });
+    }
 
     let balanceAfter: number;
     if (useReserve && reservationId) {
-      const settled = await settleMiniToolReservation(dbUser.id, reservationId, toolId, {
-        mode: parsed.data.input.mode,
-        templateId: parsed.data.input.templateId,
-      });
+      const settled = await settleMiniToolReservation(
+        dbUser.id,
+        reservationId,
+        toolId,
+        {
+          mode: parsed.data.input.mode,
+          templateId: parsed.data.input.templateId,
+          sectionCount: images.length || undefined,
+        },
+        creditsNeeded
+      );
       balanceAfter = settled.balanceAfter;
     } else {
-      const charged = await runMiniToolCharge(dbUser.id, toolId);
+      const charged = await runMiniToolCharge(dbUser.id, toolId, creditsNeeded);
       balanceAfter = charged.balanceAfter;
     }
 
     return NextResponse.json({
       output,
-      creditsUsed: tool.credits,
+      creditsUsed: creditsNeeded,
       balanceAfter,
       toolId,
     });
@@ -109,7 +192,7 @@ export async function POST(req: NextRequest) {
       await CreditService.releaseReservation(
         dbUser.id,
         reservationId,
-        "readme_generation_failed"
+        "tool_generation_failed"
       ).catch(() => {});
     }
 

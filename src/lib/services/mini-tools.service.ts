@@ -16,6 +16,7 @@ const PRO_DEFAULT_TOOLS: MiniToolId[] = [
   "prompt-doctor",
   "mvp-scope-cutter",
   "readme-generator",
+  "copy-studio",
 ];
 
 export async function assertMiniToolAccess(
@@ -88,11 +89,14 @@ export async function assertMiniToolAccess(
 
 export async function runMiniToolCharge(
   userId: string,
-  toolId: MiniToolId
+  toolId: MiniToolId,
+  creditsOverride?: number,
+  metadata?: Record<string, unknown>
 ): Promise<{ balanceAfter: number }> {
   const tool = MINI_TOOLS[toolId];
+  const amount = creditsOverride ?? tool.credits;
   try {
-    return await CreditService.chargeToolCredits(userId, tool.credits, toolId);
+    return await CreditService.chargeToolCredits(userId, amount, toolId, metadata);
   } catch (err) {
     if (err instanceof CreditServiceError) {
       throw new TierCapabilityError(err.code, err.message, err.statusCode);
@@ -104,12 +108,14 @@ export async function runMiniToolCharge(
 export async function reserveMiniToolCredits(
   userId: string,
   toolId: MiniToolId,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
+  creditsOverride?: number
 ) {
   const tool = MINI_TOOLS[toolId];
+  const amount = creditsOverride ?? tool.credits;
   const projectId = `tool-${toolId}-${Date.now()}`;
   try {
-    return await CreditService.reserveCredit(userId, tool.credits, projectId, {
+    return await CreditService.reserveCredit(userId, amount, projectId, {
       tool: toolId,
       ...metadata,
     });
@@ -125,14 +131,16 @@ export async function settleMiniToolReservation(
   userId: string,
   reservationId: string,
   toolId: MiniToolId,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
+  creditsOverride?: number
 ): Promise<{ balanceAfter: number }> {
   const tool = MINI_TOOLS[toolId];
+  const amount = creditsOverride ?? tool.credits;
   try {
     await CreditService.releaseReservation(userId, reservationId, "tool_settling").catch(
       () => {}
     );
-    return await CreditService.chargeToolCredits(userId, tool.credits, toolId, metadata);
+    return await CreditService.chargeToolCredits(userId, amount, toolId, metadata);
   } catch (err) {
     if (err instanceof CreditServiceError) {
       throw new TierCapabilityError(err.code, err.message, err.statusCode);

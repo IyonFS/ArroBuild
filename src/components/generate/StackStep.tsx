@@ -875,7 +875,7 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                         style={{
                           background: ds.id === "apple" || ds.id === "vercel" || ds.id === "minimal" 
                             ? "#FFFFFF" 
-                            : ds.id === "neo-brutalist" ? "#CCFF00" 
+                            : ds.id === "neo-brutalist" ? "#FFB020" 
                             : "rgba(255,255,255,0.04)",
                           borderBottom: "1px solid rgba(255,255,255,0.05)"
                         }}

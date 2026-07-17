@@ -5,17 +5,18 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ===== ArroBuild Design System v2.0 ===== */
-/* Dark mode default · Lime + Orange · Unbounded + JetBrains Mono */
+/* ===== ArroBuild Design System v3.1 "Neon Blueprint" ===== */
+/* Primary accent: Amber (#FFB020) + Sky (#38BDF8). Lime (#CCFF00) retired. */
+/* --color-lime* kept as aliases → amber so legacy class names still resolve. */
 
 :root {
   /* ── Brand Colors ── */
-  --color-lime: #CCFF00;
-  --color-lime-dim: #AADA00;
+  --color-lime: #FFB020; /* alias → amber (legacy name; do not use neon #CCFF00) */
+  --color-lime-dim: #E89D12;
   --color-orange: #FF5C1A;
   --color-orange-dim: #D94A12;
 
-  /* ── Dark Mode Surfaces (soft charcoal) ── */
+  /* ── Dark Mode Surfaces (soft charcoal) — prefer --app-* in new UI ── */
   --color-bg-base: #1A1A1A;
   --color-bg-surface: #242424;
   --color-bg-elevated: #2C2C2C;
@@ -27,13 +28,13 @@
   --color-text-secondary: rgba(255,255,255,0.68);
   --color-text-tertiary: rgba(255,255,255,0.42);
   --color-text-disabled: rgba(255,255,255,0.22);
-  --color-text-lime: #CCFF00;
+  --color-text-lime: #FFB020;
   --color-text-orange: #FF5C1A;
 
   /* ── Border ── */
   --color-border-default: rgba(255,255,255,0.11);
   --color-border-strong: rgba(255,255,255,0.2);
-  --color-border-focus: #CCFF00;
+  --color-border-focus: #FFB020;
 
   /* ── Semantic ── */
   --color-success: #22C55E;
@@ -42,7 +43,7 @@
   --color-info: #3B82F6;
 
   /* ── Aliases ── */
-  --color-primary-500: #CCFF00;
+  --color-primary-500: #FFB020;
   --color-bg-950: #1A1A1A;
 
   /* ── Spacing (4px grid) ── */
@@ -80,8 +81,8 @@
   --card-foreground: #F2F2EB;
   --popover: #262626;
   --popover-foreground: #F2F2EB;
-  --primary: #CCFF00;
-  --primary-foreground: #161616;
+  --primary: #FFB020;
+  --primary-foreground: #0D1321;
   --secondary: #262626;
   --secondary-foreground: #F2F2EB;
   --muted: #1E1E1E;
@@ -91,16 +92,16 @@
   --destructive: #EF4444;
   --border: rgba(255,255,255,0.11);
   --input: rgba(255,255,255,0.11);
-  --ring: #CCFF00;
+  --ring: #FFB020;
   --radius: 0.5rem;
   --sidebar: #1E1E1E;
   --sidebar-foreground: #F2F2EB;
-  --sidebar-primary: #CCFF00;
-  --sidebar-primary-foreground: #161616;
+  --sidebar-primary: #FFB020;
+  --sidebar-primary-foreground: #0D1321;
   --sidebar-accent: #262626;
   --sidebar-accent-foreground: #F2F2EB;
   --sidebar-border: rgba(255,255,255,0.11);
-  --sidebar-ring: #CCFF00;
+  --sidebar-ring: #FFB020;
 }
 
 /* ===== Design System v3.1 "Neon Blueprint" ===== */
@@ -170,16 +171,14 @@
 }
 
 /* ===== Backwards compatibility — old green+bg vars ===== */
-/* These map old variable names to new v2 tokens so generate/dashboard/auth
-   components continue working until they are individually migrated. */
+/* Green/lime legacy names → amber (Neon Blueprint). */
 :root {
-  /* Old green vars → lime */
-  --green-500: var(--color-lime);
-  --green-600: var(--color-lime-dim);
-  --green-900: rgba(204,255,0,0.1);
-  --green-text: var(--color-lime);
-  --green-muted: rgba(204,255,0,0.2);
-  --green-border: rgba(204,255,0,0.3);
+  --green-500: var(--app-amber);
+  --green-600: var(--app-amber-dim);
+  --green-900: rgba(255,176,32,0.1);
+  --green-text: var(--app-amber);
+  --green-muted: rgba(255,176,32,0.2);
+  --green-border: rgba(255,176,32,0.3);
 
   /* Old bg vars → new surface tokens */
   --bg-base: var(--color-bg-base);
@@ -282,7 +281,7 @@ body {
 }
 
 ::selection {
-  background-color: rgba(204, 255, 0, 0.2);
+  background-color: rgba(255,176,32, 0.2);
   color: #161616;
 }
 
@@ -494,16 +493,16 @@ body {
   cursor: not-allowed;
 }
 
-/* Primary — Lime */
+/* Primary — Amber (Neon Blueprint) */
 .btn-primary {
-  background: var(--color-lime);
-  color: #0A0A0A;
+  background: var(--app-amber, var(--color-lime));
+  color: #0D1321;
   padding: 12px 24px;
   border: none;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--color-lime-dim);
+  background: var(--app-amber-dim, var(--color-lime-dim));
 }
 
 /* Secondary — Outline */
@@ -579,7 +578,7 @@ body {
 
 .input:focus {
   border-color: var(--color-lime);
-  box-shadow: 0 0 0 3px rgba(204,255,0,0.1);
+  box-shadow: 0 0 0 3px rgba(255,176,32,0.1);
 }
 
 .input:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -656,7 +655,7 @@ textarea.input {
 }
 
 .badge-soft-lime {
-  background: rgba(204,255,0,0.12);
+  background: rgba(255,176,32,0.12);
   color: var(--color-lime);
 }
 
@@ -895,8 +894,8 @@ textarea.input {
   --card-foreground: #F2F2EB;
   --popover: #262626;
   --popover-foreground: #F2F2EB;
-  --primary: #CCFF00;
-  --primary-foreground: #161616;
+  --primary: #FFB020;
+  --primary-foreground: #0D1321;
   --secondary: #262626;
   --secondary-foreground: #F2F2EB;
   --muted: #1E1E1E;
@@ -906,15 +905,15 @@ textarea.input {
   --destructive: #EF4444;
   --border: rgba(255,255,255,0.11);
   --input: rgba(255,255,255,0.11);
-  --ring: #CCFF00;
+  --ring: #FFB020;
   --sidebar: #1E1E1E;
   --sidebar-foreground: #F2F2EB;
-  --sidebar-primary: #CCFF00;
-  --sidebar-primary-foreground: #161616;
+  --sidebar-primary: #FFB020;
+  --sidebar-primary-foreground: #0D1321;
   --sidebar-accent: #262626;
   --sidebar-accent-foreground: #F2F2EB;
   --sidebar-border: rgba(255,255,255,0.11);
-  --sidebar-ring: #CCFF00;
+  --sidebar-ring: #FFB020;
 }
 /* ===== Markdown Body Styles ===== */
 .markdown-body h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; font-family: var(--font-unbounded), sans-serif; color: var(--color-text-primary); }
@@ -1408,7 +1407,7 @@ html.learn-custom-cursor-active .learn-shell * {
 }
 
 .dashboard-stat-glow {
-  background: radial-gradient(circle at 20% 0%, rgba(204, 255, 0, 0.06), transparent 55%);
+  background: radial-gradient(circle at 20% 0%, rgba(255,176,32, 0.06), transparent 55%);
 }
 
 .dashboard-stat-label {
@@ -1730,6 +1729,29 @@ html.learn-custom-cursor-active .learn-shell * {
   --color-border-default: var(--app-border-default);
   --color-border-strong: var(--app-border-strong);
   --color-border-focus: var(--app-amber);
+
+  background: var(--app-bg-base);
+  color: var(--app-text-primary);
+}
+
+/* All mini tools (portfolio, copy-studio, scaffolds) — same Neon Blueprint remap */
+.tools-app {
+  --color-lime: var(--app-amber);
+  --color-lime-dim: var(--app-amber-dim);
+  --color-text-lime: var(--app-amber);
+  --color-bg-base: var(--app-bg-base);
+  --color-bg-surface: var(--app-bg-surface);
+  --color-bg-elevated: var(--app-bg-elevated);
+  --color-bg-hover: var(--app-bg-hover);
+  --color-text-primary: var(--app-text-primary);
+  --color-text-secondary: var(--app-text-secondary);
+  --color-text-tertiary: var(--app-text-tertiary);
+  --color-text-disabled: rgba(240, 243, 250, 0.22);
+  --color-border-default: var(--app-border-default);
+  --color-border-strong: var(--app-border-strong);
+  --color-border-focus: var(--app-amber);
+  --primary: var(--app-amber);
+  --ring: var(--app-amber);
 
   background: var(--app-bg-base);
   color: var(--app-text-primary);

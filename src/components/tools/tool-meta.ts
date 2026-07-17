@@ -113,13 +113,13 @@ export const TOOL_SHOWCASE_META: Record<MiniToolId, Omit<ShowcaseToolMeta, "name
     accent: "sky",
     filterKeys: ["all", "core", "prime"],
   },
-  "landing-copy": {
-    id: "landing-copy",
-    tagline: "Hero, value props, FAQ dari PRD",
-    href: "/tools/landing-copy",
+  "copy-studio": {
+    id: "copy-studio",
+    tagline: "Script copy landing page per section",
+    href: "/tools/copy-studio",
     icon: PenLine,
     accent: "amber",
-    filterKeys: ["all", "prime"],
+    filterKeys: ["all", "core", "prime"],
   },
   "schema-visualizer": {
     id: "schema-visualizer",

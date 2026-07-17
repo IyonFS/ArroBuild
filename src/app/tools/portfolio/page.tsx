@@ -99,38 +99,30 @@ export default function PortfolioToolPage() {
             backgroundSize: "var(--app-blueprint-size, 40px 40px)",
           }}
         >
-          <div className="relative z-10 mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-            <div
+          <div className="relative z-10 mx-auto max-w-6xl px-4 pb-12 pt-10 sm:px-6 sm:pb-14 sm:pt-12">
+            <Link
+              href="/tools"
               style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                gap: 16,
-                marginBottom: 20,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                fontSize: 13,
+                color: "rgba(240,243,250,0.45)",
+                textDecoration: "none",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "var(--app-sky)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "rgba(240,243,250,0.45)";
               }}
             >
-              <Link
-                href="/tools"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontFamily: "var(--font-jetbrains-mono), monospace",
-                  fontSize: 13,
-                  color: "rgba(240,243,250,0.45)",
-                  textDecoration: "none",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "#38BDF8";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "rgba(240,243,250,0.45)";
-                }}
-              >
-                <ArrowLeft size={14} />
-                Semua mini tools
-              </Link>
+              <ArrowLeft size={14} />
+              Semua mini tools
+            </Link>
 
+            <div style={{ marginTop: 20, marginBottom: 16 }}>
               <span
                 style={{
                   display: "inline-flex",
@@ -143,9 +135,9 @@ export default function PortfolioToolPage() {
                   fontWeight: 700,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
-                  background: "rgba(56,189,248,0.1)",
-                  border: "0.5px solid rgba(56,189,248,0.35)",
-                  color: "#38BDF8",
+                  background: "rgba(255,176,32,0.1)",
+                  border: "0.5px solid rgba(255,176,32,0.35)",
+                  color: "var(--app-amber)",
                 }}
               >
                 Mini Tools · Gratis
@@ -153,14 +145,14 @@ export default function PortfolioToolPage() {
             </div>
 
             <h1
-              className="mb-4 font-unbounded text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl"
+              className="mb-3 font-unbounded text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl"
               style={{ color: "var(--app-text-primary)", fontWeight: 800 }}
             >
               Portfolio Generator
             </h1>
             <p
               className="max-w-xl font-mono text-sm leading-relaxed sm:text-[15px]"
-              style={{ color: "var(--app-text-secondary)", maxWidth: 480 }}
+              style={{ color: "var(--app-text-secondary)", maxWidth: 520 }}
             >
               Generate prompt super lengkap untuk website portfoliomu. Bawa ke AI favoritmu dan mulai{" "}
               <i>vibe coding</i> hari ini.
@@ -173,11 +165,13 @@ export default function PortfolioToolPage() {
           style={{ background: "var(--app-bg-base)" }}
         >
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
-            <StepIndicator
-              currentStep={currentStep}
-              onGoTo={handleGoTo}
-              completedSteps={completedSteps}
-            />
+            {currentStep !== "result" && (
+              <StepIndicator
+                currentStep={currentStep}
+                onGoTo={handleGoTo}
+                completedSteps={completedSteps}
+              />
+            )}
 
             <div className="mt-8 transition-opacity duration-300">
               {currentStep === 1 && (
