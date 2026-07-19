@@ -8,10 +8,12 @@ import { MINI_TOOL_LIST } from "@/lib/config/mini-tools";
 import {
   PORTFOLIO_SHOWCASE,
   TOOL_SHOWCASE_META,
+  COMING_SOON_TOOLS,
   getAccent,
   tierLabel,
   type ShowcaseFilter,
   type ShowcaseToolMeta,
+  type ComingSoonToolMeta,
 } from "./tool-meta";
 
 const FILTERS: { id: ShowcaseFilter; label: string }[] = [
@@ -281,6 +283,148 @@ function ToolCard({ tool, index }: { tool: ShowcaseToolMeta; index: number }) {
           </span>
         </div>
       </Link>
+    </motion.div>
+  );
+}
+
+function ComingSoonCard({ tool, index }: { tool: ComingSoonToolMeta; index: number }) {
+  const accent = getAccent(tool.accent);
+  const Icon = tool.icon;
+  const tierColor =
+    tool.tierLabel === "Prime"
+      ? "#FFB020"
+      : tool.tierLabel === "Core"
+        ? "#38BDF8"
+        : "rgba(240,243,250,0.55)";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.2) }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          minHeight: 168,
+          padding: 20,
+          borderRadius: 12,
+          background: "rgba(31,42,68,0.5)",
+          border: "0.5px dashed rgba(240,243,250,0.1)",
+          cursor: "default",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Segera badge */}
+        <span
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            padding: "3px 8px",
+            borderRadius: 4,
+            background: "rgba(240,243,250,0.06)",
+            border: "0.5px solid rgba(240,243,250,0.12)",
+            color: "rgba(240,243,250,0.35)",
+          }}
+        >
+          Segera
+        </span>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 12,
+            marginBottom: 14,
+          }}
+        >
+          <span
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 8,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: `${accent.soft}`,
+              color: `${accent.color}80`,
+              border: `0.5px solid ${accent.color}20`,
+              flexShrink: 0,
+            }}
+          >
+            <Icon size={16} strokeWidth={1.75} />
+          </span>
+        </div>
+
+        <h3
+          style={{
+            margin: "0 0 6px",
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            fontSize: 14,
+            fontWeight: 700,
+            color: "rgba(240,243,250,0.45)",
+            letterSpacing: "0.01em",
+          }}
+        >
+          {tool.name}
+        </h3>
+        <p
+          style={{
+            margin: "0 0 16px",
+            flex: 1,
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            fontSize: 12,
+            lineHeight: 1.6,
+            color: "rgba(240,243,250,0.3)",
+          }}
+        >
+          {tool.tagline}
+        </p>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              padding: "3px 8px",
+              borderRadius: 4,
+              color: `${tierColor}80`,
+              border: `0.5px solid ${tierColor}20`,
+              background: `${tierColor}0a`,
+            }}
+          >
+            {tool.tierLabel}
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+              fontSize: 12,
+              color: "rgba(240,243,250,0.2)",
+            }}
+          >
+            {typeof tool.credits === "number" ? `${tool.credits} kredit` : tool.credits}
+          </span>
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -572,8 +716,54 @@ export default function ToolsShowcase({
               ))}
             </div>
           )}
+
+          {/* Coming Soon section */}
+          {filter !== "free" && (() => {
+            const comingSoon = COMING_SOON_TOOLS.filter((t) => t.filterKeys.includes(filter));
+            if (comingSoon.length === 0) return null;
+            return (
+              <div style={{ marginTop: 40 }}>
+                <div style={{ marginBottom: 20 }}>
+                  <h2
+                    style={{
+                      margin: "0 0 6px",
+                      fontFamily: "var(--font-unbounded), Unbounded, sans-serif",
+                      fontSize: 16,
+                      fontWeight: 700,
+                      letterSpacing: "-0.02em",
+                      color: "rgba(240,243,250,0.45)",
+                    }}
+                  >
+                    Segera hadir
+                  </h2>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                      fontSize: 12,
+                      color: "rgba(240,243,250,0.28)",
+                    }}
+                  >
+                    {comingSoon.length} tool dalam pengembangan — belum bisa dipakai
+                  </p>
+                </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gap: 12,
+                    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                  }}
+                >
+                  {comingSoon.map((tool, i) => (
+                    <ComingSoonCard key={tool.id} tool={tool} index={i} />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </section>
+
 
       <style>{`
         @media (min-width: 900px) {

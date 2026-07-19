@@ -165,6 +165,7 @@ export default function GeneratePage() {
     queueMicrotask(() => {
       const forkIdea = sessionStorage.getItem("arrobuild_fork_idea");
       const forkPresets = sessionStorage.getItem("arrobuild_fork_presets");
+      const forkStep = sessionStorage.getItem("arrobuild_fork_step");
       let usedFork = false;
       if (forkIdea) {
         usedFork = true;
@@ -178,7 +179,9 @@ export default function GeneratePage() {
             setContextData({ freeText: forkIdea });
           }
           setIntakeMode("cepat");
-          setStep("product-type");
+          setStep(
+            forkStep === "stack" || forkStep === "presets" ? "stack" : "product-type"
+          );
         } catch {
           /* ignore bad fork payload */
         }
@@ -187,10 +190,18 @@ export default function GeneratePage() {
       if (forkPresets) {
         try {
           setPresets(JSON.parse(forkPresets));
+          if (!forkIdea && (forkStep === "stack" || forkStep === "presets")) {
+            usedFork = true;
+            setIntakeMode("cepat");
+            setStep("stack");
+          }
         } catch {
           /* ignore */
         }
         sessionStorage.removeItem("arrobuild_fork_presets");
+      }
+      if (forkStep) {
+        sessionStorage.removeItem("arrobuild_fork_step");
       }
 
       if (!usedFork) {
@@ -327,10 +338,12 @@ export default function GeneratePage() {
   // Refresh balance when entering review so paywall isn't stale after interview spend
   useEffect(() => {
     if (step === "confirm" || step === "docs") refreshCredits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   useEffect(() => {
     refreshCredits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // When stage changes, auto-apply smart preset for docs
@@ -477,6 +490,7 @@ export default function GeneratePage() {
     }, 1500);
 
     return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isLoggedIn,
     step,

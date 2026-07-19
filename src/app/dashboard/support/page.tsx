@@ -8,9 +8,7 @@ import WhatsAppSupportCard, {
   type WhatsappQuotaDisplay,
 } from "@/components/support/WhatsAppSupportCard";
 import { getDisplayName } from "@/lib/display-name";
-import { deriveQuotaDisplay } from "@/lib/dashboard-quota";
 import { useDashboardMe } from "@/hooks/use-dashboard-me";
-import type { UserPlanStatus } from "@/components/generate/types";
 import { PLAN_STATUS_LABELS } from "@/components/generate/types";
 
 const TIER_LABEL = PLAN_STATUS_LABELS;
@@ -70,7 +68,6 @@ function SupportContent() {
 
   const tierLabel = TIER_LABEL[data.tier];
   const displayName = getDisplayName(data.user.name, data.user.email);
-  const quota = deriveQuotaDisplay(data);
   const tier = data.plan ?? data.tier;
   const initialQuota =
     whatsappQuota ??

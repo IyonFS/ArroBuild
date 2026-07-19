@@ -408,7 +408,7 @@ function QualityIndicator({ value, featureCount }: { value: ContextData; feature
     { label: "Fair", color: "#F59E0B", tip: "Coba tambah info tentang target user atau masalah utama" },
     { label: "Good", color: "#22C55E", tip: "Bagus! Tambah sedikit lagi untuk hasil yang lebih spesifik" },
     { label: "Great", color: "#22C55E", tip: "AI sudah punya konteks yang cukup baik" },
-    { label: "Excellent", color: "#CCFF00", tip: "Konteks sangat lengkap — output AI akan sangat spesifik" },
+    { label: "Excellent", color: "#FFB020", tip: "Konteks sangat lengkap — output AI akan sangat spesifik" },
   ];
   const level = levels[Math.max(0, score - 1)] ?? levels[0];
   const pct = (score / 5) * 100;

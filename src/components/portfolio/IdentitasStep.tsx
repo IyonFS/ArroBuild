@@ -44,13 +44,15 @@ const DEMO_PROFESI = Object.keys(PROFESI_DEMO);
 function inputStyle(focused: boolean) {
   return {
     background: "var(--color-bg-elevated)",
-    border: focused ? "0.5px solid rgba(255,176,32,0.5)" : "0.5px solid var(--color-border-default)",
+    border: focused
+      ? "0.5px solid rgba(255,176,32,0.5)"
+      : "0.5px solid var(--color-border-default)",
     boxShadow: focused ? "0 0 0 3px rgba(255,176,32,0.06)" : "none",
     color: "var(--color-text-primary)",
     padding: "12px 14px",
-    borderRadius: 12,
+    borderRadius: 10,
     width: "100%",
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "var(--font-jetbrains-mono), monospace",
     fontSize: 13,
     outline: "none",
   } as React.CSSProperties;
@@ -70,11 +72,14 @@ function Field({
   return (
     <div className="flex flex-col gap-1.5">
       <label className="flex items-center gap-1.5">
-        <span className="font-mono font-semibold text-sm" style={{ color: "var(--color-text-primary)" }}>
+        <span
+          className="font-mono text-sm font-semibold"
+          style={{ color: "var(--color-text-primary)" }}
+        >
           {label}
         </span>
         {required && (
-          <span className="font-mono text-[10px] font-bold" style={{ color: "var(--color-lime)" }}>
+          <span className="font-mono text-[10px] font-bold" style={{ color: "var(--app-amber)" }}>
             *
           </span>
         )}
@@ -114,55 +119,72 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
     value.tagline.trim();
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      {/* Header */}
+    <div className="mx-auto max-w-2xl">
       <div className="mb-8">
-        <span
-          className="font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full mb-4 inline-block"
-          style={{ background: "rgba(255,176,32,0.08)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.25)" }}
-        >
-          Step 1 of 3 — Identitas
-        </span>
         <h2
-          className="font-unbounded font-bold text-xl sm:text-2xl mb-2"
-          style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
+          className="mb-2 font-unbounded text-xl font-bold sm:text-[22px]"
+          style={{ color: "var(--color-text-primary)" }}
         >
           Siapa kamu?
         </h2>
-        <p className="font-mono text-sm" style={{ color: "var(--color-text-secondary)" }}>
+        <p
+          className="font-mono text-[13.5px] leading-relaxed"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
           Informasi dasar yang akan muncul di hero section portfoliomu.
         </p>
       </div>
 
-      {/* Demo data tip */}
       <div
-        className="flex items-center justify-between px-4 py-3 rounded-xl mb-6"
-        style={{ background: "rgba(255,176,32,0.04)", border: "0.5px solid rgba(255,176,32,0.15)" }}
+        className="mb-6 flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+        style={{
+          background: "rgba(255,176,32,0.06)",
+          border: "0.5px solid rgba(255,176,32,0.22)",
+        }}
       >
         <p className="font-mono text-xs" style={{ color: "var(--color-text-secondary)" }}>
-          💡 Belum tahu mau isi apa?
+          Belum tahu mau isi apa?
         </p>
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <button
+            type="button"
             onClick={() => setShowDemoMenu((v) => !v)}
-            className="font-mono text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
-            style={{ background: "rgba(255,176,32,0.1)", color: "var(--color-lime)", border: "0.5px solid rgba(255,176,32,0.3)" }}
+            className="rounded-lg px-3 py-1.5 font-mono text-xs font-bold transition-all"
+            style={{
+              background: "rgba(255,176,32,0.12)",
+              color: "var(--app-amber)",
+              border: "0.5px solid rgba(255,176,32,0.35)",
+            }}
           >
             Coba data demo →
           </button>
           {showDemoMenu && (
             <div
-              className="absolute right-0 top-9 z-50 w-52 rounded-xl overflow-hidden"
-              style={{ background: "var(--color-bg-elevated)", border: "0.5px solid var(--color-border-strong)", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
+              className="absolute right-0 top-9 z-50 w-52 overflow-hidden rounded-xl"
+              style={{
+                background: "var(--color-bg-elevated)",
+                border: "0.5px solid var(--color-border-strong)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+              }}
             >
               {DEMO_PROFESI.map((p) => (
                 <button
                   key={p}
+                  type="button"
                   onClick={() => applyDemo(p)}
-                  className="w-full text-left px-4 py-2.5 font-mono text-xs transition-all"
-                  style={{ color: "var(--color-text-secondary)", borderBottom: "0.5px solid var(--color-border-default)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-bg-hover)"; e.currentTarget.style.color = "var(--color-lime)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-text-secondary)"; }}
+                  className="w-full px-4 py-2.5 text-left font-mono text-xs transition-all"
+                  style={{
+                    color: "var(--color-text-secondary)",
+                    borderBottom: "0.5px solid var(--color-border-default)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--color-bg-hover)";
+                    e.currentTarget.style.color = "var(--app-amber)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "var(--color-text-secondary)";
+                  }}
                 >
                   {p}
                 </button>
@@ -172,9 +194,7 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
         </div>
       </div>
 
-      {/* Fields */}
-      <div className="flex flex-col gap-5 mb-8">
-        {/* Nama */}
+      <div className="mb-8 flex flex-col gap-5">
         <Field label="Nama / Brand" required>
           <input
             type="text"
@@ -187,7 +207,6 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
           />
         </Field>
 
-        {/* Profesi */}
         <Field label="Profesi" required>
           <select
             value={value.profesi}
@@ -210,7 +229,6 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
           </select>
         </Field>
 
-        {/* Custom profesi */}
         {value.profesi === "lainnya" && (
           <Field label="Profesi kamu (tulis sendiri)" required>
             <input
@@ -225,7 +243,6 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
           </Field>
         )}
 
-        {/* Tagline */}
         <Field
           label="Tagline"
           required
@@ -242,10 +259,9 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
           />
         </Field>
 
-        {/* Bio */}
         <Field
           label="Bio singkat"
-          hint="2–3 kalimat tentang dirimu dan apa yang kamu kerjakan. Boleh kosong — AI akan membuat bio generik."
+          hint="2–3 kalimat tentang dirimu. Boleh kosong — AI akan membuat bio generik."
         >
           <textarea
             rows={3}
@@ -258,8 +274,7 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
           />
         </Field>
 
-        {/* Kota & Email */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Kota / Lokasi">
             <input
               type="text"
@@ -284,22 +299,34 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
           </Field>
         </div>
 
-        {/* Sosial links */}
         <div>
-          <p className="font-mono font-semibold text-sm mb-3" style={{ color: "var(--color-text-primary)" }}>
-            Link Sosial <span className="font-normal text-xs" style={{ color: "var(--color-text-tertiary)" }}>(opsional)</span>
+          <p
+            className="mb-3 font-mono text-sm font-semibold"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            Link Sosial{" "}
+            <span className="text-xs font-normal" style={{ color: "var(--color-text-tertiary)" }}>
+              (opsional)
+            </span>
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {(
               [
                 { key: "github", placeholder: "github.com/username", label: "GitHub" },
                 { key: "linkedin", placeholder: "linkedin.com/in/username", label: "LinkedIn" },
                 { key: "instagram", placeholder: "instagram.com/username", label: "Instagram" },
-                { key: "whatsapp", placeholder: "wa.me/628xxx atau t.me/username", label: "WhatsApp / Telegram" },
+                {
+                  key: "whatsapp",
+                  placeholder: "wa.me/628xxx atau t.me/username",
+                  label: "WhatsApp / Telegram",
+                },
               ] as const
             ).map(({ key, placeholder, label }) => (
               <div key={key} className="flex flex-col gap-1">
-                <span className="font-mono text-[11px]" style={{ color: "var(--color-text-tertiary)" }}>
+                <span
+                  className="font-mono text-[11px]"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
                   {label}
                 </span>
                 <input
@@ -317,20 +344,17 @@ export default function IdentitasStep({ value, onChange, onApplyDemo, onNext }: 
         </div>
       </div>
 
-      {/* Next */}
-      <button
-        onClick={onNext}
-        disabled={!canNext}
-        className="w-full py-3 rounded-xl font-mono font-bold text-sm transition-all"
-        style={{
-          background: canNext ? "var(--color-lime)" : "var(--color-bg-elevated)",
-          color: canNext ? "#0D1321" : "var(--color-text-disabled, rgba(255,255,255,0.2))",
-          border: canNext ? "none" : "0.5px solid var(--color-border-default)",
-          cursor: canNext ? "pointer" : "not-allowed",
-        }}
-      >
-        {!value.nama.trim() ? "Masukkan namamu dulu" : !value.profesi ? "Pilih profesimu" : !value.tagline.trim() ? "Tulis tagline-mu" : "Lanjut ke Konten →"}
-      </button>
+      <div className="flex justify-end">
+        <button type="button" className="btn btn-primary" onClick={onNext} disabled={!canNext}>
+          {!value.nama.trim()
+            ? "Masukkan namamu dulu"
+            : !value.profesi
+              ? "Pilih profesimu"
+              : !value.tagline.trim()
+                ? "Tulis tagline-mu"
+                : "Lanjut →"}
+        </button>
+      </div>
     </div>
   );
 }

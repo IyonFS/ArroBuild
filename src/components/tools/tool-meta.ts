@@ -7,6 +7,13 @@ import {
   FileCode2,
   PenLine,
   Database,
+  Layers,
+  AlertTriangle,
+  Tag,
+  KeyRound,
+  ScrollText,
+  Calculator,
+  Braces,
 } from "lucide-react";
 import type { MiniToolId } from "@/lib/config/mini-tools";
 import { TIER, type TierId } from "@/lib/config/tiers";
@@ -26,6 +33,17 @@ export interface ShowcaseToolMeta {
   credits: number | "free";
   minTier: TierId | null;
   featured?: boolean;
+  filterKeys: ShowcaseFilter[];
+}
+
+export interface ComingSoonToolMeta {
+  id: string;
+  name: string;
+  tagline: string;
+  icon: LucideIcon;
+  accent: ShowcaseAccent;
+  credits: number | string;
+  tierLabel: string;
   filterKeys: ShowcaseFilter[];
 }
 
@@ -97,29 +115,37 @@ export const TOOL_SHOWCASE_META: Record<MiniToolId, Omit<ShowcaseToolMeta, "name
     accent: "amber",
     filterKeys: ["all", "core", "prime"],
   },
-  "stitch-composer": {
-    id: "stitch-composer",
-    tagline: "Susun prompt Google Stitch",
-    href: "/tools/stitch-composer",
+  "arrodesign": {
+    id: "arrodesign",
+    tagline: "Screenshot/URL → design.md + prompt Stitch",
+    href: "/tools/arrodesign",
     icon: Palette,
     accent: "violet",
     filterKeys: ["all", "core", "prime"],
   },
   "readme-generator": {
     id: "readme-generator",
-    tagline: "README + script setup siap pakai",
+    tagline: "README profesional dengan gaya pilihanmu",
     href: "/tools/readme-generator",
     icon: FileCode2,
     accent: "sky",
-    filterKeys: ["all", "prime"],
+    filterKeys: ["all", "core", "prime"],
   },
-  "landing-copy": {
-    id: "landing-copy",
-    tagline: "Hero, value props, FAQ dari PRD",
-    href: "/tools/landing-copy",
+  "copy-studio": {
+    id: "copy-studio",
+    tagline: "Script copy landing page per section",
+    href: "/tools/copy-studio",
     icon: PenLine,
     accent: "amber",
-    filterKeys: ["all", "prime"],
+    filterKeys: ["all", "core", "prime"],
+  },
+  "stack-advisor": {
+    id: "stack-advisor",
+    tagline: "Rekomendasi stack curated + estimasi biaya",
+    href: "/tools/stack-advisor",
+    icon: Layers,
+    accent: "sky",
+    filterKeys: ["all", "core", "prime"],
   },
   "schema-visualizer": {
     id: "schema-visualizer",
@@ -130,3 +156,68 @@ export const TOOL_SHOWCASE_META: Record<MiniToolId, Omit<ShowcaseToolMeta, "name
     filterKeys: ["all", "prime"],
   },
 };
+
+/** Coming Soon tools — tampil di UI dengan badge "Segera", belum punya route */
+export const COMING_SOON_TOOLS: ComingSoonToolMeta[] = [
+  {
+    id: "error-whisperer",
+    name: "Error Whisperer",
+    tagline: "Jelaskan error + generate prompt fix untuk AI agent",
+    icon: AlertTriangle,
+    accent: "amber",
+    credits: "~6",
+    tierLabel: "Base",
+    filterKeys: ["all", "base", "core", "prime"],
+  },
+  {
+    id: "konsultan-penamaan",
+    name: "Konsultan Penamaan",
+    tagline: "Saran nama variabel/fungsi/file sesuai konvensi Agent Rules",
+    icon: Tag,
+    accent: "sky",
+    credits: 1,
+    tierLabel: "Base",
+    filterKeys: ["all", "base", "core", "prime"],
+  },
+  {
+    id: "env-var-doctor",
+    name: "Env Var Doctor",
+    tagline: "Cross-check .env.example ke Architecture.md — tandai yang hilang",
+    icon: KeyRound,
+    accent: "violet",
+    credits: 2,
+    tierLabel: "Base",
+    filterKeys: ["all", "base", "core", "prime"],
+  },
+  {
+    id: "devlog-composer",
+    name: "Devlog Composer",
+    tagline: "Rapikan catatan kerja berantakan jadi devlog, otomatis tag FEAT-ID",
+    icon: ScrollText,
+    accent: "sky",
+    credits: 2,
+    tierLabel: "Base",
+    filterKeys: ["all", "base", "core", "prime"],
+  },
+  {
+    id: "cost-reality-check",
+    name: "Cost Reality Check",
+    tagline: "Proyeksi biaya interaktif — slider traffic, lihat angka real",
+    icon: Calculator,
+    accent: "amber",
+    credits: "minimal",
+    tierLabel: "Core",
+    filterKeys: ["all", "core", "prime"],
+  },
+  {
+    id: "mock-api-generator",
+    name: "Mock API Generator",
+    tagline: "Dari Architecture.md → koleksi mock API siap import Postman/Insomnia",
+    icon: Braces,
+    accent: "violet",
+    credits: "~3",
+    tierLabel: "Core",
+    filterKeys: ["all", "core", "prime"],
+  },
+];
+

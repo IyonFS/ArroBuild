@@ -1,0 +1,33 @@
+---
+description: Neon Blueprint design tokens — no lime/old charcoal UI
+alwaysApply: true
+---
+
+# Design System — Neon Blueprint
+
+ArroBuild uses **Neon Blueprint** (amber + sky on navy), not the retired v2 lime/charcoal look.
+
+## Do
+
+- Accents: `var(--app-amber)` / `var(--app-sky)` (or `--lp-*` on marketing landing)
+- Surfaces: `var(--app-bg-base|surface|elevated|hover)`
+- Text: `var(--app-text-primary|secondary|tertiary)`
+- Primary buttons: `btn btn-primary` (resolves to amber)
+- Mini tools pages: wrap with `className="tools-app"` so tokens remap correctly
+- Prefer Unbounded + JetBrains Mono like README / Copy Studio / Portfolio
+
+## Don't
+
+- Do **not** use neon lime `#CCFF00` / `#AADA00` or invent new lime tokens
+- Do **not** treat `--color-lime` as “bright green” — it is a **legacy alias of amber** only
+- Prefer `--app-amber` / `--app-sky` in new code instead of `--color-lime`
+- Avoid charcoal flat backgrounds (`#1A1A1A` stacks) on new app pages — use blueprint navy (`#0D1321` / `--app-bg-*`)
+- Avoid emoji decoration and rounded-full step pills on tool wizards
+
+## New page checklist
+
+1. Use `AppShell` + blueprint hero pattern from `/tools/readme-generator` or `/tools/copy-studio`
+2. Add `tools-app` (mini tools) or `generate-app` / `dashboard-app` / `learn-app` as appropriate
+3. Step indicators: equal flex steps, sky progress, hide on result
+4. Spot-check: no element should render neon green
+---

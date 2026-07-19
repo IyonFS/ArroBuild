@@ -53,7 +53,7 @@ const DOC_NODES: DocNode[] = [
     label: "Architecture",
     fileName: "architecture.md",
     blurb: "Blueprint teknis: skema DB, struktur folder, dan kontrak API untuk AI agent.",
-    x: 700, y: 70, r: 40, tier: "base", kind: "core",
+    x: 700, y: 70, r: 48, tier: "base", kind: "core",
     cable: [
       { x: 700, y: 130 },
       { x: 700, y: 180 },
@@ -65,7 +65,7 @@ const DOC_NODES: DocNode[] = [
     label: "Plan-Task",
     fileName: "plan-task.md",
     blurb: "Fase pengerjaan, urutan fitur, dan estimasi — build pondasi dulu, baru yang fancy.",
-    x: 980, y: 95, r: 38, tier: "base", kind: "core",
+    x: 980, y: 95, r: 42, tier: "base", kind: "core",
     cable: [
       { x: 980, y: 155 },
       { x: 880, y: 155 },
@@ -104,7 +104,7 @@ const DOC_NODES: DocNode[] = [
     label: "Adaptive\nDoc",
     fileName: "adaptive-document.md",
     blurb: "Strategi khusus per tipe produk (SaaS, marketplace, mobile, dll.) — eksklusif Prime.",
-    x: 700, y: 560, r: 40, tier: "prime", kind: "core",
+    x: 700, y: 560, r: 44, tier: "prime", kind: "core",
     cable: [
       { x: 700, y: 500 },
       { x: 700, y: 440 },
@@ -118,7 +118,7 @@ const DOC_NODES: DocNode[] = [
     label: "Competitive",
     fileName: "competitive-analysis.md",
     blurb: "Kompetitor, diferensiasi, dan positioning produk yang tajam.",
-    x: 110, y: 100, r: 30, tier: "core", kind: "optional",
+    x: 110, y: 100, r: 38, tier: "core", kind: "optional",
     cable: [
       { x: 170, y: 100 },
       { x: 250, y: 100 },
@@ -133,7 +133,7 @@ const DOC_NODES: DocNode[] = [
     label: "Cost &\nInfra",
     fileName: "cost-infrastructure.md",
     blurb: "Estimasi biaya hosting dan komponen infrastruktur sebelum traffic naik.",
-    x: 80, y: 250, r: 30, tier: "core", kind: "optional",
+    x: 80, y: 250, r: 36, tier: "core", kind: "optional",
     cable: [
       { x: 140, y: 250 },
       { x: 220, y: 250 },
@@ -148,7 +148,7 @@ const DOC_NODES: DocNode[] = [
     label: "Onboarding",
     fileName: "onboarding-email.md",
     blurb: "Alur onboarding dan email transaksional untuk aktivasi pengguna pertama.",
-    x: 80, y: 400, r: 30, tier: "core", kind: "optional",
+    x: 80, y: 400, r: 36, tier: "core", kind: "optional",
     cable: [
       { x: 140, y: 400 },
       { x: 220, y: 400 },
@@ -163,7 +163,7 @@ const DOC_NODES: DocNode[] = [
     label: "Compliance",
     fileName: "compliance-legal.md",
     blurb: "Outline privasi, ToS, dan kepatuhan pembayaran agar produk siap regulasi.",
-    x: 150, y: 540, r: 30, tier: "prime", kind: "optional",
+    x: 150, y: 540, r: 38, tier: "prime", kind: "optional",
     cable: [
       { x: 210, y: 540 },
       { x: 320, y: 540 },
@@ -180,7 +180,7 @@ const DOC_NODES: DocNode[] = [
     label: "Analytics",
     fileName: "analytics-metrics.md",
     blurb: "Event tracking, funnel, dan dashboard metrik supaya tim baca data yang sama.",
-    x: 1290, y: 100, r: 30, tier: "core", kind: "optional",
+    x: 1290, y: 100, r: 36, tier: "core", kind: "optional",
     cable: [
       { x: 1230, y: 100 },
       { x: 1150, y: 100 },
@@ -195,7 +195,7 @@ const DOC_NODES: DocNode[] = [
     label: "Testing\n& QA",
     fileName: "testing-qa.md",
     blurb: "Strategi test dan skenario prioritas sebelum fitur kritikal go-live.",
-    x: 1320, y: 250, r: 30, tier: "core", kind: "optional",
+    x: 1320, y: 250, r: 36, tier: "core", kind: "optional",
     cable: [
       { x: 1260, y: 250 },
       { x: 1180, y: 250 },
@@ -210,7 +210,7 @@ const DOC_NODES: DocNode[] = [
     label: "Database",
     fileName: "database-deep-dive.md",
     blurb: "Indexing, integritas data, dan growth plan — murah sekarang, mahal kalau ditunda.",
-    x: 1320, y: 400, r: 30, tier: "prime", kind: "optional",
+    x: 1320, y: 400, r: 36, tier: "prime", kind: "optional",
     cable: [
       { x: 1260, y: 400 },
       { x: 1180, y: 400 },
@@ -225,7 +225,7 @@ const DOC_NODES: DocNode[] = [
     label: "Security",
     fileName: "security-launch.md",
     blurb: "Checklist keamanan dan pre-launch supaya tidak miss hal kritikal sebelum rilis.",
-    x: 1250, y: 540, r: 30, tier: "prime", kind: "optional",
+    x: 1250, y: 540, r: 36, tier: "prime", kind: "optional",
     cable: [
       { x: 1190, y: 540 },
       { x: 1080, y: 540 },

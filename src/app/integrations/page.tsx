@@ -61,8 +61,8 @@ export default function IntegrationsPage() {
           <div
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono mb-6"
             style={{
-              background: "rgba(204,255,0,0.08)",
-              border: "0.5px solid rgba(204,255,0,0.3)",
+              background: "rgba(255,176,32,0.08)",
+              border: "0.5px solid rgba(255,176,32,0.3)",
               color: "var(--color-lime)",
             }}
           >
@@ -111,7 +111,7 @@ export default function IntegrationsPage() {
                     style={{
                       background:
                         tool.status === "Supported"
-                          ? "rgba(204,255,0,0.1)"
+                          ? "rgba(255,176,32,0.1)"
                           : "rgba(255,255,255,0.05)",
                       color:
                         tool.status === "Supported"
@@ -119,7 +119,7 @@ export default function IntegrationsPage() {
                           : "var(--color-text-tertiary)",
                       border: `0.5px solid ${
                         tool.status === "Supported"
-                          ? "rgba(204,255,0,0.3)"
+                          ? "rgba(255,176,32,0.3)"
                           : "rgba(255,255,255,0.1)"
                       }`,
                     }}

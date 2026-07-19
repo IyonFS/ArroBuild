@@ -8,8 +8,11 @@ import AppShell from "@/components/layout/AppShell";
 import type { MiniToolDefinition } from "@/lib/config/mini-tools";
 import { tierLabel } from "@/components/tools/tool-meta";
 
+/** Serializable tool props — no buildPrompt (server-only). */
+export type MiniToolClientProps = Omit<MiniToolDefinition, "buildPrompt">;
+
 interface MiniToolRunnerProps {
-  tool: MiniToolDefinition;
+  tool: MiniToolClientProps;
 }
 
 export default function MiniToolRunner({ tool }: MiniToolRunnerProps) {

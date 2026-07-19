@@ -143,6 +143,7 @@ function DashboardContent() {
       .finally(() => {
         if (mountedRef.current) setLoading(false);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [upgrade, router]);
 
   useEffect(() => {
@@ -165,6 +166,7 @@ function DashboardContent() {
         })
         .catch(() => {});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, upgrade]);
 
   async function handleSignOut() {

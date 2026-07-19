@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -233,7 +234,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
                       justifyContent: "center",
                       fontSize: 10,
                       fontWeight: 700,
-                      background: "rgba(204,255,0,0.15)",
+                      background: "rgba(255,176,32,0.15)",
                       color: "var(--color-lime)",
                     }}
                   >

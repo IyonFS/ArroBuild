@@ -36,7 +36,6 @@ function DashboardShellLayout({
   displayName = "User",
   tierLabel = "",
   tier = "none",
-  activeId,
   onSignOut = () => {},
   headerAction,
   navId,
