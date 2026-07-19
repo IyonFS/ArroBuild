@@ -54,7 +54,7 @@ const QUICK_PROMPTS = [
 export default function RevisePanel({ projectId, file, onAccepted }: Props) {
   const sections = useMemo(
     () => (file ? parseMarkdownSections(file.content) : []),
-    [file?.content, file?.id, file?.version]
+    [file]
   );
   const [sectionName, setSectionName] = useState("");
   const [sectionStartLine, setSectionStartLine] = useState<number | null>(null);

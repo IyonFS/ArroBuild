@@ -17,6 +17,8 @@ const PRO_DEFAULT_TOOLS: MiniToolId[] = [
   "mvp-scope-cutter",
   "readme-generator",
   "copy-studio",
+  "stack-advisor",
+  "arrodesign",
 ];
 
 export async function assertMiniToolAccess(

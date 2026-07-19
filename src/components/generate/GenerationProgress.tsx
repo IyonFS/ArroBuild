@@ -80,7 +80,6 @@ export default function GenerationProgress({
   clarifications,
   presets,
   plan,
-  modelId,
   selectedDocs,
   perDocModelClass,
   estimatedCredits,
@@ -271,7 +270,6 @@ export default function GenerationProgress({
   }, []);
 
   const doneCount = files.filter((f) => f.status === "done").length;
-  const generatingFile = files.find((f) => f.status === "generating");
   const progressPct = (doneCount / files.length) * 100;
 
   return (

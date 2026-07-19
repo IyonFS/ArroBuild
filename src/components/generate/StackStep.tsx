@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, ChevronDown, ChevronRight, Pencil, Package, Wrench } from "lucide-react";
 import type {
   ProductType,
   Presets,
   Framework,
-  Design,
   AgentTool,
   Database,
   AnimationLibrary,

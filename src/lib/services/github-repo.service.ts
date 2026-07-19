@@ -10,12 +10,13 @@ export interface GitHubRepoData {
   packageName: string | null;
   folderStructure: string[];
   existingReadme: string | null;
+  /** True when repo exists but structure is incomplete (empty / no package.json) */
+  incomplete?: boolean;
 }
 
 export type GitHubRepoErrorCode =
   | "INVALID_URL"
   | "NOT_FOUND"
-  | "INCOMPLETE"
   | "RATE_LIMIT"
   | "API_ERROR";
 
@@ -102,7 +103,7 @@ export async function fetchGitHubRepo(url: string): Promise<GitHubRepoData> {
   }
   if (repoRes.status === 403) {
     const body = await repoRes.text();
-    if (body.includes("rate limit")) {
+    if (body.toLowerCase().includes("rate limit")) {
       throw new GitHubRepoError(
         "RATE_LIMIT",
         "GitHub API rate limit tercapai. Coba lagi beberapa menit."
@@ -142,7 +143,7 @@ export async function fetchGitHubRepo(url: string): Promise<GitHubRepoData> {
   if (contentsRes.ok) {
     const contents = (await contentsRes.json()) as Array<{ name: string; type: string }>;
     folderStructure = contents
-      .filter((c) => c.type === "dir" || c.name.match(/\.(json|md|ts|js)$/))
+      .filter((c) => c.type === "dir" || c.name.match(/\.(json|md|ts|js|py|go|rs|toml|yml|yaml)$/))
       .map((c) => (c.type === "dir" ? `${c.name}/` : c.name))
       .slice(0, 20);
 
@@ -165,13 +166,6 @@ export async function fetchGitHubRepo(url: string): Promise<GitHubRepoData> {
     }
   }
 
-  if (!hasPackageJson && folderStructure.length === 0) {
-    throw new GitHubRepoError(
-      "INCOMPLETE",
-      "Repo ditemukan, tapi kami tidak bisa membaca strukturnya (repo kosong atau tidak ada package.json)."
-    );
-  }
-
   let existingReadme: string | null = null;
   for (const readmeName of ["README.md", "readme.md", "Readme.md"]) {
     const readmeRes = await githubFetch(`/repos/${owner}/${repo}/contents/${readmeName}`);
@@ -183,6 +177,9 @@ export async function fetchGitHubRepo(url: string): Promise<GitHubRepoData> {
   }
 
   const techStack = inferTechStack(languages, packageJson);
+
+  // PRD: incomplete when repo empty OR no package.json (structure not fully readable)
+  const incomplete = folderStructure.length === 0 || !hasPackageJson;
 
   return {
     owner,
@@ -196,5 +193,6 @@ export async function fetchGitHubRepo(url: string): Promise<GitHubRepoData> {
     packageName,
     folderStructure,
     existingReadme,
+    incomplete,
   };
 }

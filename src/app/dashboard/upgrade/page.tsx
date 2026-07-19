@@ -7,9 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import UpgradePlanPicker from "@/components/dashboard/UpgradePlanPicker";
 import { getDisplayName } from "@/lib/display-name";
-import { deriveQuotaDisplay } from "@/lib/dashboard-quota";
 import { useDashboardMe } from "@/hooks/use-dashboard-me";
-import type { UserPlanStatus } from "@/components/generate/types";
 import { PLAN_STATUS_LABELS } from "@/components/generate/types";
 
 const TIER_LABEL = PLAN_STATUS_LABELS;
@@ -95,7 +93,6 @@ function UpgradeContent() {
 
   const displayName = getDisplayName(data.user.name, data.user.email);
   const tierLabel = TIER_LABEL[data.tier];
-  const quota = deriveQuotaDisplay(data);
 
   return (
     <DashboardShell

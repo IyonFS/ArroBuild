@@ -92,4 +92,7 @@ export type Framework = (typeof FRAMEWORKS)[number];
 export type DesignPreset = (typeof DESIGN_PRESETS)[number];
 export type AgentTool = (typeof AGENT_TOOLS)[number];
 export type Database = (typeof DATABASES)[number];
+export type Deployment = (typeof DEPLOYMENTS)[number];
+export type ProgrammingLanguage = (typeof PROGRAMMING_LANGUAGES)[number];
+export type StackBundleId = (typeof STACK_BUNDLES)[number];
 export type DocumentFileKey = (typeof DOCUMENT_FILE_KEYS)[number];

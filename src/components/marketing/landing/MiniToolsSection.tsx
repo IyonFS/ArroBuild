@@ -36,9 +36,12 @@ export default function MiniToolsSection() {
   return (
     <section
       style={{
-        background: "var(--lp-bg-base)",
+        background: "linear-gradient(180deg, var(--lp-bg-base) 0%, rgba(18, 24, 38, 0.6) 50%, var(--lp-bg-base) 100%)",
+        borderTop: "1px solid rgba(240, 243, 250, 0.04)",
+        borderBottom: "1px solid rgba(240, 243, 250, 0.04)",
         padding: "96px 0",
         textAlign: "center",
+        position: "relative",
       }}
     >
       <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 24px" }}>
@@ -96,22 +99,16 @@ export default function MiniToolsSection() {
         </motion.div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center", padding: "0 24px" }}>
         <div
           style={{
-            overflowX: "auto",
-            scrollSnapType: "x mandatory",
-            WebkitOverflowScrolling: "touch",
-            paddingLeft: 24,
-            paddingRight: 24,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+            gap: 16,
+            width: "100%",
+            maxWidth: 1080,
             paddingBottom: 16,
-            display: "flex",
-            gap: 12,
-            msOverflowStyle: "none",
-            scrollbarWidth: "none",
-            maxWidth: "100vw",
           }}
-          className="tools-strip"
         >
           {LANDING_TOOLS.map((tool, i) => {
             const accent = getAccent(tool.accent);
@@ -123,22 +120,24 @@ export default function MiniToolsSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.35, delay: i * 0.04 }}
-                whileHover={{ scale: 1.02, borderColor: accent.color }}
+                whileHover={{ 
+                  scale: 1.02, 
+                  y: -4, 
+                  borderColor: accent.color,
+                  boxShadow: `0 12px 30px -10px ${accent.color}40`,
+                  backgroundColor: "rgba(30, 40, 60, 0.3)" 
+                }}
                 style={{
-                  flexShrink: 0,
-                  width: 200,
-                  scrollSnapAlign: "start",
                   background: "var(--lp-bg-elevated)",
-                  border: "0.5px solid var(--lp-border-default)",
-                  borderRadius: 12,
-                  padding: "20px",
+                  border: "1px solid var(--lp-border-default)",
+                  borderRadius: 14,
+                  padding: "24px",
                   textDecoration: "none",
                   display: "flex",
                   flexDirection: "column",
-                  gap: 10,
+                  gap: 12,
                   textAlign: "left",
                   cursor: "pointer",
-                  transition: "border-color 0.2s",
                 }}
               >
                 <div>
@@ -210,7 +209,6 @@ export default function MiniToolsSection() {
       </div>
 
       <style>{`
-        .tools-strip::-webkit-scrollbar { display: none; }
       `}</style>
     </section>
   );

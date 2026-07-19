@@ -8,13 +8,18 @@ import {
   buildReadmePrompt,
   recordToReadmeInput,
 } from "@/lib/config/readme-prompt";
+import {
+  buildStackAdvisorPrompt,
+  STACK_ADVISOR_CREDITS,
+} from "@/lib/config/stack-advisor-prompt";
 
 export type MiniToolId =
   | "prompt-doctor"
   | "mvp-scope-cutter"
-  | "stitch-composer"
+  | "arrodesign"
   | "readme-generator"
   | "copy-studio"
+  | "stack-advisor"
   | "schema-visualizer";
 
 export interface MiniToolDefinition {
@@ -53,10 +58,16 @@ Given a feature list, force a ruthless MVP cut:
 4. **Saran urutan build** — 2-week sprint order
 Be direct. Same language as input.`;
 
-const STITCH_SYSTEM = `You compose a paste-ready prompt for Google Stitch (Google Labs UI design AI).
-Use design tokens, typography, spacing, and product context provided.
-Structure: product summary, screen goal, layout, components, color/type tokens, interaction notes, export hint (Tailwind/HTML).
-Output ONLY the Stitch prompt.`;
+// ArroDesign — Fase 2 backend belum live. Placeholder prompt untuk scaffold.
+const ARRODESIGN_SYSTEM = `You are ArroDesign, an AI design analyst.
+Analyze the visual reference provided and return a structured design.md with:
+- Color tokens (exact hex from image)
+- Typography (font families, sizes, weights)
+- Layout & spacing breakdown per section
+- Confidence tags: [EXTRACTED] for data directly from image, [INFERRED] for educated guesses
+- A ready-to-paste Google Stitch prompt using Zoom-Out-Zoom-In method
+Always include a disclaimer: results are "inspired by" not "identical to" the reference.
+Output structured markdown only.`;
 
 const SCHEMA_SYSTEM = `You are a database architect. From the architecture/schema description, output:
 1. Mermaid erDiagram block (valid syntax)
@@ -88,7 +99,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     id: "mvp-scope-cutter",
     name: "MVP Scope Cutter",
     description: "Potong daftar fitur jadi MVP yang realistis.",
-    credits: 60,
+    credits: 5,
     modelClass: "MENENGAH",
     maxOutputTokens: 2000,
     minTier: TIER.PRO,
@@ -110,32 +121,38 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     buildPrompt: (input) =>
       `${MVP_SCOPE_SYSTEM}\n\nProduct context:\n${input.context || "—"}\n\nFeatures:\n${input.features ?? ""}`,
   },
-  "stitch-composer": {
-    id: "stitch-composer",
-    name: "Stitch Prompt Composer",
-    description: "Susun prompt Google Stitch dari design system & PRD.",
-    credits: 5,
-    modelClass: "HEMAT",
-    maxOutputTokens: 2000,
+  "arrodesign": {
+    id: "arrodesign",
+    name: "ArroDesign",
+    description: "Ubah screenshot atau URL referensi jadi design.md terstruktur + prompt Stitch siap pakai.",
+    credits: 200,
+    modelClass: "FLAGSHIP",
+    maxOutputTokens: 4000,
     minTier: TIER.PRO,
     fields: [
       {
-        key: "designSystem",
-        label: "Design system / token",
-        type: "textarea",
-        placeholder: "Warna, font, spacing dari design-system.md...",
+        key: "inputType",
+        label: "Tipe input",
+        type: "text",
+        placeholder: "image | url",
         required: true,
       },
       {
-        key: "prdExcerpt",
-        label: "Konteks produk / layar",
+        key: "referenceSource",
+        label: "URL referensi atau deskripsi gambar",
         type: "textarea",
-        placeholder: "Screen yang mau didesain, user flow...",
+        placeholder: "https://example.com atau deskripsi visual...",
         required: true,
+      },
+      {
+        key: "projectContext",
+        label: "Konteks proyek (opsional)",
+        type: "textarea",
+        placeholder: "PRD / nama produk / catatan tambahan...",
       },
     ],
     buildPrompt: (input) =>
-      `${STITCH_SYSTEM}\n\nDesign tokens:\n${input.designSystem ?? ""}\n\nProduct/screen:\n${input.prdExcerpt ?? ""}`,
+      `${ARRODESIGN_SYSTEM}\n\nInput type: ${input.inputType ?? "url"}\nReference: ${input.referenceSource ?? ""}\nProject context: ${input.projectContext || "—"}`,
   },
   "readme-generator": {
     id: "readme-generator",
@@ -170,11 +187,29 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     ],
     buildPrompt: (input) => buildCopyStudioPrompt(input),
   },
+  "stack-advisor": {
+    id: "stack-advisor",
+    name: "Stack Advisor",
+    description:
+      "Curhat kebutuhan proyek — dapat 2–3 paket stack curated (bukan karangan AI).",
+    credits: STACK_ADVISOR_CREDITS.cepat,
+    modelClass: "MENENGAH",
+    maxOutputTokens: 2000,
+    minTier: TIER.PRO,
+    fields: [
+      { key: "mode", label: "Mode", type: "text", required: true },
+      { key: "productType", label: "Tipe produk", type: "text" },
+      { key: "priority", label: "Prioritas", type: "text" },
+      { key: "stage", label: "Stage", type: "text" },
+      { key: "notes", label: "Catatan", type: "textarea" },
+    ],
+    buildPrompt: (input) => buildStackAdvisorPrompt(input),
+  },
   "schema-visualizer": {
     id: "schema-visualizer",
     name: "Database Schema Visualizer",
     description: "Diagram ER Mermaid dari skema arsitektur.",
-    credits: 3,
+    credits: 1,
     modelClass: "HEMAT",
     maxOutputTokens: 2000,
     minTier: TIER.PRO_MAX,

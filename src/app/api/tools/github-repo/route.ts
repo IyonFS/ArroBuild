@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const data = await fetchGitHubRepo(parsed.data.url);
-    return NextResponse.json({ data });
+    return NextResponse.json({
+      data,
+      incomplete: Boolean(data.incomplete),
+    });
   } catch (err) {
     if (err instanceof GitHubRepoError) {
       const status =
@@ -39,11 +42,9 @@ export async function POST(req: NextRequest) {
           ? 422
           : err.code === "NOT_FOUND"
             ? 404
-            : err.code === "INCOMPLETE"
-              ? 422
-              : err.code === "RATE_LIMIT"
-                ? 429
-                : 500;
+            : err.code === "RATE_LIMIT"
+              ? 429
+              : 500;
 
       return NextResponse.json({ error: err.message, code: err.code }, { status });
     }

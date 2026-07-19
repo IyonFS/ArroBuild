@@ -10,6 +10,7 @@ import {
   buildScreenshotVisionPrompt,
   estimateCopyStudioCredits,
 } from "@/lib/config/copy-studio-prompt";
+import { estimateStackAdvisorCredits } from "@/lib/config/stack-advisor-prompt";
 import { MINI_TOOLS, type MiniToolId } from "@/lib/config/mini-tools";
 import { CreditService } from "@/lib/services/credit.service";
 import {
@@ -35,7 +36,11 @@ const BodySchema = z.object({
   reserve: z.boolean().optional(),
 });
 
-const TOOLS_WITH_RESERVE: MiniToolId[] = ["readme-generator", "copy-studio"];
+const TOOLS_WITH_RESERVE: MiniToolId[] = [
+  "readme-generator",
+  "copy-studio",
+  "stack-advisor",
+];
 
 function resolveCredits(
   toolId: MiniToolId,
@@ -48,6 +53,9 @@ function resolveCredits(
       scratchSubMode: input.scratchSubMode,
       sectionCount: imageCount > 0 ? imageCount : Number(input.sectionCount || 1),
     });
+  }
+  if (toolId === "stack-advisor") {
+    return estimateStackAdvisorCredits(input.mode ?? "cepat");
   }
   return MINI_TOOLS[toolId].credits;
 }
