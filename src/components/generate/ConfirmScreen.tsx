@@ -242,7 +242,7 @@ export default function ConfirmScreen({
     perDocumentModelClass: perDocModelClass,
   });
 
-  const tierRank: Record<UserTier, number> = { starter: 1, pro: 2, pro_max: 3 };
+  const tierRank: Record<UserTier, number> = { base: 1, core: 2, prime: 3 };
   const showTierHint =
     needsSubscription ||
     (hasActiveSubscription &&

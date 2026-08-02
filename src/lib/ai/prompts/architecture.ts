@@ -3,14 +3,14 @@ import { buildFeatIdContextBlock } from "./yaml-metadata";
 import type { PromptDepthTier } from "@/lib/config/documents";
 
 const DEPTH: Record<PromptDepthTier, string> = {
-  STARTER: `
+  BASE: `
 Buat **architecture.md** ringkas:
 1. Keputusan Teknis Utama (tabel dari stack form)
 2. Skema Database (tabel + kolom penting, link FEAT-ID)
 3. Struktur Folder Proyek
 4. Batasan & Pertimbangan Teknis (singkat)`,
 
-  PRO: `
+  CORE: `
 Buat **architecture.md** lengkap:
 1. Keputusan Teknis Utama + alasan singkat
 2. Skema Database dengan relasi antar tabel + FEAT-ID
@@ -18,7 +18,7 @@ Buat **architecture.md** lengkap:
 4. Kontrak API (tabel endpoint jika relevan)
 5. Batasan & Pertimbangan Teknis`,
 
-  PRO_MAX: `
+  PRIME: `
 Buat **architecture.md** engineering-grade:
 Semua section PRO, plus:
 - Diagram ER Mermaid untuk skema database
@@ -29,7 +29,7 @@ Semua section PRO, plus:
 
 export function buildArchitecturePrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "STARTER",
+  tier: PromptDepthTier = "BASE",
   accumulatedContext = ""
 ): string {
   const base = buildBaseContext(input);

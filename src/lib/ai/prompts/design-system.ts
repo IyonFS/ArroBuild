@@ -1,8 +1,8 @@
 /**
  * design-system.ts — Tier-aware design-system.md prompt builder (v3)
  *
- * PRO:     Design system document dengan color palette, typography, spacing, dan component patterns dasar.
- * PRO_MAX: Sangat lengkap dengan dark/light mode tokens, accessibility requirements, dan tailwind config extension.
+ * CORE:     Design system document dengan color palette, typography, spacing, dan component patterns dasar.
+ * PRIME: Sangat lengkap dengan dark/light mode tokens, accessibility requirements, dan tailwind config extension.
  */
 
 import {
@@ -40,8 +40,8 @@ const DESIGN_PRESET_TRAITS: Record<DesignPreset, string> = {
 };
 
 const DEPTH_INSTRUCTIONS: Record<V3Tier, string> = {
-  STARTER: ``,
-  PRO: `
+  BASE: ``,
+  CORE: `
 Buat design system document dengan:
 - Color palette (primary, secondary, neutral, semantic)
   Sertakan hex values yang konsisten dengan gaya desain.
@@ -51,7 +51,7 @@ Buat design system document dengan:
   Format sebagai CSS custom properties yang siap dipakai
 - Responsive breakpoints`,
 
-  PRO_MAX: `
+  PRIME: `
 Buat design system document yang sangat lengkap:
 - Color system dengan dark/light mode tokens
   Semua sebagai CSS custom properties (--color-primary, dll)
@@ -72,7 +72,7 @@ Dokumen ini harus bisa digunakan AI agent sebagai referensi langsung saat membua
 
 export function buildDesignSystemPrompt(
   input: GenerationInput,
-  tier: V3Tier = "PRO",
+  tier: V3Tier = "CORE",
   accumulatedContext = ""
 ): string {
   const base = buildBaseContext(input);
@@ -81,7 +81,7 @@ export function buildDesignSystemPrompt(
     ? `\n<accumulated_context>\n${accumulatedContext}\n</accumulated_context>\n`
     : "";
 
-  const instruction = tier === "PRO_MAX" ? DEPTH_INSTRUCTIONS.PRO_MAX : DEPTH_INSTRUCTIONS.PRO;
+  const instruction = tier === "PRIME" ? DEPTH_INSTRUCTIONS.PRIME : DEPTH_INSTRUCTIONS.CORE;
 
   return `You are a senior UI/UX designer creating a comprehensive design system for a new product.
 

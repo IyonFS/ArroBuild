@@ -1,6 +1,6 @@
 import type { PaymentStatus, CreditLedgerType, SubscriptionTier } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import { getTierConfig, parseBillingMonthsFromOrderId, PRO_MAX_FIRST_MONTH_BONUS } from "@/lib/config/tiers";
+import { getTierConfig, parseBillingMonthsFromOrderId, PRIME_FIRST_MONTH_BONUS } from "@/lib/config/tiers";
 import { createSnapToken, isSuccessfulTransactionStatus, getTransactionStatus, verifyWebhookSignature } from "@/lib/midtrans";
 import { logger } from "@/lib/logger";
 import { CreditService } from "@/lib/services/credit.service";
@@ -64,7 +64,7 @@ export const PaymentService = {
     const { token: snapToken, redirectUrl } = await createSnapToken({
       orderId,
       amount: params.amount,
-      tierId: params.tierSlug as "starter" | "pro" | "pro_max",
+      tierId: params.tierSlug as "base" | "core" | "prime",
       customer: { email: params.email, name: params.name },
     });
 
@@ -106,7 +106,7 @@ export const PaymentService = {
     const { token: snapToken, redirectUrl } = await createSnapToken({
       orderId,
       amount: pack.priceIdr,
-      tierId: "starter",
+      tierId: "base",
       customer: { email: params.email, name: params.name },
       itemName: pack.label,
     });
@@ -242,14 +242,14 @@ export const PaymentService = {
         const priorProMaxPayments = await tx.payment.count({
           where: {
             userId: payment.userId,
-            tier: "PRO_MAX",
+            tier: "PRIME",
             status: { in: ["SETTLEMENT", "PAID"] },
             id: { not: payment.id },
           },
         });
         const firstProMaxBonus =
-          payment.tier === "PRO_MAX" && priorProMaxPayments === 0
-            ? PRO_MAX_FIRST_MONTH_BONUS
+          payment.tier === "PRIME" && priorProMaxPayments === 0
+            ? PRIME_FIRST_MONTH_BONUS
             : 0;
         const creditsToAdd = config.creditsPerMonth + firstProMaxBonus;
 

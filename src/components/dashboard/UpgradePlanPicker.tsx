@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { PRICING_TIERS } from "@/lib/pricing";
 import type { PricingTierId } from "@/lib/pricing";
 import type { UserPlanStatus } from "@/components/generate/types";
@@ -59,7 +60,7 @@ export default function UpgradePlanPicker({
     const months = getBillingMonths(tierId);
     if (months === 1) return `Rp ${(basePrice / 1000).toFixed(0)}K`;
     const tierEnum =
-      tierId === "pro_max" ? TIER.PRO_MAX : tierId === "pro" ? TIER.PRO : null;
+      tierId === "prime" ? TIER.PRIME : tierId === "core" ? TIER.CORE : null;
     const pack = tierEnum
       ? SUBSCRIPTION_PACKS.find((p) => p.tierId === tierEnum && p.months === months)
       : undefined;
@@ -262,52 +263,76 @@ export default function UpgradePlanPicker({
   return (
     <div className="space-y-8">
       {variant === "page" && (
-        <header className="space-y-2">
-          <p
-            className="font-mono text-[10px] uppercase tracking-widest"
+        <header className="space-y-3 pb-4">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="font-mono text-[11px] uppercase tracking-widest font-bold"
             style={{ color: "var(--app-amber)" }}
           >
             Langganan
-          </p>
-          <h2 className="font-unbounded text-xl sm:text-2xl font-bold text-white">
+          </motion.p>
+          <motion.h2
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="font-unbounded text-2xl sm:text-3xl font-bold text-white tracking-tight"
+            style={{
+              background: "linear-gradient(135deg, #fff 0%, #a1a1aa 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent"
+            }}
+          >
             {isSubscribed(currentTier) ? "Upgrade paket" : "Pilih paket"}
-          </h2>
-          <p className="text-sm max-w-2xl" style={{ color: "var(--color-text-secondary)" }}>
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-[15px] max-w-2xl leading-relaxed" 
+            style={{ color: "var(--color-text-secondary)" }}
+          >
             {isSubscribed(currentTier)
               ? `Kamu memakai paket ${TIER_LABELS[currentTier]}. Bayar selisih paket lebih tinggi — periode baru dimulai setelah pembayaran sukses.`
               : "QRIS, GoPay, OVO, Dana, transfer bank — semua via Midtrans sandbox/production."}
-          </p>
+          </motion.p>
         </header>
       )}
 
       {isSubscribed(currentTier) && (
-        <div
-          className="rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="rounded-2xl px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden"
           style={{
-            background: "rgba(255,176,32,0.06)",
-            border: "0.5px solid rgba(255,176,32,0.22)",
+            background: "linear-gradient(135deg, rgba(255,176,32,0.1), rgba(0,0,0,0.2))",
+            border: "1px solid rgba(255,176,32,0.2)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.05)"
           }}
         >
-          <div>
-            <p className="text-xs font-mono uppercase tracking-widest" style={{ color: "var(--app-amber)" }}>
+          {/* Subtle glow effect */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--app-amber)] rounded-full blur-[60px] opacity-20 pointer-events-none" />
+
+          <div className="relative z-10">
+            <p className="text-xs font-mono uppercase tracking-widest font-bold mb-1" style={{ color: "var(--app-amber)" }}>
               Paket aktif
             </p>
-            <p className="text-lg font-semibold text-white mt-1">{TIER_LABELS[currentTier]}</p>
+            <p className="text-xl font-bold text-white mt-1 tracking-tight">{TIER_LABELS[currentTier]}</p>
             {creditPool != null && creditPool > 0 && (
-              <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-                Kredit: {(creditBalance ?? 0).toLocaleString("id-ID")} / {creditPool.toLocaleString("id-ID")}
+              <p className="text-sm mt-1.5 font-mono" style={{ color: "var(--color-text-secondary)" }}>
+                Kredit: {(creditBalance ?? 0).toLocaleString("id-ID")} <span className="opacity-50">/ {creditPool.toLocaleString("id-ID")}</span>
               </p>
             )}
           </div>
           {nextTarget && (
-            <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-              Rekomendasi:{" "}
-              <span className="text-white font-medium">
+            <div className="relative z-10 text-sm bg-[rgba(0,0,0,0.2)] px-4 py-2 rounded-lg border border-[rgba(255,255,255,0.05)]">
+              <span style={{ color: "var(--color-text-secondary)" }}>Rekomendasi: </span>
+              <span className="text-[var(--app-amber)] font-bold tracking-wide">
                 {PRICING_TIERS.find((t) => t.id === nextTarget)?.name}
               </span>
-            </p>
+            </div>
           )}
-        </div>
+        </motion.div>
       )}
 
       {configHint && (
@@ -353,8 +378,8 @@ export default function UpgradePlanPicker({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {PRICING_TIERS.map((tier) => {
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {PRICING_TIERS.map((tier, idx) => {
           const state = getTierCardState(tier.id, currentTier);
           const highlighted =
             tier.highlighted || highlightPlan === tier.id || tier.id === nextTarget;
@@ -365,14 +390,29 @@ export default function UpgradePlanPicker({
           const canBuy = purchasable.includes(tier.id);
 
           return (
-            <div
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1, type: "spring", stiffness: 300, damping: 25 }}
               key={tier.id}
-              className={`dashboard-project-card rounded-2xl p-5 flex flex-col transition-all ${
-                isCurrent ? "ring-1 ring-[rgba(255,176,32,0.45)]" : ""
-              } ${highlighted && canBuy ? "ring-1 ring-[rgba(255,176,32,0.35)]" : ""} ${
+              className={`dashboard-project-card relative rounded-2xl p-6 flex flex-col transition-all duration-300 ${
+                isCurrent ? "ring-2 ring-[rgba(255,176,32,0.5)]" : ""
+              } ${highlighted && canBuy ? "hover:-translate-y-1 hover:shadow-2xl hover:shadow-[rgba(255,176,32,0.15)] ring-1 ring-[rgba(255,176,32,0.4)]" : "hover:-translate-y-1"} ${
                 isLocked ? "opacity-55" : ""
               }`}
+              style={{
+                background: highlighted && canBuy ? "linear-gradient(180deg, rgba(30,41,59,0.7), rgba(15,23,42,0.9))" : "var(--app-bg-elevated)",
+                backdropFilter: "blur(12px)",
+              }}
             >
+              {highlighted && canBuy && (
+                <div className="absolute inset-0 pointer-events-none rounded-2xl border-2 border-transparent bg-clip-border" style={{
+                  backgroundImage: "linear-gradient(135deg, rgba(255,176,32,0.4) 0%, transparent 100%)",
+                  WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
+                  WebkitMaskComposite: "xor",
+                  maskComposite: "exclude"
+                }} />
+              )}
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div>
                   <p className="text-base font-semibold text-white">{tier.name}</p>
@@ -410,22 +450,30 @@ export default function UpgradePlanPicker({
                 {tier.description}
               </p>
 
-              {(tier.id === "pro" || tier.id === "pro_max") && canBuy && (
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {([1, 3, 4] as BillingMonths[]).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setBillingByTier((prev) => ({ ...prev, [tier.id]: m }))}
-                      className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                        getBillingMonths(tier.id) === m
-                          ? "border-[var(--app-amber)] text-[var(--app-amber)]"
-                          : "border-[var(--bg-border)] text-[var(--text-tertiary)]"
-                      }`}
-                    >
-                      {m === 1 ? "Bulanan" : `${m} bln`}
-                    </button>
-                  ))}
+              {(tier.id === "core" || tier.id === "prime") && canBuy && (
+                <div className="flex flex-wrap gap-2 mt-4 relative p-1 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.05)] w-fit">
+                  {([1, 3, 4] as BillingMonths[]).map((m) => {
+                    const isSelected = getBillingMonths(tier.id) === m;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setBillingByTier((prev) => ({ ...prev, [tier.id]: m }))}
+                        className={`relative z-10 text-[11px] font-mono px-3 py-1 rounded-md transition-colors ${
+                          isSelected ? "text-[#0D1321] font-bold" : "text-[var(--text-tertiary)] hover:text-white"
+                        }`}
+                      >
+                        {isSelected && (
+                          <motion.div
+                            layoutId={`billing-pill-${tier.id}`}
+                            className="absolute inset-0 rounded-md bg-[var(--app-amber)] z-[-1]"
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          />
+                        )}
+                        {m === 1 ? "Bulanan" : `${m} bln`}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
@@ -455,7 +503,7 @@ export default function UpgradePlanPicker({
                 type="button"
                 onClick={() => handleUpgrade(tier.id)}
                 disabled={loadingTier !== null || isCurrent || isLocked || (!canBuy && !full)}
-                className={`btn btn-sm w-full ${
+                className={`btn mt-4 w-full relative overflow-hidden group transition-all duration-300 ${
                   isCurrent
                     ? "btn-secondary opacity-80"
                     : isLocked
@@ -463,50 +511,76 @@ export default function UpgradePlanPicker({
                       : full
                         ? "btn-secondary"
                         : highlighted && canBuy
-                          ? "btn-primary"
-                          : "btn-secondary"
+                          ? "btn-primary shadow-lg shadow-[rgba(255,176,32,0.25)] hover:shadow-[rgba(255,176,32,0.4)] hover:-translate-y-0.5"
+                          : "btn-secondary hover:-translate-y-0.5"
                 }`}
+                style={{
+                  background: highlighted && canBuy && !full && !isLocked && !isCurrent ? "linear-gradient(135deg, var(--app-amber), #F59E0B)" : undefined,
+                  color: highlighted && canBuy && !full && !isLocked && !isCurrent ? "#0D1321" : undefined
+                }}
               >
-                {loadingTier === tier.id
-                  ? "Memproses..."
-                  : full && canBuy
-                    ? "Masuk waitlist"
-                    : getUpgradeButtonLabel(tier.id, currentTier)}
+                <span className="relative z-10 font-bold">
+                  {loadingTier === tier.id
+                    ? "Memproses..."
+                    : full && canBuy
+                      ? "Masuk waitlist"
+                      : getUpgradeButtonLabel(tier.id, currentTier)}
+                </span>
+                {highlighted && canBuy && !full && !isLocked && !isCurrent && (
+                  <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300 z-0" />
+                )}
               </button>
-            </div>
+            </motion.div>
           );
         })}
       </div>
 
-      {isSubscribed(currentTier) && currentTier === "pro_max" && (
+      {isSubscribed(currentTier) && currentTier === "prime" && (
         <p className="text-sm text-center" style={{ color: "var(--color-text-secondary)" }}>
           Kamu sudah di paket tertinggi. Tambah kredit di bawah jika pool bulanan habis.
         </p>
       )}
 
       {isSubscribed(currentTier) && (
-        <section className="border-t pt-8" style={{ borderColor: "var(--color-border-default)" }}>
-          <h3 className="text-base font-semibold text-white mb-1">Top-up kredit</h3>
-          <p className="text-sm mb-4" style={{ color: "var(--color-text-secondary)" }}>
+        <section className="border-t pt-10 mt-6" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+          <h3 className="text-xl font-bold text-white mb-2">Top-up kredit</h3>
+          <p className="text-[14px] mb-6" style={{ color: "var(--color-text-secondary)" }}>
             Beli kredit tambahan tanpa mengubah paket. Kredit langsung masuk setelah pembayaran.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {CREDIT_TOPUP_PACKS.map((pack) => (
-              <button
+              <motion.button
+                whileHover={{ y: -4, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 key={pack.id}
                 type="button"
                 onClick={() => handleTopup(pack.id)}
                 disabled={loadingTopup !== null}
-                className="app-panel p-4 text-left hover:border-[rgba(255,176,32,0.25)] transition-colors"
+                className="relative text-left p-5 rounded-2xl border transition-all duration-300 group overflow-hidden"
+                style={{
+                  background: "var(--app-bg-elevated)",
+                  borderColor: "rgba(255,255,255,0.08)",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.15)"
+                }}
               >
-                <p className="text-sm font-medium text-white">{pack.label}</p>
-                <p className="text-lg font-semibold text-white mt-1">
-                  Rp {Math.round(pack.priceIdr / 1000)}K
+                {/* Micro hover glow */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-[rgba(255,255,255,0.05)] to-transparent pointer-events-none" />
+                <div className="absolute top-0 right-0 w-16 h-16 bg-[var(--app-sky)] rounded-full blur-[30px] opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none" />
+
+                <p className="text-[13px] font-mono tracking-widest uppercase font-bold" style={{ color: "var(--app-text-tertiary)" }}>{pack.label}</p>
+                <p className="text-2xl font-bold text-white mt-2 tracking-tight">
+                  Rp {Math.round(pack.priceIdr / 1000)}<span className="text-lg opacity-70">K</span>
                 </p>
-                <p className="text-[11px] mt-2 font-mono" style={{ color: "var(--text-tertiary)" }}>
-                  {loadingTopup === pack.id ? "Memproses..." : "Beli sekarang"}
-                </p>
-              </button>
+                
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-[12px] font-medium" style={{ color: "var(--app-sky)" }}>
+                    {loadingTopup === pack.id ? "Memproses..." : "+ Beli sekarang"}
+                  </span>
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--app-sky)] transform translate-x-[-10px] group-hover:translate-x-0 duration-300">
+                    →
+                  </span>
+                </div>
+              </motion.button>
             ))}
           </div>
         </section>

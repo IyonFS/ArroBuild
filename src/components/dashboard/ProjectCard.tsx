@@ -23,11 +23,11 @@ interface ProjectCardProps {
   onDelete: (id: string) => void;
 }
 
-const STATUS_STYLES: Record<string, { label: string; bg: string; color: string; border: string }> = {
-  DONE: { label: "Selesai", bg: "rgba(52,211,153,0.12)", color: "#34D399", border: "rgba(52,211,153,0.35)" },
-  GENERATING: { label: "Proses", bg: "rgba(56,189,248,0.12)", color: "#38BDF8", border: "rgba(56,189,248,0.35)" },
-  PENDING: { label: "Antrian", bg: "rgba(255,176,32,0.12)", color: "#FFB020", border: "rgba(255,176,32,0.35)" },
-  FAILED: { label: "Gagal", bg: "rgba(239,68,68,0.12)", color: "#EF4444", border: "rgba(239,68,68,0.35)" },
+const STATUS_STYLES: Record<string, { label: string; bg: string; color: string; border: string; glow: string }> = {
+  DONE: { label: "Selesai", bg: "rgba(52,211,153,0.1)", color: "#34D399", border: "rgba(52,211,153,0.4)", glow: "0 0 10px rgba(52,211,153,0.2)" },
+  GENERATING: { label: "Proses", bg: "rgba(56,189,248,0.1)", color: "#38BDF8", border: "rgba(56,189,248,0.4)", glow: "0 0 10px rgba(56,189,248,0.2)" },
+  PENDING: { label: "Antrian", bg: "rgba(255,176,32,0.1)", color: "#FFB020", border: "rgba(255,176,32,0.4)", glow: "0 0 10px rgba(255,176,32,0.2)" },
+  FAILED: { label: "Gagal", bg: "rgba(239,68,68,0.1)", color: "#EF4444", border: "rgba(239,68,68,0.4)", glow: "0 0 10px rgba(239,68,68,0.2)" },
 };
 
 const PRODUCT_COLORS: Record<string, string> = {
@@ -69,6 +69,7 @@ export default function ProjectCard({
     bg: "rgba(240,243,250,0.06)",
     color: "var(--app-text-secondary)",
     border: "var(--app-border-default)",
+    glow: "none"
   };
   const accent = PRODUCT_COLORS[display.productType] ?? PRODUCT_COLORS.other;
   const isDone = status === "DONE" && fileCount > 0;
@@ -169,8 +170,19 @@ export default function ProjectCard({
 
   return (
     <>
-      <article className="dashboard-project-row group px-4 sm:px-5 py-4">
-        <div className="flex flex-col gap-2">
+      <article 
+        className="dashboard-project-row group px-4 sm:px-5 py-5 transition-all duration-300 relative overflow-hidden"
+        style={{
+          borderBottom: "0.5px solid var(--app-border-default)",
+        }}
+      >
+        {/* Subtle hover gradient */}
+        <div 
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+          style={{ background: `linear-gradient(90deg, transparent, ${accent}05, transparent)` }}
+        />
+        
+        <div className="flex flex-col gap-3 relative z-10 transform transition-transform duration-300 group-hover:translate-x-1">
           {/* Row 1: badges + status */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -192,13 +204,21 @@ export default function ProjectCard({
               )}
             </div>
             <span
-              className="font-mono text-[12px] font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full"
+              className="font-mono text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full relative overflow-hidden shadow-sm"
               style={{
                 background: statusStyle.bg,
                 color: statusStyle.color,
                 border: `1px solid ${statusStyle.border}`,
+                boxShadow: statusStyle.glow,
               }}
             >
+              {/* Animated scanning line effect for active states */}
+              {(isGenerating || status === "PENDING") && (
+                <span 
+                  className="absolute inset-0 w-full h-[1px] opacity-50 animate-[scan_2s_ease-in-out_infinite]"
+                  style={{ background: statusStyle.color, boxShadow: `0 0 8px ${statusStyle.color}` }}
+                />
+              )}
               {statusStyle.label}
             </span>
           </div>

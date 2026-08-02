@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { usePathname, useSearchParams } from "next/navigation";
 import DashboardSidebar, {
   resolveDashboardNavId,
@@ -52,12 +53,12 @@ function DashboardShellLayout({
   const defaultHeaderAction = (
     <Link
       href="/generate"
-      className="btn btn-sm dashboard-header-cta"
+      className="btn btn-sm relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:-translate-y-[1px] active:scale-[0.98]"
       style={{
         fontFamily: "var(--font-jetbrains-mono), monospace",
         fontSize: 13,
         fontWeight: 700,
-        background: "var(--app-amber)",
+        background: "linear-gradient(135deg, var(--app-amber), #F59E0B)",
         color: "#0D1321",
         padding: "8px 18px",
         borderRadius: 8,
@@ -65,9 +66,11 @@ function DashboardShellLayout({
         display: "inline-flex",
         alignItems: "center",
         gap: 6,
+        boxShadow: "0 4px 14px rgba(255,176,32,0.25), inset 0 1px 1px rgba(255,255,255,0.4)"
       }}
     >
-      Generate baru
+      <span className="relative z-10">Generate baru</span>
+      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
     </Link>
   );
 
@@ -88,8 +91,12 @@ function DashboardShellLayout({
 
       <div className="flex-1 flex flex-col min-w-0 lg:pl-[240px]">
         <header
-          className="dashboard-topbar sticky top-0 z-30 flex items-center justify-between gap-4 px-4 sm:px-8 h-[60px] border-b"
-          style={{ borderColor: "var(--app-border-default)" }}
+          className="dashboard-topbar sticky top-4 z-30 flex items-center justify-between gap-4 px-4 sm:px-6 h-[60px] mx-4 sm:mx-8 rounded-2xl backdrop-blur-md"
+          style={{ 
+            background: "rgba(13,19,33,0.7)", 
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.3)" 
+          }}
         >
           <div className="flex items-center gap-3 min-w-0">
             <button
@@ -104,11 +111,11 @@ function DashboardShellLayout({
             </button>
             <div className="min-w-0">
               <h1
-                className="font-unbounded font-extrabold truncate"
+                className="font-unbounded font-bold truncate"
                 style={{
-                  fontSize: "clamp(22px, 2.5vw, 28px)",
+                  fontSize: "clamp(20px, 2vw, 24px)",
                   color: "var(--app-text-primary)",
-                  letterSpacing: "-0.02em",
+                  letterSpacing: "0.01em",
                   lineHeight: 1.15,
                 }}
               >

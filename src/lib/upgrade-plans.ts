@@ -3,9 +3,9 @@ import type { PricingTierId } from "@/lib/pricing";
 import { PRICING_TIERS } from "@/lib/pricing";
 
 const TIER_RANK: Record<PricingTierId, number> = {
-  starter: 1,
-  pro: 2,
-  pro_max: 3,
+  base: 1,
+  core: 2,
+  prime: 3,
 };
 
 export function tierRank(tierId: PricingTierId): number {
@@ -20,10 +20,10 @@ export function planToPricingId(plan: UserPlanStatus): PricingTierId | null {
 /** Tiers the user can purchase (new sub or upgrade). */
 export function getPurchasableTiers(current: UserPlanStatus): PricingTierId[] {
   if (current === "none") {
-    return ["starter", "pro", "pro_max"];
+    return ["base", "core", "prime"];
   }
   const currentRank = TIER_RANK[current];
-  return (["starter", "pro", "pro_max"] as PricingTierId[]).filter(
+  return (["base", "core", "prime"] as PricingTierId[]).filter(
     (id) => TIER_RANK[id] > currentRank
   );
 }

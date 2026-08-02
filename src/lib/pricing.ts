@@ -6,7 +6,7 @@ import {
   type TierId,
 } from "@/lib/config/tiers";
 
-export type PricingTierId = "starter" | "pro" | "pro_max";
+export type PricingTierId = "base" | "core" | "prime";
 
 export interface PricingTier {
   id: PricingTierId;
@@ -24,14 +24,14 @@ export interface PricingTier {
   badge?: string;
 }
 
-export const PAID_TIER_IDS: PricingTierId[] = ["starter", "pro", "pro_max"];
+export const PAID_TIER_IDS: PricingTierId[] = ["base", "core", "prime"];
 
 export const PRICING_TIERS: PricingTier[] = [
   {
-    id: "starter",
+    id: "base",
     name: "Base",
     price: "Rp 65K",
-    priceAmount: TIER_CONFIG[TIER.STARTER].priceIdr,
+    priceAmount: TIER_CONFIG[TIER.BASE].priceIdr,
     period: "/bulan",
     description: "3 dokumen inti — PRD, Architecture, Plan/Task untuk mulai bangun dengan AI.",
     features: [
@@ -42,13 +42,13 @@ export const PRICING_TIERS: PricingTier[] = [
       "Download Markdown",
     ],
     cta: "Mulai Base",
-    ctaHref: "/signup?plan=starter",
+    ctaHref: "/signup?plan=base",
   },
   {
-    id: "pro",
+    id: "core",
     name: "Core",
     price: "Rp 145K",
-    priceAmount: TIER_CONFIG[TIER.PRO].priceIdr,
+    priceAmount: TIER_CONFIG[TIER.CORE].priceIdr,
     period: "/bulan",
     description: "Bundle fondasi lengkap + Design System & Agent Rules.",
     features: [
@@ -59,16 +59,16 @@ export const PRICING_TIERS: PricingTier[] = [
       "Chat WA founder 2x/bulan",
     ],
     cta: "Upgrade ke Core",
-    ctaHref: "/signup?plan=pro",
+    ctaHref: "/signup?plan=core",
     highlighted: true,
     badge: "Paling Direkomendasikan",
     compareAtPrice: "Rp 175K",
   },
   {
-    id: "pro_max",
+    id: "prime",
     name: "Prime",
     price: "Rp 199K",
-    priceAmount: TIER_CONFIG[TIER.PRO_MAX].priceIdr,
+    priceAmount: TIER_CONFIG[TIER.PRIME].priceIdr,
     period: "/bulan",
     description: "Production-ready — 6 dokumen inti + modul opsional.",
     features: [
@@ -79,7 +79,7 @@ export const PRICING_TIERS: PricingTier[] = [
       "Revisi unlimited + semua mini tools",
     ],
     cta: "Upgrade ke Prime",
-    ctaHref: "/signup?plan=pro_max",
+    ctaHref: "/signup?plan=prime",
     badge: "Terlengkap",
     compareAtPrice: "Rp 265K",
   },
@@ -91,23 +91,23 @@ export function getPaidTier(id: string) {
 
 export function getTierConfigByPricingId(id: PricingTierId) {
   switch (id) {
-    case "starter":
-      return getTierConfig(TIER.STARTER);
-    case "pro":
-      return getTierConfig(TIER.PRO);
-    case "pro_max":
-      return getTierConfig(TIER.PRO_MAX);
+    case "base":
+      return getTierConfig(TIER.BASE);
+    case "core":
+      return getTierConfig(TIER.CORE);
+    case "prime":
+      return getTierConfig(TIER.PRIME);
   }
 }
 
 export function pricingIdToTierId(id: PricingTierId): TierId {
   switch (id) {
-    case "starter":
-      return TIER.STARTER;
-    case "pro":
-      return TIER.PRO;
-    case "pro_max":
-      return TIER.PRO_MAX;
+    case "base":
+      return TIER.BASE;
+    case "core":
+      return TIER.CORE;
+    case "prime":
+      return TIER.PRIME;
   }
 }
 

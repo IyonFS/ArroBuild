@@ -15,7 +15,7 @@ export interface TierCapacity {
   isFull: boolean;
 }
 
-const TIER_ORDER: TierId[] = [TIER.STARTER, TIER.PRO, TIER.PRO_MAX];
+const TIER_ORDER: TierId[] = [TIER.BASE, TIER.CORE, TIER.PRIME];
 
 export async function countActiveSeats(tier: TierId): Promise<number> {
   return prisma.subscription.count({

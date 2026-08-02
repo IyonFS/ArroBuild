@@ -50,7 +50,7 @@ export async function syncDbUser(supabaseUser: SupabaseUser) {
       email,
       name,
       avatarUrl,
-      tier: TIER.STARTER,
+      tier: TIER.BASE,
       creditBalance: 0,
     },
     update: {

@@ -98,7 +98,7 @@ export async function POST(req: Request) {
   }
 
   const billingMonths: BillingMonths = parsed.data.billingMonths ?? 1;
-  if (billingMonths > 1 && parsed.data.tierId === "starter") {
+  if (billingMonths > 1 && parsed.data.tierId === "base") {
     return NextResponse.json(
       { error: "Paket multi-bulan hanya untuk Core dan Prime." },
       { status: 422 }

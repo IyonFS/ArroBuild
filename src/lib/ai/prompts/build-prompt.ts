@@ -41,9 +41,9 @@ export function buildPromptForTier(
     case "plan-task":
       return buildPlanTaskPrompt(input, depth, accumulatedContext);
     case "design-system":
-      return buildDesignSystemPrompt(input, depth as "PRO" | "PRO_MAX", accumulatedContext);
+      return buildDesignSystemPrompt(input, depth as "CORE" | "PRIME", accumulatedContext);
     case "agent-rules":
-      return buildAgentRulesPrompt(input, depth as "PRO" | "PRO_MAX", accumulatedContext);
+      return buildAgentRulesPrompt(input, depth as "CORE" | "PRIME", accumulatedContext);
     case "adaptive-document":
       return buildAdaptiveDocumentPrompt(input, depth, accumulatedContext);
     case "cost-infrastructure":

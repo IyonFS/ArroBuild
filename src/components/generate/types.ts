@@ -537,7 +537,7 @@ export interface Presets {
 // ─── User & Model ─────────────────────────────────────────────────────────────
 
 /** Active subscription plan (v2 — no FREE tier) */
-export type UserTier = "starter" | "pro" | "pro_max";
+export type UserTier = "base" | "core" | "prime";
 
 /** Includes users without an active subscription */
 export type UserPlanStatus = UserTier | "none";
@@ -548,7 +548,7 @@ export function isSubscribed(plan: UserPlanStatus): plan is UserTier {
 
 /** Preview tier for credit estimates when user has no plan yet */
 export function resolvePreviewTier(plan: UserPlanStatus): UserTier {
-  return plan === "none" ? "starter" : plan;
+  return plan === "none" ? "base" : plan;
 }
 
 export type AIProvider = "gemini" | "openai" | "anthropic" | "deepseek";
@@ -611,9 +611,9 @@ export const MODEL_CLASS_PIPELINE: Record<ModelClass, string> = {
 
 /** Which model classes are available per tier */
 export const TIER_MODEL_CLASSES: Record<UserTier, ModelClass[]> = {
-  starter: ["hemat"],
-  pro: ["hemat", "menengah", "flagship"],
-  pro_max: ["hemat", "menengah", "flagship", "ultra"],
+  base: ["hemat"],
+  core: ["hemat", "menengah", "flagship"],
+  prime: ["hemat", "menengah", "flagship", "ultra"],
 };
 
 /** Token budget per document per tier (from Document-isi / pricing v2) */
@@ -660,23 +660,23 @@ export function calcTotalCredits(
 
 /** Tier credit pool per month (from arrobuild_pricing_monetisasi_v2.md §4) */
 export const TIER_CREDIT_POOL: Record<UserTier, number> = {
-  starter: 3_000,
-  pro: 7_000,
-  pro_max: 14_000,
+  base: 3_000,
+  core: 7_000,
+  prime: 14_000,
 };
 
 /** Tier labels for display */
 export const TIER_LABELS: Record<UserTier, string> = {
-  starter: "Base",
-  pro: "Core",
-  pro_max: "Prime",
+  base: "Base",
+  core: "Core",
+  prime: "Prime",
 };
 
 export const PLAN_STATUS_LABELS: Record<UserPlanStatus, string> = {
   none: "Belum berlangganan",
-  starter: "Base",
-  pro: "Core",
-  pro_max: "Prime",
+  base: "Base",
+  core: "Core",
+  prime: "Prime",
 };
 
 // ─── Legacy Model Options (backward compat for API & GenerationProgress) ────
@@ -752,7 +752,7 @@ export const MODEL_OPTIONS: ModelOption[] = [
 ];
 
 export function getModelsForTier(tier: UserTier): ModelOption[] {
-  if (tier === "starter") {
+  if (tier === "base") {
     return MODEL_OPTIONS.filter((m) => m.tier === "free");
   }
   return MODEL_OPTIONS;
@@ -799,9 +799,9 @@ export function documentsForTier(tier: UserTier): FileKey[] {
 }
 
 export const TIER_FILE_KEYS: Record<UserTier, FileKey[]> = {
-  starter: documentsForTier("starter"),
-  pro: documentsForTier("pro"),
-  pro_max: documentsForTier("pro_max"),
+  base: documentsForTier("base"),
+  core: documentsForTier("core"),
+  prime: documentsForTier("prime"),
 };
 
 // ─── Framework Display Data ──────────────────────────────────────────────────

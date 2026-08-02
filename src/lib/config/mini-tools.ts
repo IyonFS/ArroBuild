@@ -82,7 +82,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     credits: 1,
     modelClass: "HEMAT",
     maxOutputTokens: 1200,
-    minTier: TIER.STARTER,
+    minTier: TIER.BASE,
     fields: [
       {
         key: "rawPrompt",
@@ -102,7 +102,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     credits: 5,
     modelClass: "MENENGAH",
     maxOutputTokens: 2000,
-    minTier: TIER.PRO,
+    minTier: TIER.CORE,
     fields: [
       {
         key: "features",
@@ -128,7 +128,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     credits: 200,
     modelClass: "FLAGSHIP",
     maxOutputTokens: 4000,
-    minTier: TIER.PRO,
+    minTier: TIER.CORE,
     fields: [
       {
         key: "inputType",
@@ -161,7 +161,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     credits: 2,
     modelClass: "HEMAT",
     maxOutputTokens: 2000,
-    minTier: TIER.PRO,
+    minTier: TIER.CORE,
     fields: [
       { key: "mode", label: "Mode", type: "text", required: true },
       { key: "category", label: "Kategori", type: "text", required: true },
@@ -178,7 +178,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     credits: COPY_STUDIO_CREDITS.template,
     modelClass: "MENENGAH",
     maxOutputTokens: 2500,
-    minTier: TIER.PRO,
+    minTier: TIER.CORE,
     fields: [
       { key: "mode", label: "Mode", type: "text", required: true },
       { key: "productName", label: "Nama produk", type: "text" },
@@ -195,7 +195,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     credits: STACK_ADVISOR_CREDITS.cepat,
     modelClass: "MENENGAH",
     maxOutputTokens: 2000,
-    minTier: TIER.PRO,
+    minTier: TIER.CORE,
     fields: [
       { key: "mode", label: "Mode", type: "text", required: true },
       { key: "productType", label: "Tipe produk", type: "text" },
@@ -212,7 +212,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     credits: 1,
     modelClass: "HEMAT",
     maxOutputTokens: 2000,
-    minTier: TIER.PRO_MAX,
+    minTier: TIER.PRIME,
     fields: [
       {
         key: "schema",
@@ -230,9 +230,9 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
 export const MINI_TOOL_LIST = Object.values(MINI_TOOLS);
 
 const TIER_RANK: Record<TierId, number> = {
-  [TIER.STARTER]: 1,
-  [TIER.PRO]: 2,
-  [TIER.PRO_MAX]: 3,
+  [TIER.BASE]: 1,
+  [TIER.CORE]: 2,
+  [TIER.PRIME]: 3,
 };
 
 export function isToolAllowedForTier(toolId: MiniToolId, tierId: TierId): boolean {

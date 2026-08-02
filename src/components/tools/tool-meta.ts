@@ -71,15 +71,15 @@ export function getAccent(a: ShowcaseAccent) {
 
 export function tierLabel(tier: TierId | null): string {
   if (!tier) return "Gratis";
-  if (tier === TIER.STARTER) return "Base";
-  if (tier === TIER.PRO) return "Core";
+  if (tier === TIER.BASE) return "Base";
+  if (tier === TIER.CORE) return "Core";
   return "Prime";
 }
 
 export function filterFromTier(tier: TierId | null): ShowcaseFilter {
   if (!tier) return "free";
-  if (tier === TIER.STARTER) return "base";
-  if (tier === TIER.PRO) return "core";
+  if (tier === TIER.BASE) return "base";
+  if (tier === TIER.CORE) return "core";
   return "prime";
 }
 

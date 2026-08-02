@@ -207,7 +207,7 @@ function DashboardContent() {
   const quota = deriveQuotaDisplay(data);
   const doneCount = projects.filter((p) => p.status === "DONE").length;
   const canFork =
-    data.canForkProject ?? (data.plan === "pro" || data.plan === "pro_max");
+    data.canForkProject ?? (data.plan === "core" || data.plan === "prime");
 
   return (
     <DashboardShell
@@ -244,55 +244,75 @@ function DashboardContent() {
 
       {quota.monthlyLimit > 0 && (
         <section
+          className="relative overflow-hidden"
           style={{
-            background: "var(--app-bg-elevated)",
-            border: "0.5px solid var(--app-border-default)",
-            borderRadius: 12,
-            padding: "20px",
+            background: "linear-gradient(135deg, rgba(30,41,59,0.5), rgba(15,23,42,0.8))",
+            border: "1px solid rgba(255,255,255,0.05)",
+            boxShadow: "0 10px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)",
+            borderRadius: 16,
+            padding: "24px",
             marginBottom: 32,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
-            <p
-              style={{
-                fontFamily: "var(--font-jetbrains-mono), monospace",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--app-text-primary)",
-              }}
-            >
-              Kuota generate
-            </p>
+          {/* Subtle noise/mesh background */}
+          <div 
+            className="absolute inset-0 pointer-events-none opacity-[0.03]" 
+            style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}
+          />
+          {/* Accent glow on top left */}
+          <div 
+            className="absolute -top-24 -left-24 w-48 h-48 rounded-full pointer-events-none blur-3xl opacity-20"
+            style={{ background: data.tier === "prime" ? "var(--app-amber)" : data.tier === "core" ? "var(--app-sky)" : "transparent" }}
+          />
+
+          <div className="relative z-10" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 24 }}>
+            <div>
+              <p
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono), monospace",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "var(--app-text-primary)",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                KUOTA GENERATE
+              </p>
+              <p style={{ fontSize: 11, color: "var(--app-text-tertiary)", marginTop: 4 }}>
+                Status penggunaan *resources* saat ini
+              </p>
+            </div>
             <span
               style={{
                 fontFamily: "var(--font-jetbrains-mono), monospace",
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 700,
-                letterSpacing: "0.12em",
+                letterSpacing: "0.1em",
                 textTransform: "uppercase",
-                padding: "4px 12px",
+                padding: "6px 14px",
                 borderRadius: 999,
                 background:
-                  data.tier === "pro_max"
-                    ? "rgba(255,176,32,0.12)"
-                    : data.tier === "pro"
-                    ? "rgba(56,189,248,0.12)"
+                  data.tier === "prime"
+                    ? "rgba(255,176,32,0.15)"
+                    : data.tier === "core"
+                    ? "rgba(56,189,248,0.15)"
                     : "rgba(240,243,250,0.07)",
                 color:
-                  data.tier === "pro_max"
+                  data.tier === "prime"
                     ? "var(--app-amber)"
-                    : data.tier === "pro"
+                    : data.tier === "core"
                     ? "var(--app-sky)"
                     : "var(--app-text-tertiary)",
                 border:
-                  data.tier === "pro_max"
-                    ? "1px solid rgba(255,176,32,0.3)"
-                    : data.tier === "pro"
-                    ? "1px solid rgba(56,189,248,0.3)"
-                    : "1px solid var(--app-border-default)",
+                  data.tier === "prime"
+                    ? "1px solid rgba(255,176,32,0.4)"
+                    : data.tier === "core"
+                    ? "1px solid rgba(56,189,248,0.4)"
+                    : "1px solid rgba(255,255,255,0.1)",
+                boxShadow: data.tier === "prime" ? "0 0 12px rgba(255,176,32,0.2)" : "none",
               }}
             >
-              Paket {tierLabel}
+              PAKET {tierLabel}
             </span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>

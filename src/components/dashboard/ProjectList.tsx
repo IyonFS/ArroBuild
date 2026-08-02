@@ -185,7 +185,7 @@ export default function ProjectList({
                     cursor: "pointer",
                   }}
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="relative z-10 flex items-center gap-2">
                     {opt.label}
                     <span
                       className="inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 rounded-full text-[10px] font-bold"
@@ -199,10 +199,13 @@ export default function ProjectList({
                   </span>
                   {active && (
                     <motion.span
-                      layoutId="dashboard-project-filter"
-                      className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full"
-                      style={{ background: "var(--app-amber)" }}
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      layoutId="dashboard-project-filter-pill"
+                      className="absolute inset-0 rounded-lg"
+                      style={{ 
+                        background: "var(--app-bg-hover)",
+                        border: "0.5px solid var(--app-border-strong)"
+                      }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     />
                   )}
                 </button>
@@ -262,7 +265,11 @@ export default function ProjectList({
         ) : (
           <div
             className="rounded-xl overflow-hidden"
-            style={{ border: "0.5px solid var(--app-border-default)" }}
+            style={{ 
+              background: "var(--app-bg-elevated)",
+              border: "1px solid var(--app-border-default)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.1)"
+            }}
           >
             {filtered.map((project) => (
               <ProjectCard

@@ -42,9 +42,9 @@ export async function assertMiniToolAccess(
 
   if (!isToolAllowedForTier(toolId, tierId)) {
     const needed =
-      tool.minTier === TIER.PRO_MAX
+      tool.minTier === TIER.PRIME
         ? "Prime"
-        : tool.minTier === TIER.PRO
+        : tool.minTier === TIER.CORE
           ? "Core"
           : "Base";
     throw new TierCapabilityError(
@@ -54,7 +54,7 @@ export async function assertMiniToolAccess(
     );
   }
 
-  if (config.miniToolsIncluded !== "all" && tierId === TIER.PRO) {
+  if (config.miniToolsIncluded !== "all" && tierId === TIER.CORE) {
     if (!PRO_DEFAULT_TOOLS.includes(toolId)) {
       throw new TierCapabilityError(
         "TOOL_NOT_IN_PRO_BUNDLE",
@@ -68,7 +68,7 @@ export async function assertMiniToolAccess(
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  if (tierId === TIER.STARTER) {
+  if (tierId === TIER.BASE) {
     const used = await prisma.creditLedger.count({
       where: {
         userId,

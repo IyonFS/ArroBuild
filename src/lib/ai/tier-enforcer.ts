@@ -40,9 +40,9 @@ export type ExportFormat =
   | "system-prompt";
 
 const MODELS_BY_TIER: Record<UserTier, ModelId[]> = {
-  starter: ["gemini-3.1-flash-lite", "deepseek-v4-flash"],
-  pro: ["gemini-3.1-flash-lite", "deepseek-v4-flash", "gemini-3.5-flash", "gpt-5.4"],
-  pro_max: [
+  base: ["gemini-3.1-flash-lite", "deepseek-v4-flash"],
+  core: ["gemini-3.1-flash-lite", "deepseek-v4-flash", "gemini-3.5-flash", "gpt-5.4"],
+  prime: [
     "gemini-3.1-flash-lite",
     "deepseek-v4-flash",
     "gemini-3.5-flash",
@@ -52,9 +52,9 @@ const MODELS_BY_TIER: Record<UserTier, ModelId[]> = {
 };
 
 const DEFAULT_MODEL: Record<UserTier, ModelId> = {
-  starter: "gemini-3.1-flash-lite",
-  pro: "gemini-3.5-flash",
-  pro_max: "claude-sonnet-4-20250514",
+  base: "gemini-3.1-flash-lite",
+  core: "gemini-3.5-flash",
+  prime: "claude-sonnet-4-20250514",
 };
 
 export interface TierEnforcementResult {
@@ -75,7 +75,7 @@ export function enforceTier(
   const userTier = legacyTierSlugToUserTier(tierSlug);
   const promptDepth = userTierToPromptDepth(userTier);
   const config = getTierConfig(
-    userTier === "pro_max" ? "PRO_MAX" : userTier === "pro" ? "PRO" : "STARTER"
+    userTier === "prime" ? "PRIME" : userTier === "core" ? "CORE" : "BASE"
   );
 
   const sanitizedDocs = filterDocumentsForTier(requestedDocs, userTier)
@@ -122,7 +122,7 @@ export async function checkMonthlyQuota(
 ): Promise<QuotaCheckResult> {
   const userTier = legacyTierSlugToUserTier(tierSlug);
   const tierId =
-    userTier === "pro_max" ? "PRO_MAX" : userTier === "pro" ? "PRO" : "STARTER";
+    userTier === "prime" ? "PRIME" : userTier === "core" ? "CORE" : "BASE";
   const limit = getTierConfig(tierId).maxProjectsPerMonth;
 
   const used = await countProjectsThisMonth(userId);
@@ -145,7 +145,7 @@ export async function checkDailyLimit(
 ): Promise<QuotaCheckResult> {
   const userTier = legacyTierSlugToUserTier(tierSlug);
   const tierId =
-    userTier === "pro_max" ? "PRO_MAX" : userTier === "pro" ? "PRO" : "STARTER";
+    userTier === "prime" ? "PRIME" : userTier === "core" ? "CORE" : "BASE";
   const baseLimit = getTierConfig(tierId).maxProjectsPerDay;
   const limit =
     process.env.NODE_ENV === "development"
@@ -170,7 +170,7 @@ export async function checkDailyLimit(
 export function getTierQuotaLimits(tierSlug: string | undefined | null) {
   const userTier = legacyTierSlugToUserTier(tierSlug);
   const tierId =
-    userTier === "pro_max" ? "PRO_MAX" : userTier === "pro" ? "PRO" : "STARTER";
+    userTier === "prime" ? "PRIME" : userTier === "core" ? "CORE" : "BASE";
   const config = getTierConfig(tierId);
   return {
     monthlyLimit: config.maxProjectsPerMonth,
@@ -236,11 +236,11 @@ export function modelToProvider(modelId: ModelId): import("./prompts/shared").AI
 
 /** Backward compat for orchestrator token lookup */
 export const V3_TIER_CONFIG = {
-  STARTER: { maxTokensPerDoc: 2500, allowedModels: MODELS_BY_TIER.starter },
-  PRO: { maxTokensPerDoc: 5000, allowedModels: MODELS_BY_TIER.pro },
-  PRO_MAX: { maxTokensPerDoc: 10000, allowedModels: MODELS_BY_TIER.pro_max },
+  BASE: { maxTokensPerDoc: 2500, allowedModels: MODELS_BY_TIER.base },
+  CORE: { maxTokensPerDoc: 5000, allowedModels: MODELS_BY_TIER.core },
+  PRIME: { maxTokensPerDoc: 10000, allowedModels: MODELS_BY_TIER.prime },
   // legacy aliases
-  FREE: { maxTokensPerDoc: 2500, allowedModels: MODELS_BY_TIER.starter },
+  FREE: { maxTokensPerDoc: 2500, allowedModels: MODELS_BY_TIER.base },
 } as const;
 
 export function getFilesForTierConfig(tierSlug: string): DocumentFileKey[] {

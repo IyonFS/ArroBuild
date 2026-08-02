@@ -36,7 +36,7 @@ function hasAuthCookie(request: NextRequest): boolean {
     .some((c) => c.name.includes("auth-token") || c.name.includes("sb-"));
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||

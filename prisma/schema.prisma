@@ -20,7 +20,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   // v2: cached tier & credit balance (ledger is source of truth)
-  tier          SubscriptionTier @default(STARTER)
+  tier          SubscriptionTier @default(BASE)
   creditBalance Int              @default(0)
 
   subscription      Subscription?
@@ -38,7 +38,7 @@ model Subscription {
   id        String             @id @default(cuid())
   userId    String             @unique
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tier      SubscriptionTier   @default(STARTER)
+  tier      SubscriptionTier   @default(BASE)
   status    SubscriptionStatus @default(ACTIVE)
   startDate DateTime?
   renewalDate DateTime?
@@ -113,9 +113,9 @@ model DocumentRevision {
 }
 
 enum SubscriptionTier {
-  STARTER
-  PRO
-  PRO_MAX
+  BASE  @map("STARTER")
+  CORE  @map("PRO")
+  PRIME @map("PRO_MAX")
 }
 
 enum SubscriptionStatus {

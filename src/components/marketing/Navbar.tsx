@@ -9,6 +9,7 @@ import { getNavLabel } from "@/lib/display-name";
 import { OPEN_LEARN_IN_NEW_TAB, LEARN_HUB_PATH } from "@/lib/learn-links";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { SparklesIcon, MenuIcon, CloseIcon } from "./icons";
+import { motion } from "framer-motion";
 
 const NAV_LINKS = [
   { href: "/learn", label: "Belajar" },
@@ -33,6 +34,7 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [hoveredLink, setHoveredLink] = useState<string | null>(null);
   const mounted = useHydrated();
 
   useEffect(() => {
@@ -174,27 +176,49 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
 
           {/* Desktop nav links */}
           <div
-            className="hidden lg:flex"
-            style={{ alignItems: "center", gap: 28 }}
+            className="hidden lg:flex relative"
+            style={{ alignItems: "center", gap: 8 }}
+            onMouseLeave={() => setHoveredLink(null)}
           >
-            {links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                {...(link.href === LEARN_HUB_PATH ? OPEN_LEARN_IN_NEW_TAB : {})}
-                className="nav-link"
-                style={{
-                  fontSize: 15,
-                  color:
-                    pathname === link.href ||
-                    (link.href === "/learn" && pathname.startsWith("/learn"))
-                      ? "var(--color-text-primary)"
-                      : undefined,
-                }}
-              >
-                {link.label}
-              </a>
-            ))}
+            {links.map((link) => {
+              const isActive =
+                pathname === link.href ||
+                (link.href === "/learn" && pathname.startsWith("/learn"));
+              const isHovered = hoveredLink === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  {...(link.href === LEARN_HUB_PATH ? OPEN_LEARN_IN_NEW_TAB : {})}
+                  className="nav-link relative"
+                  style={{
+                    fontSize: 14,
+                    padding: "8px 16px",
+                    borderRadius: "9999px",
+                    color: isActive || isHovered ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                    zIndex: 1,
+                    textDecoration: "none"
+                  }}
+                  onMouseEnter={() => setHoveredLink(link.href)}
+                >
+                  {isHovered && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute inset-0 z-[-1]"
+                      style={{
+                        background: "rgba(255, 255, 255, 0.08)",
+                        borderRadius: "9999px",
+                      }}
+                    />
+                  )}
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Right side actions */}

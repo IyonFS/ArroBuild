@@ -153,7 +153,7 @@ export function TechLogoStack({
   size?: number;
   className?: string;
 }) {
-  const slugs = names.map(resolveTechSlug).filter(Boolean).slice(0, 4);
+  const slugs = Array.from(new Set(names.map(resolveTechSlug).filter(Boolean) as string[])).slice(0, 4);
   if (slugs.length === 0) return null;
   return (
     <div className={`flex items-center -space-x-1.5 ${className ?? ""}`}>

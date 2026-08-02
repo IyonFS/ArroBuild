@@ -8,19 +8,19 @@ import { TIER_LABELS } from "@/components/generate/types";
 import { TIER_CONFIG, TIER, type TierId } from "@/lib/config/tiers";
 
 const TIER_RANK: Record<UserTier, number> = {
-  starter: 1,
-  pro: 2,
-  pro_max: 3,
+  base: 1,
+  core: 2,
+  prime: 3,
 };
 
 function tierIdToUserTier(tierId: TierId): UserTier {
   switch (tierId) {
-    case TIER.STARTER:
-      return "starter";
-    case TIER.PRO:
-      return "pro";
-    case TIER.PRO_MAX:
-      return "pro_max";
+    case TIER.BASE:
+      return "base";
+    case TIER.CORE:
+      return "core";
+    case TIER.PRIME:
+      return "prime";
   }
 }
 
@@ -35,7 +35,7 @@ export function recommendTierForPlan(params: {
   selectedDocs: DocumentFileKey[];
   perDocumentModelClass?: Partial<Record<DocumentFileKey, ModelClass>>;
 }): TierRecommendation {
-  let minimum: UserTier = "starter";
+  let minimum: UserTier = "base";
 
   for (const docKey of params.selectedDocs) {
     const def = DOCUMENT_DEFINITIONS[docKey];
@@ -46,39 +46,39 @@ export function recommendTierForPlan(params: {
 
   for (const [, modelClass] of Object.entries(params.perDocumentModelClass ?? {})) {
     if (modelClass === "ultra" || modelClass === "flagship") {
-      if (modelClass === "ultra") minimum = "pro_max";
-      else if (TIER_RANK[minimum] < TIER_RANK.pro) minimum = "pro";
+      if (modelClass === "ultra") minimum = "prime";
+      else if (TIER_RANK[minimum] < TIER_RANK.core) minimum = "core";
     }
-    if (modelClass === "menengah" && TIER_RANK[minimum] < TIER_RANK.pro) {
-      minimum = "pro";
+    if (modelClass === "menengah" && TIER_RANK[minimum] < TIER_RANK.core) {
+      minimum = "core";
     }
   }
 
-  const starterPool = TIER_CONFIG[TIER.STARTER].creditsPerMonth;
-  const proPool = TIER_CONFIG[TIER.PRO].creditsPerMonth;
+  const starterPool = TIER_CONFIG[TIER.BASE].creditsPerMonth;
+  const proPool = TIER_CONFIG[TIER.CORE].creditsPerMonth;
 
   if (params.estimatedCredits > proPool) {
-    minimum = "pro_max";
+    minimum = "prime";
   } else if (params.estimatedCredits > starterPool) {
-    if (TIER_RANK[minimum] < TIER_RANK.pro) minimum = "pro";
+    if (TIER_RANK[minimum] < TIER_RANK.core) minimum = "core";
   }
 
   let recommended = minimum;
   const reasons: string[] = [];
 
-  if (minimum === "pro_max") {
+  if (minimum === "prime") {
     reasons.push("plan butuh dokumen opsional atau kelas model Ultra/Flagship");
-  } else if (minimum === "pro") {
+  } else if (minimum === "core") {
     reasons.push("plan butuh lebih dari 3 dokumen inti atau model Menengah+");
   }
 
-  if (params.estimatedCredits > starterPool && recommended === "starter") {
-    recommended = "pro";
+  if (params.estimatedCredits > starterPool && recommended === "base") {
+    recommended = "core";
     reasons.push(`estimasi ${params.estimatedCredits} kredit melebihi pool Base (${starterPool})`);
   }
 
-  if (params.estimatedCredits > proPool && recommended !== "pro_max") {
-    recommended = "pro_max";
+  if (params.estimatedCredits > proPool && recommended !== "prime") {
+    recommended = "prime";
     reasons.push(`estimasi ${params.estimatedCredits} kredit melebihi pool Core (${proPool})`);
   }
 

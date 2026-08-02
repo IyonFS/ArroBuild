@@ -61,7 +61,7 @@ export async function assertTierCapability(
     if (limit <= 0) {
       throw new TierCapabilityError(
         "WHATSAPP_NOT_INCLUDED",
-        "Chat WhatsApp founder tersedia di paket Pro ke atas. Upgrade untuk akses chat langsung dengan founder.",
+        "Chat WhatsApp founder tersedia di paket Core ke atas. Upgrade untuk akses chat langsung dengan founder.",
         403
       );
     }
@@ -151,7 +151,7 @@ export async function getRevisionQuota(userId: string): Promise<RevisionQuota | 
     };
   }
 
-  if (tierId === TIER.PRO) {
+  if (tierId === TIER.CORE) {
     const used = await countMonthlyFreeRevisions(userId);
     const freeRemaining = Math.max(0, PRO_FREE_REVISIONS_PER_MONTH - used);
     return {

@@ -558,40 +558,45 @@ export default function StackStep({ productType, value, onChange, onNext, onBack
                       : "none",
                   }}
                 >
-                  {isRecommended && (
-                    <span
-                      className="absolute top-3 right-3 inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{
-                        background: "rgba(56,189,248,0.12)",
-                        color: "var(--app-sky)",
-                        border: "1px solid rgba(56,189,248,0.25)",
-                      }}
-                    >
-                      <Sparkles size={10} strokeWidth={2} />
-                      Cocok
-                    </span>
-                  )}
-                  {isSelected && (
-                    <div
-                      className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center"
-                      style={{ background: "var(--app-amber)" }}
-                    >
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4L3.5 6.5L9 1" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                  <div className="flex flex-col gap-3 mb-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="font-semibold text-sm"
+                          style={{
+                            color: isSelected ? "var(--app-amber)" : "var(--app-text-primary)",
+                          }}
+                        >
+                          {bundle.label}
+                        </span>
+                        {isRecommended && (
+                          <span
+                            className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full"
+                            style={{
+                              background: "rgba(56,189,248,0.12)",
+                              color: "var(--app-sky)",
+                              border: "1px solid rgba(56,189,248,0.25)",
+                            }}
+                          >
+                            <Sparkles size={10} strokeWidth={2} />
+                            Cocok
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TechLogoStack names={bundle.techBadges} size={13} />
+                        {isSelected && (
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                            style={{ background: "var(--app-amber)" }}
+                          >
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                              <path d="M1 4L3.5 6.5L9 1" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <span
-                      className="font-semibold text-sm"
-                      style={{
-                        color: isSelected ? "var(--app-amber)" : "var(--app-text-primary)",
-                      }}
-                    >
-                      {bundle.label}
-                    </span>
-                    <TechLogoStack names={bundle.techBadges} size={13} />
                   </div>
 
                   {/* Tech badges */}
