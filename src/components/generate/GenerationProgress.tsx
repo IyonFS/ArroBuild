@@ -511,7 +511,7 @@ export default function GenerationProgress({
                   {isGenerating && <SmallSpinner />}
                   {file.status === "done" && (
                     <motion.div
-                      initial={{ scale: 0 }} animate={{ scale: 1 }} type="spring"
+                      initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}
                       className="w-6 h-6 rounded-full flex items-center justify-center bg-[rgba(34,197,94,0.15)]"
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
