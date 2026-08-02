@@ -7,7 +7,7 @@ import { buildPrdYamlMetadata, buildFeatIdContextBlock } from "./yaml-metadata";
 import type { PromptDepthTier } from "@/lib/config/documents";
 
 const DEPTH: Record<PromptDepthTier, string> = {
-  STARTER: `
+  BASE: `
 1. Ringkasan Produk (2-3 kalimat)
 2. Masalah yang Diselesaikan
 3. Target Pengguna
@@ -17,7 +17,7 @@ const DEPTH: Record<PromptDepthTier, string> = {
 7. Batasan
 8. Section khusus product_type (wajib)`,
 
-  PRO: `
+  CORE: `
 1. Ringkasan Produk
 2. Masalah yang Diselesaikan
 3. Target Pengguna (multi-persona)
@@ -27,7 +27,7 @@ const DEPTH: Record<PromptDepthTier, string> = {
 7. Batasan
 8. Section khusus product_type`,
 
-  PRO_MAX: `
+  PRIME: `
 Semua section Pro, plus:
 - Kondisi gagal/edge case per fitur P0
 - Minimal 1 alur alternatif (mis. pembayaran gagal)
@@ -48,7 +48,7 @@ const PRODUCT_TYPE_SECTIONS: Record<string, string> = {
 
 export function buildPrdPrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "STARTER",
+  tier: PromptDepthTier = "BASE",
   accumulatedContext = ""
 ): string {
   const yaml = buildPrdYamlMetadata(input);

@@ -3,37 +3,30 @@
 import Link from "next/link";
 import { LEARN_HUB_PATH, OPEN_LEARN_IN_NEW_TAB } from "@/lib/learn-links";
 
-function NodeMark() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
-      <line x1="14" y1="6" x2="22" y2="20" stroke="rgba(240,243,250,0.3)" strokeWidth="1.5" />
-      <line x1="14" y1="6" x2="6" y2="20" stroke="rgba(240,243,250,0.3)" strokeWidth="1.5" />
-      <line x1="22" y1="20" x2="6" y2="20" stroke="rgba(240,243,250,0.3)" strokeWidth="1.5" />
-      <circle cx="14" cy="6" r="4" fill="#FFB020" />
-      <circle cx="22" cy="20" r="3" fill="#38BDF8" />
-      <circle cx="6" cy="20" r="2.5" fill="#9D4EDD" />
-    </svg>
-  );
-}
-
 const FOOTER_LINKS = {
   product: [
-    { href: "/generate", label: "Generate" },
-    { href: LEARN_HUB_PATH, label: "Learn Hub", learn: true },
+    { href: "/generate", label: "Buat Web / Dokumen" },
+    { href: LEARN_HUB_PATH, label: "Pusat Belajar", learn: true },
     { href: "/#pricing", label: "Harga" },
-    { href: "/tools", label: "Mini Tools" },
-    { href: "/dashboard", label: "Dashboard" },
+    { href: "/tools", label: "Alat Mini" },
+    { href: "/dashboard", label: "Dasbor" },
   ],
   resources: [
-    { href: "/#how-it-works", label: "Cara kerja" },
-    { href: "/integrations", label: "Integrations" },
-    { href: "/#faq", label: "FAQ" },
+    { href: "/#how-it-works", label: "Cara Kerja" },
+    { href: "/integrations", label: "Integrasi" },
+    { href: "/#faq", label: "Tanya Jawab" },
   ],
   account: [
     { href: "/login", label: "Masuk" },
     { href: "/signup", label: "Daftar" },
     { href: "/terms", label: "Syarat & Ketentuan" },
-    { href: "/privacy", label: "Privasi" },
+    { href: "/privacy", label: "Kebijakan Privasi" },
+  ],
+  socials: [
+    { href: "#", label: "Twitter / X" },
+    { href: "#", label: "LinkedIn" },
+    { href: "#", label: "GitHub" },
+    { href: "mailto:hello@hygione.com", label: "Hubungi Kami" },
   ],
 };
 
@@ -45,16 +38,16 @@ function FooterColumn({
   links: Array<{ href: string; label: string; learn?: boolean }>;
 }) {
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column" }}>
       <p
         style={{
           fontFamily: "var(--font-jetbrains-mono), monospace",
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: 700,
-          letterSpacing: "0.12em",
+          letterSpacing: "0.1em",
           textTransform: "uppercase",
-          color: "var(--lp-text-tertiary, rgba(240,243,250,0.35))",
-          margin: "0 0 16px",
+          color: "var(--lp-text-primary, #F0F3FA)",
+          margin: "0 0 24px",
         }}
       >
         {title}
@@ -65,20 +58,22 @@ function FooterColumn({
           href={link.href}
           {...(link.learn ? OPEN_LEARN_IN_NEW_TAB : {})}
           style={{
-            display: "block",
+            display: "inline-flex",
+            alignItems: "center",
             fontFamily: "var(--font-jetbrains-mono), monospace",
-            fontSize: 13,
+            fontSize: 14,
             color: "var(--lp-text-secondary, rgba(240,243,250,0.62))",
             textDecoration: "none",
-            marginBottom: 10,
-            transition: "color 0.15s",
+            marginBottom: 16,
+            transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--lp-text-primary, #F0F3FA)";
+            e.currentTarget.style.color = "var(--lp-amber, #FFB020)";
+            e.currentTarget.style.transform = "translateX(6px)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color =
-              "var(--lp-text-secondary, rgba(240,243,250,0.62))";
+            e.currentTarget.style.color = "var(--lp-text-secondary, rgba(240,243,250,0.62))";
+            e.currentTarget.style.transform = "translateX(0px)";
           }}
         >
           {link.label}
@@ -94,78 +89,130 @@ export default function Footer() {
       style={{
         background: "var(--lp-bg-base, #0D1321)",
         borderTop: "0.5px solid var(--lp-border-default, rgba(240,243,250,0.08))",
-        padding: "56px 24px 32px",
+        padding: "96px 24px 64px",
+        overflow: "hidden",
       }}
     >
-      <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        
+        {/* Main Grid: Huge Statement + Links */}
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr 1fr",
-            gap: 40,
-            marginBottom: 48,
-          }}
-          className="lp-footer-grid"
+          className="flex flex-col lg:flex-row gap-16 lg:gap-24 mb-24"
         >
-          <div>
-            <Link
-              href="/"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 10,
-                textDecoration: "none",
-                marginBottom: 16,
-              }}
-            >
-              <NodeMark />
-              <span
+          {/* Left / Top: Editorial Statement */}
+          <div className="flex-1 flex flex-col justify-between">
+            <div>
+              <Link
+                href="/"
+                style={{ textDecoration: "none" }}
+              >
+                <h2
+                  style={{
+                    fontFamily: "var(--font-unbounded), Unbounded, sans-serif",
+                    fontWeight: 900,
+                    fontSize: "clamp(2.5rem, 6vw, 4.5rem)",
+                    lineHeight: 1.05,
+                    letterSpacing: "-0.04em",
+                    color: "var(--lp-text-primary, #F0F3FA)",
+                    margin: 0,
+                  }}
+                >
+                  ArroBuild
+                  <span style={{ color: "var(--lp-amber, #FFB020)" }}>.</span>
+                </h2>
+              </Link>
+              <p
                 style={{
-                  fontFamily: "var(--font-unbounded), Unbounded, sans-serif",
-                  fontWeight: 800,
-                  fontSize: 18,
-                  letterSpacing: "-0.02em",
-                  color: "var(--lp-text-primary, #F0F3FA)",
+                  fontFamily: "var(--font-jetbrains-mono), monospace",
+                  fontSize: 14,
+                  color: "var(--lp-text-secondary, rgba(240,243,250,0.62))",
+                  lineHeight: 1.8,
+                  marginTop: 24,
+                  maxWidth: 380,
                 }}
               >
-                Arro
-                <span style={{ color: "var(--lp-amber, #FFB020)" }}>Build</span>
-              </span>
-            </Link>
-            <p
-              style={{
-                fontFamily: "var(--font-jetbrains-mono), monospace",
-                fontSize: 12,
-                color: "var(--lp-text-tertiary, rgba(240,243,250,0.35))",
-                lineHeight: 1.7,
-                margin: 0,
-                maxWidth: 240,
-              }}
-            >
-              Dari ide ke dokumen fondasi. Sebelum AI agent sempat ngasal.
-            </p>
+                Dari ide ke dokumen fondasi. Sebelum AI agent sempat ngasal. Arsitektur yang kokoh dimulai dari desain sistem yang tepat.
+              </p>
+              
+              {/* Newsletter / Contact mini form to add elements */}
+              <div style={{ marginTop: 40, maxWidth: 360 }}>
+                <p style={{
+                  fontFamily: "var(--font-jetbrains-mono), monospace",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--lp-text-primary)",
+                  margin: "0 0 12px",
+                }}>
+                  Berlangganan Update
+                </p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input 
+                    type="email" 
+                    placeholder="Alamat email Anda"
+                    style={{
+                      flex: 1,
+                      background: "rgba(255,255,255,0.03)",
+                      border: "0.5px solid var(--lp-border-default)",
+                      borderRadius: 8,
+                      padding: "10px 16px",
+                      fontFamily: "var(--font-jetbrains-mono), monospace",
+                      fontSize: 13,
+                      color: "var(--lp-text-primary)",
+                      outline: "none",
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = "var(--lp-amber)"}
+                    onBlur={(e) => e.target.style.borderColor = "var(--lp-border-default)"}
+                  />
+                  <button style={{
+                    background: "var(--lp-amber, #FFB020)",
+                    color: "#0D1321",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "0 16px",
+                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "opacity 0.2s"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+                  >
+                    Daftar
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <FooterColumn title="Produk" links={FOOTER_LINKS.product} />
-          <FooterColumn title="Resources" links={FOOTER_LINKS.resources} />
-          <FooterColumn title="Akun" links={FOOTER_LINKS.account} />
+          {/* Right / Bottom: Clean Link Columns */}
+          <div 
+            className="flex-[1.8] grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-8 pt-4"
+          >
+            <FooterColumn title="Produk" links={FOOTER_LINKS.product} />
+            <FooterColumn title="Sumber Daya" links={FOOTER_LINKS.resources} />
+            <FooterColumn title="Akun" links={FOOTER_LINKS.account} />
+            <FooterColumn title="Sosial" links={FOOTER_LINKS.socials} />
+          </div>
         </div>
 
+        {/* Bottom Bar */}
         <div
           style={{
             borderTop: "0.5px solid var(--lp-border-default, rgba(240,243,250,0.08))",
-            paddingTop: 24,
+            paddingTop: 32,
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 12,
+            gap: 16,
           }}
+          className="flex-col md:flex-row md:items-center"
         >
           <span
             style={{
               fontFamily: "var(--font-jetbrains-mono), monospace",
-              fontSize: 11,
+              fontSize: 12,
               color: "var(--lp-text-tertiary, rgba(240,243,250,0.35))",
             }}
           >
@@ -174,28 +221,17 @@ export default function Footer() {
           <span
             style={{
               fontFamily: "var(--font-jetbrains-mono), monospace",
-              fontSize: 11,
+              fontSize: 12,
               color: "var(--lp-text-tertiary, rgba(240,243,250,0.35))",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             }}
           >
-            Made with ◈ in Indonesia
+            Buatan Hygione
           </span>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .lp-footer-grid {
-            grid-template-columns: 1fr 1fr !important;
-            gap: 32px !important;
-          }
-        }
-        @media (max-width: 480px) {
-          .lp-footer-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
     </footer>
   );
 }

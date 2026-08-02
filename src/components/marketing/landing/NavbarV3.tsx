@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -41,22 +41,21 @@ function NavAccountButton({
         display: "inline-flex",
         alignItems: "center",
         gap: 8,
-        padding: "8px 14px",
-        borderRadius: 8,
+        padding: "6px 14px",
+        borderRadius: 999,
         textDecoration: "none",
-        background: "rgba(31,42,68,0.55)",
-        border: "1px solid rgba(240,243,250,0.16)",
-        transition: "border-color 0.2s, background 0.2s",
+        background: "rgba(255,255,255,0.05)",
+        transition: "background 0.2s, transform 0.15s",
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget;
-        el.style.borderColor = "rgba(56,189,248,0.4)";
-        el.style.background = "rgba(56,189,248,0.08)";
+        el.style.background = "rgba(255,255,255,0.1)";
+        el.style.transform = "translateY(-1px)";
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget;
-        el.style.borderColor = "rgba(240,243,250,0.16)";
-        el.style.background = "rgba(31,42,68,0.55)";
+        el.style.background = "rgba(255,255,255,0.05)";
+        el.style.transform = "translateY(0)";
       }}
     >
       {user.avatarUrl ? (
@@ -64,8 +63,8 @@ function NavAccountButton({
           src={user.avatarUrl}
           alt=""
           style={{
-            width: 22,
-            height: 22,
+            width: 20,
+            height: 20,
             borderRadius: "50%",
             objectFit: "cover",
           }}
@@ -73,8 +72,8 @@ function NavAccountButton({
       ) : (
         <span
           style={{
-            width: 22,
-            height: 22,
+            width: 20,
+            height: 20,
             borderRadius: "50%",
             display: "inline-flex",
             alignItems: "center",
@@ -82,7 +81,7 @@ function NavAccountButton({
             fontFamily: "var(--font-jetbrains-mono)",
             fontSize: 10,
             fontWeight: 700,
-            background: "rgba(255,176,32,0.15)",
+            background: "rgba(255,176,32,0.1)",
             color: "var(--lp-amber)",
           }}
         >
@@ -92,7 +91,7 @@ function NavAccountButton({
       <span
         style={{
           fontFamily: "var(--font-jetbrains-mono)",
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: 600,
           color: "var(--lp-text-primary)",
         }}
@@ -103,18 +102,15 @@ function NavAccountButton({
   );
 }
 
-// Node Cluster mark (3 dots connected)
 function NodeMark() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      {/* Lines */}
-      <line x1="14" y1="6" x2="22" y2="20" stroke="rgba(240,243,250,0.3)" strokeWidth="1.5" />
-      <line x1="14" y1="6" x2="6" y2="20" stroke="rgba(240,243,250,0.3)" strokeWidth="1.5" />
-      <line x1="22" y1="20" x2="6" y2="20" stroke="rgba(240,243,250,0.3)" strokeWidth="1.5" />
-      {/* Nodes */}
+    <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+      <line x1="14" y1="6" x2="22" y2="20" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
+      <line x1="14" y1="6" x2="6" y2="20" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
+      <line x1="22" y1="20" x2="6" y2="20" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
       <circle cx="14" cy="6" r="4" fill="#FFB020" />
       <circle cx="22" cy="20" r="3" fill="#38BDF8" />
-      <circle cx="6" cy="20" r="2.5" fill="#9D4EDD" />
+      <circle cx="6" cy="20" r="2.5" fill="#FFFFFF" />
     </svg>
   );
 }
@@ -122,16 +118,28 @@ function NodeMark() {
 export default function NavbarV3({ solid = false }: { solid?: boolean }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     if (solid) return;
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 20);
+      
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100 && !menuOpen) {
+        setHidden(true);
+      } else {
+        setHidden(false);
+      }
+      lastScrollY.current = currentScrollY;
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [solid]);
+  }, [solid, menuOpen]);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -155,7 +163,7 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
   }, []);
 
   const showSolid = solid || scrolled;
-  const navBg = showSolid ? "rgba(13,19,33,0.92)" : "transparent";
+  const navBg = showSolid ? "var(--lp-bg-base)" : "transparent";
 
   function isActive(href: string) {
     if (href === "/tools") return pathname === "/tools" || pathname.startsWith("/tools/");
@@ -175,17 +183,17 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
           right: 0,
           zIndex: 200,
           background: navBg,
-          backdropFilter: showSolid ? "blur(12px)" : "none",
-          borderBottom: showSolid ? "0.5px solid rgba(240,243,250,0.08)" : "none",
-          transition: "background 0.3s, border-color 0.3s, backdrop-filter 0.3s",
+          transition: "background 0.3s, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transform: hidden ? "translateY(-100%)" : "translateY(0)",
+          borderBottom: showSolid ? "1px solid rgba(255,255,255,0.03)" : "1px solid transparent",
         }}
       >
         <div
           style={{
-            maxWidth: 1440,
+            maxWidth: 1200,
             margin: "0 auto",
             padding: "0 24px",
-            height: 76,
+            height: 72,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -197,7 +205,7 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 10,
+              gap: 8,
               textDecoration: "none",
             }}
           >
@@ -206,7 +214,7 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
               style={{
                 fontFamily: "var(--font-unbounded)",
                 fontWeight: 800,
-                fontSize: 20,
+                fontSize: 16,
                 letterSpacing: "-0.02em",
                 color: "var(--lp-text-primary)",
               }}
@@ -220,7 +228,7 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 32,
+              gap: 40,
             }}
             className="nav-desktop"
           >
@@ -232,15 +240,15 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
                   href={link.href}
                   style={{
                     fontFamily: "var(--font-jetbrains-mono)",
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: 500,
                     letterSpacing: "0.02em",
-                    color: active ? "var(--lp-amber)" : "var(--lp-text-secondary)",
+                    color: active ? "var(--lp-text-primary)" : "var(--lp-text-tertiary)",
                     textDecoration: "none",
                     transition: "color 0.2s",
                   }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--lp-text-primary)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = active ? "var(--lp-amber)" : "var(--lp-text-secondary)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = active ? "var(--lp-text-primary)" : "var(--lp-text-tertiary)"; }}
                 >
                   {link.label}
                 </Link>
@@ -249,7 +257,7 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
           </div>
 
           {/* Auth CTA */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }} className="nav-desktop">
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }} className="nav-desktop">
             {user ? (
               <NavAccountButton user={user} />
             ) : (
@@ -258,14 +266,14 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
                   href="/login"
                   style={{
                     fontFamily: "var(--font-jetbrains-mono)",
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: 500,
-                    color: "var(--lp-text-secondary)",
+                    color: "var(--lp-text-tertiary)",
                     textDecoration: "none",
                     transition: "color 0.2s",
                   }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--lp-text-primary)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--lp-text-secondary)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--lp-text-tertiary)"; }}
                 >
                   Masuk
                 </Link>
@@ -273,19 +281,19 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
                   href="/signup"
                   style={{
                     fontFamily: "var(--font-jetbrains-mono)",
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: 700,
-                    background: "var(--lp-amber)",
-                    color: "#0D1321",
-                    padding: "10px 20px",
-                    borderRadius: 8,
+                    background: "var(--lp-text-primary)",
+                    color: "var(--lp-bg-base)",
+                    padding: "8px 16px",
+                    borderRadius: 999,
                     textDecoration: "none",
-                    transition: "background 0.2s, transform 0.15s",
+                    transition: "transform 0.15s, opacity 0.2s",
                   }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "var(--lp-amber-dim)"; (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-1px)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "var(--lp-amber)"; (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)"; }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = "0.9"; (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-1px)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = "1"; (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)"; }}
                 >
-                  Daftar gratis
+                  Mulai
                 </Link>
               </>
             )}
@@ -305,11 +313,11 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
             aria-label="Toggle menu"
           >
             {menuOpen ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="4" y1="8" x2="20" y2="8" /><line x1="4" y1="16" x2="20" y2="16" />
               </svg>
             )}
@@ -338,18 +346,18 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
               onClick={() => setMenuOpen(false)}
               style={{
                 fontFamily: "var(--font-unbounded)",
-                fontSize: 22,
+                fontSize: 24,
                 fontWeight: 700,
                 color: "var(--lp-text-primary)",
                 textDecoration: "none",
-                padding: "12px 0",
-                borderBottom: "0.5px solid var(--lp-border-default)",
+                padding: "16px 0",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
               }}
             >
               {link.label}
             </Link>
           ))}
-          <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
             {user ? (
               <NavAccountButton user={user} onClick={() => setMenuOpen(false)} />
             ) : (
@@ -364,9 +372,9 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
                 color: "var(--lp-text-secondary)",
                 textDecoration: "none",
                 textAlign: "center",
-                padding: "12px",
-                border: "0.5px solid var(--lp-border-strong)",
-                borderRadius: 8,
+                padding: "14px",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 999,
               }}
             >
               Masuk
@@ -378,15 +386,15 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
                 fontFamily: "var(--font-jetbrains-mono)",
                 fontSize: 14,
                 fontWeight: 700,
-                background: "var(--lp-amber)",
-                color: "#0D1321",
+                background: "var(--lp-text-primary)",
+                color: "var(--lp-bg-base)",
                 textDecoration: "none",
                 textAlign: "center",
-                padding: "13px",
-                borderRadius: 8,
+                padding: "14px",
+                borderRadius: 999,
               }}
             >
-              Daftar gratis
+              Mulai gratis
             </Link>
               </>
             )}

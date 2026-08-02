@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type {
   Clarifications,
   Presets,
@@ -63,14 +64,45 @@ const FILE_TIPS: Partial<Record<FileKey, string>> = {
   "compliance-legal": "Outline privasi & legal membantu produk siap regulasi sejak awal.",
 };
 
-function Spinner() {
+function TechSpinner({ size = 48, color = "var(--lp-amber)" }: { size?: number, color?: string }) {
   return (
-    <div
-      className="w-4 h-4 rounded-full border-2 animate-spin"
-      style={{
-        borderColor: "rgba(255,176,32,0.2)",
-        borderTopColor: "var(--app-amber)",
-      }}
+    <div style={{ width: size, height: size, position: "relative" }} className="mx-auto mb-6">
+      {/* Outer ring */}
+      <motion.div
+        className="absolute inset-0 rounded-full border-t-2 border-r-2"
+        style={{ borderColor: color, opacity: 0.3 }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+      />
+      {/* Inner fast ring */}
+      <motion.div
+        className="absolute inset-[4px] rounded-full border-l-2 border-b-2"
+        style={{ borderColor: color, opacity: 0.8 }}
+        animate={{ rotate: -360 }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+      />
+      {/* Center dot pulsing */}
+      <motion.div
+        className="absolute inset-0 m-auto rounded-full"
+        style={{ width: 8, height: 8, background: color }}
+        animate={{ scale: [0.8, 1.5, 0.8], opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <div 
+        className="absolute inset-[-50%] m-auto rounded-full blur-xl pointer-events-none"
+        style={{ background: `radial-gradient(circle, ${color}20 0%, transparent 60%)` }}
+      />
+    </div>
+  );
+}
+
+function SmallSpinner() {
+  return (
+    <motion.div
+      className="w-4 h-4 rounded-full border-2"
+      style={{ borderColor: "rgba(255,176,32,0.2)", borderTopColor: "var(--lp-amber)" }}
+      animate={{ rotate: 360 }}
+      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
     />
   );
 }
@@ -273,351 +305,345 @@ export default function GenerationProgress({
   const progressPct = (doneCount / files.length) * 100;
 
   return (
-    <div className="generate-app max-w-2xl mx-auto px-4 py-10 animate-fade-in-up">
+    <div className="generate-app max-w-3xl mx-auto px-4 py-12 relative">
+      {/* Ambient glowing background behind the whole component */}
+      <div className="absolute inset-0 top-[10%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(255,176,32,0.03)] via-transparent to-transparent pointer-events-none" />
+
       {/* Heading */}
-      <div className="mb-8 text-center">
+      <div className="mb-10 text-center relative z-10">
         {globalStatus === "running" && (
-          <>
-            <div
-              className="w-12 h-12 rounded-full border-2 animate-spin mx-auto mb-5"
-              style={{
-                borderColor: "rgba(255,176,32,0.2)",
-                borderTopColor: "var(--app-amber)",
-              }}
-            />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <TechSpinner />
             <h1
-              className="font-unbounded font-bold text-xl mb-2"
-              style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
+              className="font-unbounded font-bold text-2xl sm:text-3xl mb-3"
+              style={{
+                background: "linear-gradient(to right, var(--lp-text-primary), var(--lp-amber))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                letterSpacing: "-0.03em"
+              }}
             >
               Generating your docs...
             </h1>
             <p
-              className="font-mono text-sm"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="font-mono text-sm tracking-wide uppercase font-semibold"
+              style={{ color: "var(--lp-text-tertiary)" }}
             >
-              {doneCount} of {files.length} files complete
+              {doneCount} / {files.length} FILES COMPLETE
             </p>
-          </>
+          </motion.div>
         )}
         {globalStatus === "done" && (
-          <>
-            <div className="text-5xl mb-4">✅</div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          >
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center bg-[rgba(34,197,94,0.15)] shadow-[0_0_30px_rgba(34,197,94,0.2)]">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <motion.path
+                  d="M5 13l4 4L19 7"
+                  stroke="#4ADE80"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                />
+              </svg>
+            </div>
             <h1
-              className="font-unbounded font-bold text-xl mb-2"
-              style={{ color: "var(--app-amber)", letterSpacing: "-0.02em" }}
+              className="font-unbounded font-bold text-2xl sm:text-3xl mb-2"
+              style={{ color: "#4ADE80", letterSpacing: "-0.02em" }}
             >
-              Docs siap!
+              System Ready.
             </h1>
             <p className="font-mono text-sm" style={{ color: "var(--color-text-secondary)" }}>
-              Loading preview...
+              Initializing preview environment...
             </p>
-          </>
+          </motion.div>
         )}
         {globalStatus === "error" && (
-          <>
-            <div className="text-5xl mb-4">⚠️</div>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          >
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center bg-[rgba(239,68,68,0.15)] shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+              <span style={{ color: "#F87171", fontSize: 24, fontWeight: "bold" }}>!</span>
+            </div>
             <h1
-              className="font-unbounded font-bold text-xl mb-2"
+              className="font-unbounded font-bold text-2xl mb-2"
               style={{ color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}
             >
-              Generation gagal
+              Generation Failed
             </h1>
             <p
               className="font-mono text-sm max-w-md mx-auto"
-              style={{ color: "#EF4444" }}
+              style={{ color: "#F87171" }}
             >
               {error}
             </p>
-          </>
+          </motion.div>
         )}
       </div>
 
       {/* Overall progress bar */}
-      <div
-        className="h-1.5 rounded-full overflow-hidden mb-6"
-        style={{ background: "var(--color-border-default)" }}
-      >
+      <div className="relative mb-8 z-10">
         <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{
-            width: `${progressPct}%`,
-            background:
-              globalStatus === "done"
-                ? "var(--app-amber)"
-                : "linear-gradient(90deg, rgba(255,176,32,0.6), var(--app-amber))",
-          }}
-        />
+          className="h-1.5 w-full rounded-full overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.05)" }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-700 relative"
+            style={{
+              width: `${progressPct}%`,
+              background:
+                globalStatus === "done"
+                  ? "#4ADE80"
+                  : globalStatus === "error"
+                  ? "#F87171"
+                  : "var(--lp-amber)",
+              boxShadow: globalStatus === "running" ? "0 0 10px var(--lp-amber)" : "none",
+            }}
+          />
+        </div>
       </div>
 
-      {/* Live Build Log — terminal style */}
+      {/* Live Build Log — Dev Console Style */}
       <div
-        className="rounded-xl overflow-hidden mb-6"
+        className="rounded-xl overflow-hidden mb-8 relative z-10"
         style={{
-          border: "1px solid rgba(255,176,32,0.18)",
-          background: "#050505",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,176,32,0.2)",
+          background: "var(--app-bg-elevated)",
+          boxShadow: "0 10px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
         }}
       >
         <div
-          className="flex items-center justify-between px-4 py-2.5"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          className="flex items-center justify-between px-5 py-3"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.2)" }}
         >
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#EF4444" }} />
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#F59E0B" }} />
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#22C55E" }} />
+          <div className="flex items-center gap-3">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,176,32,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
             <span
-              className="ml-2 text-[10px] uppercase tracking-widest font-bold"
-              style={{
-                color: "rgba(255,176,32,0.7)",
-                fontFamily: "var(--font-jetbrains-mono), monospace",
-              }}
+              className="text-[11px] uppercase tracking-[0.2em] font-bold"
+              style={{ color: "var(--lp-text-secondary)", fontFamily: "var(--font-jetbrains-mono), monospace" }}
             >
-              Live Build Log
+              Dev Console
             </span>
           </div>
-          <span
-            className="text-[10px]"
-            style={{
-              color: "rgba(255,255,255,0.3)",
-              fontFamily: "var(--font-jetbrains-mono), monospace",
-            }}
-          >
-            {Math.round(progressPct)}%
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[10px] font-bold tracking-widest"
+              style={{ color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-jetbrains-mono), monospace" }}
+            >
+              {Math.round(progressPct)}%
+            </span>
+            {globalStatus === "running" && (
+              <span className="flex items-center gap-1.5 ml-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse shadow-[0_0_8px_#4ADE80]" />
+                <span className="text-[9px] font-bold text-[#4ADE80] tracking-widest">LIVE</span>
+              </span>
+            )}
+          </div>
         </div>
         <div
           ref={logRef}
-          className="px-4 py-3 overflow-y-auto"
+          className="px-5 py-4 overflow-y-auto"
           style={{
-            maxHeight: 160,
+            maxHeight: 180,
             fontFamily: "var(--font-jetbrains-mono), monospace",
-            fontSize: 11,
-            lineHeight: 1.65,
-            color: "rgba(255,176,32,0.75)",
+            fontSize: 12,
+            lineHeight: 1.7,
+            color: "rgba(255,255,255,0.6)",
           }}
         >
           {buildLog.map((line, i) => (
-            <div key={`${i}-${line.slice(0, 12)}`}>
-              <span style={{ color: "rgba(255,255,255,0.25)" }}>
+            <div key={`${i}-${line.slice(0, 12)}`} className="flex gap-3 hover:bg-[rgba(255,255,255,0.02)] px-2 py-0.5 rounded -mx-2 transition-colors">
+              <span style={{ color: "rgba(255,255,255,0.2)", minWidth: "1.5rem" }}>
                 {String(i + 1).padStart(2, "0")}
-              </span>{" "}
-              {line}
+              </span>
+              <span style={{ color: line.includes("✗") ? "#F87171" : line.includes("✓") ? "#4ADE80" : line.includes("→") ? "var(--lp-amber)" : "inherit" }}>
+                {line}
+              </span>
             </div>
           ))}
           {globalStatus === "running" && (
-            <div>
-              <span style={{ color: "rgba(255,255,255,0.25)" }}>··</span>{" "}
-              <span className="animate-pulse">_</span>
+            <div className="flex gap-3 px-2 py-0.5">
+              <span style={{ color: "rgba(255,255,255,0.2)", minWidth: "1.5rem" }}>--</span>
+              <span className="w-2 h-4 bg-[var(--lp-amber)] animate-pulse mt-1" />
             </div>
           )}
         </div>
       </div>
 
       {/* File list */}
-      <div
-        className="rounded-xl overflow-hidden mb-6"
-        style={{
-          border: "0.5px solid var(--color-border-default)",
-          background: "var(--color-bg-elevated)",
-        }}
-      >
+      <div className="flex flex-col gap-3 mb-8 relative z-10">
         {files.map((file, i) => {
           const meta = FILE_META[file.key];
+          const isGenerating = file.status === "generating";
+          
           return (
-            <div
+            <motion.div
               key={file.key}
-              className="flex items-start gap-4 px-5 py-4 transition-all"
+              layout
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: file.status === "pending" ? 0.5 : 1, y: 0 }}
+              className="rounded-xl overflow-hidden transition-all duration-300"
               style={{
-                borderBottom:
-                  i < files.length - 1
-                    ? "0.5px solid var(--color-border-default)"
-                    : "none",
-                opacity: file.status === "pending" ? 0.4 : 1,
+                background: isGenerating ? "rgba(255,176,32,0.03)" : "var(--app-bg-elevated)",
+                border: isGenerating ? "1px solid rgba(255,176,32,0.3)" : "1px solid var(--app-border-default)",
+                boxShadow: isGenerating ? "0 4px 20px rgba(255,176,32,0.05)" : "none",
               }}
             >
-              {/* Status icon */}
-              <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center mt-0.5">
-                {file.status === "pending" && (
-                  <div
-                    className="w-5 h-5 rounded-full border"
-                    style={{ borderColor: "var(--color-border-default)" }}
-                  />
-                )}
-                {file.status === "generating" && <Spinner />}
-                {file.status === "done" && (
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ background: "var(--app-amber)" }}
-                  >
-                    <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6l3 3 5-5"
-                        stroke="#0A0A0A"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                )}
-                {file.status === "error" && (
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ background: "#EF4444" }}
-                  >
-                    <span style={{ color: "#fff", fontSize: 10 }}>✕</span>
-                  </div>
-                )}
-              </div>
-
-              {/* File info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                  <DocIcon
-                    doc={file.key}
-                    size={16}
-                    className="shrink-0"
-                    style={{
-                      color:
-                        file.status === "generating"
-                          ? "var(--app-amber)"
-                          : file.status === "done"
-                            ? "var(--app-amber)"
-                            : "var(--app-text-tertiary)",
-                    }}
-                  />
-                  <span
-                    className="font-mono font-semibold text-sm"
-                    style={{
-                      color:
-                        file.status === "pending"
-                          ? "var(--color-text-tertiary)"
-                          : "var(--color-text-primary)",
-                    }}
-                  >
-                    {meta.label}
-                  </span>
-                  {file.status === "done" && (
-                    <span
-                      className="font-mono text-[9px] font-bold tracking-wide uppercase px-1.5 py-0.5 rounded ml-auto"
-                      style={{
-                        background: "rgba(34,197,94,0.1)",
-                        color: "#22C55E",
-                      }}
-                    >
-                      Done
-                    </span>
+              <div className="px-5 py-4 flex items-start gap-4">
+                {/* Status icon */}
+                <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center mt-0.5">
+                  {file.status === "pending" && (
+                    <div className="w-5 h-5 rounded-full border-2 border-[rgba(255,255,255,0.1)]" />
                   )}
-                  {file.status === "generating" && (
-                    <span
-                      className="font-mono text-[9px] font-bold tracking-wide uppercase px-1.5 py-0.5 rounded ml-auto"
-                      style={{
-                        background: "rgba(59,130,246,0.1)",
-                        color: "#3B82F6",
-                      }}
+                  {isGenerating && <SmallSpinner />}
+                  {file.status === "done" && (
+                    <motion.div
+                      initial={{ scale: 0 }} animate={{ scale: 1 }} type="spring"
+                      className="w-6 h-6 rounded-full flex items-center justify-center bg-[rgba(34,197,94,0.15)]"
                     >
-                      {file.retryCount > 0
-                        ? `Retry ${file.retryCount}...`
-                        : "Generating..."}
-                    </span>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </motion.div>
                   )}
                   {file.status === "error" && (
-                    <span
-                      className="font-mono text-[9px] font-bold tracking-wide uppercase px-1.5 py-0.5 rounded ml-auto"
-                      style={{
-                        background: "rgba(239,68,68,0.1)",
-                        color: "#EF4444",
-                      }}
-                    >
-                      Failed
-                    </span>
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[rgba(239,68,68,0.15)]">
+                      <span style={{ color: "#F87171", fontSize: 12, fontWeight: "bold" }}>✕</span>
+                    </div>
                   )}
                 </div>
 
-                <p
-                  className="font-mono text-[11px]"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  {meta.description}
-                </p>
-
-                {/* Streaming preview */}
-                {file.status === "generating" && file.chunks && (
-                  <div
-                    className="mt-2 font-mono text-[11px] rounded-lg p-2.5 overflow-hidden"
-                    style={{
-                      background: "#0D0D0D",
-                      border: "0.5px solid var(--color-border-default)",
-                      color: "var(--color-text-secondary)",
-                      lineHeight: 1.6,
-                      maxHeight: 80,
-                    }}
-                  >
-                    <span>{file.chunks.slice(-200)}</span>
-                    <span className="animate-pulse" style={{ color: "var(--app-amber)" }}>▊</span>
-                  </div>
-                )}
-
-                {/* Skeleton for pending */}
-                {file.status === "pending" && (
-                  <div className="mt-2 flex flex-col gap-1.5">
-                    <div
-                      className="h-1.5 w-3/4 rounded"
-                      style={{ background: "var(--color-border-default)" }}
+                {/* File info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <DocIcon
+                      doc={file.key}
+                      size={18}
+                      className="shrink-0"
+                      style={{ color: isGenerating || file.status === "done" ? "var(--lp-amber)" : "var(--lp-text-tertiary)" }}
                     />
-                    <div
-                      className="h-1.5 w-1/2 rounded"
-                      style={{ background: "var(--color-border-default)" }}
-                    />
+                    <span className="font-mono font-bold text-[14px]" style={{ color: "var(--lp-text-primary)" }}>
+                      {meta.label}
+                    </span>
+                    {file.status === "done" && (
+                      <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-[rgba(34,197,94,0.1)] text-[#4ADE80] ml-auto">
+                        Complete
+                      </span>
+                    )}
+                    {isGenerating && (
+                      <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-[rgba(255,176,32,0.1)] text-[var(--lp-amber)] ml-auto animate-pulse">
+                        {file.retryCount > 0 ? `Retrying ${file.retryCount}...` : "Generating..."}
+                      </span>
+                    )}
+                    {file.status === "error" && (
+                      <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-[rgba(239,68,68,0.1)] text-[#F87171] ml-auto">
+                        Failed
+                      </span>
+                    )}
                   </div>
-                )}
+
+                  <p className="font-mono text-[12px] leading-relaxed" style={{ color: "var(--lp-text-secondary)" }}>
+                    {meta.description}
+                  </p>
+
+                  {/* Streaming Code Preview Box */}
+                  <AnimatePresence>
+                    {isGenerating && file.chunks && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3 font-mono text-[11px] rounded-lg p-3 overflow-hidden"
+                        style={{
+                          background: "#080808",
+                          border: "1px solid rgba(255,255,255,0.05)",
+                          color: "rgba(255,255,255,0.5)",
+                          lineHeight: 1.6,
+                          maxHeight: 100,
+                          boxShadow: "inset 0 2px 10px rgba(0,0,0,0.5)"
+                        }}
+                      >
+                        <span style={{ color: "rgba(255,255,255,0.8)" }}>{file.chunks.slice(-250)}</span>
+                        <span className="animate-pulse ml-1" style={{ color: "var(--lp-amber)", background: "var(--lp-amber)", width: "6px", height: "12px", display: "inline-block", verticalAlign: "middle" }} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Skeleton for pending */}
+                  {file.status === "pending" && (
+                    <div className="mt-3 flex flex-col gap-2 opacity-30">
+                      <div className="h-1.5 w-full max-w-[200px] rounded" style={{ background: "var(--color-border-default)" }} />
+                      <div className="h-1.5 w-full max-w-[140px] rounded" style={{ background: "var(--color-border-default)" }} />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
 
       {/* Educational tip */}
-      {currentTip && globalStatus === "running" && (
-        <div
-          className="flex items-start gap-3 px-4 py-3 rounded-xl mb-6"
-          style={{
-            background: "rgba(255,176,32,0.04)",
-            border: "0.5px solid rgba(255,176,32,0.12)",
-          }}
-        >
-          <span style={{ color: "var(--app-amber)", fontSize: 14, flexShrink: 0 }}>💡</span>
-          <div>
-            <p
-              className="font-mono text-[10px] font-bold tracking-wide uppercase mb-1"
-              style={{ color: "var(--app-amber)" }}
-            >
-              Tau nggak?
-            </p>
-            <p
-              className="font-mono text-xs"
-              style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}
-            >
-              {currentTip}
-            </p>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {currentTip && globalStatus === "running" && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-start gap-4 px-5 py-4 rounded-2xl mb-8 relative overflow-hidden"
+            style={{
+              background: "var(--app-bg-elevated)",
+              border: "1px solid rgba(255,176,32,0.2)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[rgba(255,176,32,0.05)] to-transparent pointer-events-none" />
+            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-[rgba(255,176,32,0.15)] border border-[rgba(255,176,32,0.3)]">
+              <span style={{ fontSize: 16 }}>💡</span>
+            </div>
+            <div className="relative z-10">
+              <p
+                className="font-unbounded text-[11px] font-bold tracking-widest uppercase mb-1"
+                style={{ color: "var(--lp-amber)" }}
+              >
+                Pro Tip
+              </p>
+              <p className="font-mono text-[13px]" style={{ color: "var(--lp-text-secondary)", lineHeight: 1.6 }}>
+                {currentTip}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {globalStatus === "error" && (
-        <button
+        <motion.button
           id="generation-retry-btn"
           onClick={onError}
-          className="w-full py-3 rounded-xl font-mono font-bold text-sm transition-all"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full py-4 rounded-xl font-mono font-bold text-sm transition-all"
           style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-secondary)",
-            border: "0.5px solid var(--color-border-default)",
+            background: "rgba(239,68,68,0.1)",
+            color: "#F87171",
+            border: "1px solid rgba(239,68,68,0.3)",
           }}
         >
-          ← Coba lagi
-        </button>
+          ← COBA LAGI
+        </motion.button>
       )}
     </div>
   );

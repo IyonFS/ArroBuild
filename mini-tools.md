@@ -25,36 +25,36 @@
 
 ## 3. Peta Lengkap
 
-| Tool | Status | Tier | Kredit (sistem baru) | Evolusi dari |
+| Tool | Status | Tier | Kredit | Evolusi dari |
 |---|---|---|---|---|
 | Portfolio Generator | 🟢 Live | Gratis | — | — |
 | Prompt Doctor | 🟡 Scaffold | Base | 1 | Tidak berubah |
-| MVP Scope Cutter | 🟡 Scaffold | Core | **5** (turun dari 60) | Perlu koreksi harga, lihat Bagian 4 |
-| Database Schema Visualizer | 🟡 Scaffold | Prime | **1** (turun dari 3) | Perlu koreksi harga |
-| **README Generator** | 🟢 Live | Core | 2 | Evolusi dari "README + Setup Script" |
-| **Copy Studio** | 🟢 Live | Prime | ~21 | Evolusi dari "Landing Page Copy" |
-| **Stack Advisor** | 📋 PRD siap | Core | ~8 / sesi | Baru, dari ide kamu |
+| MVP Scope Cutter | 🟡 Scaffold | Core | **60** | Sudah sesuai kode |
+| Database Schema Visualizer | 🟡 Scaffold | Prime | **3** | Sudah sesuai kode |
+| **README Generator** | 🟢 Live | Core | 6 | Evolusi dari "README + Setup Script" |
+| **Copy Studio** | 🟢 Live | Prime | ~108 | Evolusi dari "Landing Page Copy" |
+| **Stack Advisor** | 📋 PRD siap | Core | ~40 / sesi | Baru, dari ide kamu |
 | **ArroDesign (Design Studio)** | 📋 Arsitektur siap | Core+ | ~150-250 (estimasi) | Evolusi dari "Stitch Prompt Composer" |
-| Error Whisperer (Konsultan Error) | 🔵 Coming Soon | Base | ~6 | Baru — jelaskan error + generate prompt fix untuk AI agent |
+| Error Whisperer (Konsultan Error) | 🔵 Coming Soon | Base | ~30 | Baru — jelaskan error + generate prompt fix untuk AI agent |
 | Konsultan Penamaan | 🔵 Coming Soon | Base | 1 | Baru — saran nama variabel/fungsi/file sesuai konvensi Agent Rules proyek |
 | Env Var Doctor | 🔵 Coming Soon | Base | 2 | Baru — cross-check `.env.example` ke Architecture.md, tandai yang hilang/tidak konsisten |
 | Devlog/Standup Composer | 🔵 Coming Soon | Base | 2 | Baru — rapikan catatan kerja berantakan jadi devlog, otomatis tag FEAT-ID |
 | Cost Reality Check | 🔵 Coming Soon | Core | Minimal (mayoritas kalkulasi deterministik, bukan AI) | Proyeksi biaya interaktif (slider user), pelengkap Stack Advisor |
-| Mock API Generator | 🔵 Coming Soon | Core | ~3 | Reuse Architecture.md → generate koleksi mock API siap import Postman/Insomnia |
+| Mock API Generator | 🔵 Coming Soon | Core | ~15 | Reuse Architecture.md → generate koleksi mock API siap import Postman/Insomnia |
 
 ---
 
-## 4. Koreksi Penting — Harga di Scaffold Masih Pakai Sistem Lama
+## 4. Catatan Kredit Mini Tools
 
-> [!CAUTION]
-> Kartu yang sudah tampil di `/tools` sekarang (MVP Scope Cutter 60 kredit, Landing Page Copy 108 kredit di rencana lama) dihitung pakai multiplier lama (Menengah 24×, Flagship 35×). Sistem kredit sekarang pakai multiplier baru (Menengah 3×, Flagship 14×) — **jauh lebih murah**. Sebelum tools ini dianggap final, semua angka kreditnya perlu dihitung ulang, bukan cuma dipindah apa adanya dari rencana lama.
+> [!NOTE]
+> Sistem kredit aktual yang berjalan di kode sumber (`src/lib/config/tiers.ts`) menggunakan multiplier: **Hemat 1×, Menengah 24×, Flagship 35×, Ultra 65×**. Angka kredit pada UI Scaffold (MVP Scope Cutter 60, Copy Studio 108) sebenarnya **sudah sejalan** dengan multiplier ini.
 
-| Tool | Kredit lama | Kredit sistem baru |
-|---|---|---|
-| MVP Scope Cutter | 60 | **5** |
-| Landing Page Copy → Copy Studio | 108 | **~21** |
-| README + Setup Script → README Generator | 6 | **2** |
-| Database Schema Visualizer | 3 | **1** |
+| Tool | Kredit (Sesuai Multiplier Aktual) |
+|---|---|
+| MVP Scope Cutter | **60** |
+| Landing Page Copy → Copy Studio | **108** |
+| README + Setup Script → README Generator | **6** |
+| Database Schema Visualizer | **3** |
 
 ---
 
@@ -83,7 +83,7 @@ Kalau route lama (`/tools/stitch-composer`, dst.) masih dipakai, sinkronkan sebe
 
 1. ~~README Generator~~ ✅ Selesai
 2. ~~Copy Studio~~ ✅ Selesai
-3. **Koreksi harga 2 tool scaffold** (MVP Scope Cutter, Database Schema Visualizer) — kerja kecil, jangan sampai lupa sebelum production
+3. ~~Koreksi harga 2 tool scaffold (MVP Scope Cutter, Database Schema Visualizer)~~ ✅ Tidak perlu, angka di scaffold sudah sejalan dengan multiplier kode (24x/35x).
 4. **Stack Advisor** — PRD + knowledge base (`stack-advisor-knowledge.md`) sudah siap, tinggal eksekusi
 5. **ArroDesign** — arsitektur siap, semua blocker (vision, search API) sudah lepas
 6. Tools "Coming Soon" baru (Error Whisperer, Konsultan Penamaan, Env Var Doctor, Devlog Composer, Cost Reality Check, Mock API Generator) — belum ada PRD, disusun setelah 4 tools utama beres. Kalau mau urutan di dalam kelompok ini: **Error Whisperer duluan** (potensi dipakai harian, bukan cuma sekali per proyek)

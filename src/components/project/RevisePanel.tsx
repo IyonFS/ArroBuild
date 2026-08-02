@@ -285,8 +285,8 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
             style={{
               maxHeight: 180,
               borderRadius: 14,
-              background: "rgba(0,0,0,0.35)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "var(--app-bg-base)",
+              border: "1px solid var(--app-border-default)",
             }}
           >
             {sections.map((s) => {
@@ -319,7 +319,7 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
                         borderRadius: 7,
                         background: active
                           ? "rgba(255,176,32,0.2)"
-                          : "rgba(255,255,255,0.06)",
+                          : "var(--app-bg-elevated)",
                         color: active
                           ? "var(--app-amber)"
                           : "rgba(255,255,255,0.4)",
@@ -360,10 +360,10 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
             className="mt-2"
             style={{
               borderRadius: 14,
-              background: "rgba(0,0,0,0.35)",
+              background: "var(--app-bg-base)",
               border: instruction.trim()
                 ? "1px solid rgba(255,176,32,0.35)"
-                : "1px solid rgba(255,255,255,0.1)",
+                : "1px solid var(--app-border-default)",
             }}
           >
             <textarea
@@ -438,7 +438,8 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
             <div
               className="rounded-xl overflow-hidden max-h-64 overflow-y-auto text-[11px] leading-relaxed"
               style={{
-                border: "1px solid rgba(255,255,255,0.1)",
+                border: "1px solid var(--app-border-default)",
+                background: "var(--app-bg-base)",
                 fontFamily: "var(--font-jetbrains-mono), monospace",
               }}
             >
@@ -475,9 +476,9 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
                 className="flex-1 py-3 text-sm font-semibold"
                 style={{
                   borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.16)",
+                  border: "1px solid var(--app-border-strong)",
                   color: "rgba(255,255,255,0.7)",
-                  background: "rgba(255,255,255,0.04)",
+                  background: "var(--app-bg-elevated)",
                 }}
               >
                 Batalkan

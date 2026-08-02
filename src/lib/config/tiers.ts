@@ -4,9 +4,9 @@
  */
 
 export const TIER = {
-  STARTER: "STARTER",
-  PRO: "PRO",
-  PRO_MAX: "PRO_MAX",
+  BASE: "BASE",
+  CORE: "CORE",
+  PRIME: "PRIME",
 } as const;
 
 export type TierId = (typeof TIER)[keyof typeof TIER];
@@ -61,7 +61,7 @@ export interface TierConfig {
 }
 
 export const TIER_CONFIG: Record<TierId, TierConfig> = {
-  [TIER.STARTER]: {
+  [TIER.BASE]: {
     priceIdr: 65_000,
     creditsPerMonth: 3_000,
     rolloverMax: 0,
@@ -83,7 +83,7 @@ export const TIER_CONFIG: Record<TierId, TierConfig> = {
     whatsappChatPerMonth: 0,
     whatsappChatPriority: "normal",
   },
-  [TIER.PRO]: {
+  [TIER.CORE]: {
     priceIdr: 145_000,
     creditsPerMonth: 7_000,
     rolloverMax: 2_000,
@@ -104,7 +104,7 @@ export const TIER_CONFIG: Record<TierId, TierConfig> = {
     whatsappChatPerMonth: 2,
     whatsappChatPriority: "normal",
   },
-  [TIER.PRO_MAX]: {
+  [TIER.PRIME]: {
     priceIdr: 199_000,
     creditsPerMonth: 14_000,
     rolloverMax: 4_000,
@@ -167,13 +167,16 @@ export function tierIdFromPricingSlug(
   slug: string
 ): TierId | null {
   switch (slug) {
-    case "starter":
-      return TIER.STARTER;
-    case "pro":
-      return TIER.PRO;
-    case "pro_max":
+    case "base":
+    case "starter": // legacy compatibility
+      return TIER.BASE;
+    case "core":
+    case "pro": // legacy compatibility
+      return TIER.CORE;
+    case "prime":
+    case "pro_max": // legacy compatibility
     case "unlimited":
-      return TIER.PRO_MAX;
+      return TIER.PRIME;
     default:
       return null;
   }
@@ -181,12 +184,12 @@ export function tierIdFromPricingSlug(
 
 export function pricingSlugFromTierId(tierId: TierId): string {
   switch (tierId) {
-    case TIER.STARTER:
-      return "starter";
-    case TIER.PRO:
-      return "pro";
-    case TIER.PRO_MAX:
-      return "pro_max";
+    case TIER.BASE:
+      return "base";
+    case TIER.CORE:
+      return "core";
+    case TIER.PRIME:
+      return "prime";
   }
 }
 
@@ -203,44 +206,44 @@ export function getCreditTopupPack(packId: string) {
   return CREDIT_TOPUP_PACKS.find((p) => p.id === packId) ?? null;
 }
 
-/** Bonus kredit bulan pertama langganan Pro Max — docs/08-MONETIZATION.md pricing */
-export const PRO_MAX_FIRST_MONTH_BONUS = 500;
+/** Bonus kredit bulan pertama langganan Prime — docs/08-MONETIZATION.md pricing */
+export const PRIME_FIRST_MONTH_BONUS = 500;
 
 export type BillingMonths = 1 | 3 | 4;
 
 export interface SubscriptionPack {
-  tierId: typeof TIER.PRO | typeof TIER.PRO_MAX;
+  tierId: typeof TIER.CORE | typeof TIER.PRIME;
   months: BillingMonths;
   priceIdr: number;
   label: string;
   savingsNote?: string;
 }
 
-/** Multi-bulan Pro/Pro Max — kredit refresh tetap bulanan via cron */
+/** Multi-bulan Core/Prime — kredit refresh tetap bulanan via cron */
 export const SUBSCRIPTION_PACKS: SubscriptionPack[] = [
   {
-    tierId: TIER.PRO,
+    tierId: TIER.CORE,
     months: 3,
     priceIdr: 365_000,
     label: "Core 3 bulan",
     savingsNote: "Hemat vs 3× bulanan",
   },
   {
-    tierId: TIER.PRO,
+    tierId: TIER.CORE,
     months: 4,
     priceIdr: 459_000,
     label: "Core 4 bulan",
     savingsNote: "Hemat vs 4× bulanan",
   },
   {
-    tierId: TIER.PRO_MAX,
+    tierId: TIER.PRIME,
     months: 3,
     priceIdr: 499_000,
     label: "Prime 3 bulan",
     savingsNote: "Hemat vs 3× bulanan",
   },
   {
-    tierId: TIER.PRO_MAX,
+    tierId: TIER.PRIME,
     months: 4,
     priceIdr: 629_000,
     label: "Prime 4 bulan",
@@ -262,7 +265,7 @@ export function resolveSubscriptionPrice(
       label: "Bulanan",
     };
   }
-  if (tierId !== TIER.PRO && tierId !== TIER.PRO_MAX) return null;
+  if (tierId !== TIER.CORE && tierId !== TIER.PRIME) return null;
   const pack = SUBSCRIPTION_PACKS.find(
     (p) => p.tierId === tierId && p.months === months
   );

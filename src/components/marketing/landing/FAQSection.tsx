@@ -37,40 +37,38 @@ export default function FAQSection() {
     <section
       id="faq"
       style={{
-        background: "var(--lp-bg-surface)",
-        padding: "96px 24px",
+        background: "var(--lp-bg-base)",
+        padding: "160px 24px",
       }}
     >
-      <div style={{ maxWidth: 720, margin: "0 auto" }}>
+      <div style={{ maxWidth: 800, margin: "0 auto" }}>
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true, margin: "-100px" }}
           style={{
             fontFamily: "var(--font-unbounded)",
             fontWeight: 800,
-            fontSize: "clamp(22px, 3vw, 32px)",
-            lineHeight: 1.15,
+            fontSize: "clamp(24px, 4vw, 40px)",
+            lineHeight: 1.1,
             letterSpacing: "-0.02em",
             color: "var(--lp-text-primary)",
-            margin: "0 0 40px",
+            margin: "0 0 64px",
           }}
         >
-          Pertanyaan yang sering muncul.
+          Pertanyaan umum.
         </motion.h2>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.4 }}
-        >
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
           {FAQ_ITEMS.map((item, i) => (
-            <div
+            <motion.div
               key={i}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: i * 0.05 }}
               style={{
-                borderBottom: "0.5px solid var(--lp-border-default)",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
               }}
             >
               <button
@@ -81,40 +79,40 @@ export default function FAQSection() {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  padding: "20px 0",
+                  padding: "32px 0",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  gap: 16,
+                  gap: 24,
                 }}
               >
                 <span
                   style={{
                     fontFamily: "var(--font-jetbrains-mono)",
-                    fontSize: 14,
-                    fontWeight: openIdx === i ? 700 : 500,
+                    fontSize: 18,
+                    fontWeight: 700,
                     color: openIdx === i ? "var(--lp-text-primary)" : "var(--lp-text-secondary)",
                     lineHeight: 1.5,
-                    transition: "color 0.15s",
-                    letterSpacing: "-0.005em",
+                    transition: "color 0.2s",
+                    letterSpacing: "-0.01em",
                   }}
                 >
                   {item.q}
                 </span>
-                <motion.span
-                  animate={{ rotate: openIdx === i ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
+                <span
                   style={{
-                    color: openIdx === i ? "var(--lp-amber)" : "var(--lp-text-tertiary)",
+                    color: openIdx === i ? "var(--lp-text-primary)" : "var(--lp-text-tertiary)",
                     flexShrink: 0,
                     display: "flex",
                     alignItems: "center",
+                    transition: "color 0.2s, transform 0.2s",
+                    transform: openIdx === i ? "rotate(45deg)" : "rotate(0deg)",
+                    fontSize: 24,
+                    fontWeight: 300,
                   }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </motion.span>
+                  +
+                </span>
               </button>
 
               <AnimatePresence initial={false}>
@@ -124,26 +122,22 @@ export default function FAQSection() {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     style={{ overflow: "hidden" }}
                   >
                     <div
                       style={{
-                        paddingBottom: 20,
-                        borderLeft: "2px solid var(--lp-amber)",
-                        paddingLeft: 16,
-                        marginLeft: 0,
+                        paddingBottom: 32,
                       }}
                     >
                       <p
                         style={{
                           fontFamily: "var(--font-jetbrains-mono)",
-                          fontSize: 13,
-                          color: "var(--lp-text-secondary)",
+                          fontSize: 15,
+                          color: "var(--lp-text-tertiary)",
                           margin: 0,
-                          lineHeight: 1.85,
-                          maxWidth: 520,
-                          letterSpacing: "-0.005em",
+                          lineHeight: 1.8,
+                          maxWidth: 600,
                         }}
                       >
                         {item.a}
@@ -152,9 +146,9 @@ export default function FAQSection() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </motion.div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

@@ -85,15 +85,15 @@ export interface ModelOption {
   id: string;
   provider: AIProvider;
   label: string;
-  tier: "free" | "pro" | "pro_max";
+  tier: "free" | "core" | "prime";
 }
 
 export const MODEL_OPTIONS: ModelOption[] = [
   { id: "gemini-3.1-flash-lite", provider: "gemini", label: "Gemini 3.1 Flash Lite", tier: "free" },
   { id: "deepseek-v4-flash", provider: "deepseek", label: "DeepSeek V4 Flash", tier: "free" },
-  { id: "gemini-3.5-flash", provider: "gemini", label: "Gemini 3.5 Flash", tier: "pro" },
-  { id: "gpt-5.4", provider: "openai", label: "GPT-5.4", tier: "pro" },
-  { id: "claude-sonnet-4-20250514", provider: "anthropic", label: "Claude Sonnet 4", tier: "pro_max" },
+  { id: "gemini-3.5-flash", provider: "gemini", label: "Gemini 3.5 Flash", tier: "core" },
+  { id: "gpt-5.4", provider: "openai", label: "GPT-5.4", tier: "core" },
+  { id: "claude-sonnet-4-20250514", provider: "anthropic", label: "Claude Sonnet 4", tier: "prime" },
 ];
 
 export function summarizeForContext(content: string, maxChars: number): string {

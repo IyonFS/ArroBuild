@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function WhatsAppSupportTeaser({ tier, quota }: Props) {
-  const hasAccess = tier === "pro" || tier === "pro_max";
+  const hasAccess = tier === "core" || tier === "prime";
 
   if (!hasAccess) {
     return (
@@ -31,7 +31,7 @@ export default function WhatsAppSupportTeaser({ tier, quota }: Props) {
             <WhatsAppIcon size={18} />
           </span>
           <p className="font-mono text-[13px] truncate" style={{ color: "var(--app-text-secondary)" }}>
-            Chat founder via WhatsApp — tersedia di paket Pro
+            Chat founder via WhatsApp — tersedia di paket Core
           </p>
         </div>
         <span className="font-mono text-[12px] font-semibold flex-shrink-0" style={{ color: "var(--app-amber)" }}>

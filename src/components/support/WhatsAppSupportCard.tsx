@@ -71,7 +71,7 @@ export default function WhatsAppSupportCard({
     setQuota(initialQuota);
   }
 
-  const hasAccess = tier === "pro" || tier === "pro_max";
+  const hasAccess = tier === "core" || tier === "prime";
   const atLimit = quota != null && quota.limit > 0 && !quota.available;
 
   const submit = async () => {
@@ -125,12 +125,16 @@ export default function WhatsAppSupportCard({
 
   return (
     <section
-      className={shellClass}
+      className={`${shellClass} relative overflow-hidden`}
       style={{
-        background: "var(--color-bg-elevated)",
-        border: "0.5px solid rgba(255,255,255,0.1)",
+        background: "var(--app-bg-elevated)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+        border: "1px solid var(--app-border-default)",
       }}
     >
+      {/* Friendly subtle top gradient */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#25D366] to-transparent opacity-50" />
+
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
           <span
@@ -209,8 +213,8 @@ export default function WhatsAppSupportCard({
 
           <div>
             <label
-              className="text-[10px] uppercase tracking-wider font-semibold"
-              style={{ color: "rgba(255,255,255,0.4)" }}
+              className="text-[11px] font-mono tracking-wider font-bold mb-2 block"
+              style={{ color: "var(--app-text-secondary)" }}
             >
               Topik (opsional)
             </label>
@@ -220,19 +224,19 @@ export default function WhatsAppSupportCard({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Mis. Bantuan revisi PRD"
               maxLength={120}
-              className="mt-1.5 w-full px-3 py-2.5 text-sm rounded-xl outline-none"
+              className="w-full px-4 py-3 text-[14px] rounded-xl outline-none transition-all duration-300 focus:ring-2 focus:ring-[#25D366]/40"
               style={{
-                background: "rgba(0,0,0,0.35)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "var(--color-text-primary)",
+                background: "rgba(240,243,250,0.04)",
+                border: "1px solid var(--app-border-strong)",
+                color: "var(--app-text-primary)",
               }}
             />
           </div>
 
           <div>
             <label
-              className="text-[10px] uppercase tracking-wider font-semibold"
-              style={{ color: "rgba(255,255,255,0.4)" }}
+              className="text-[11px] font-mono tracking-wider font-bold mb-2 block"
+              style={{ color: "var(--app-text-secondary)" }}
             >
               Pesan ke founder
             </label>
@@ -242,26 +246,26 @@ export default function WhatsAppSupportCard({
               rows={4}
               placeholder="Jelaskan singkat masalah atau pertanyaan kamu (min. 10 karakter)..."
               maxLength={2000}
-              className="mt-1.5 w-full px-3 py-2.5 text-sm rounded-xl outline-none resize-none"
+              className="w-full px-4 py-3 text-[14px] rounded-xl outline-none resize-none transition-all duration-300 focus:ring-2 focus:ring-[#25D366]/40"
               style={{
-                background: "rgba(0,0,0,0.35)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "var(--color-text-primary)",
-                lineHeight: 1.55,
+                background: "rgba(240,243,250,0.04)",
+                border: "1px solid var(--app-border-strong)",
+                color: "var(--app-text-primary)",
+                lineHeight: 1.6,
               }}
             />
-            <div className="flex flex-wrap gap-1.5 mt-2">
+            <div className="flex flex-wrap gap-2 mt-3">
               {TOPICS.map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setTitle(t)}
-                  className="text-[11px] px-2.5 py-1 rounded-full transition-colors"
+                  className="text-[12px] px-3 py-1.5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95"
                   style={{
                     background:
-                      title === t ? "rgba(37,211,102,0.15)" : "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: title === t ? "#25D366" : "rgba(255,255,255,0.5)",
+                      title === t ? "rgba(37,211,102,0.15)" : "var(--app-bg-hover)",
+                    border: title === t ? "1px solid rgba(37,211,102,0.4)" : "1px solid var(--app-border-strong)",
+                    color: title === t ? "#25D366" : "var(--app-text-tertiary)",
                   }}
                 >
                   {t}
@@ -289,14 +293,15 @@ export default function WhatsAppSupportCard({
             type="button"
             onClick={() => void submit()}
             disabled={busy || message.trim().length < 10}
-            className="w-full py-3 text-sm font-bold disabled:opacity-40 transition-opacity"
+            className="w-full py-3.5 mt-2 text-[15px] font-bold rounded-xl transition-all duration-300 disabled:opacity-50 group relative overflow-hidden flex items-center justify-center gap-2 hover:shadow-[0_4px_20px_rgba(37,211,102,0.3)] hover:-translate-y-[1px] active:scale-[0.98]"
             style={{
-              borderRadius: 12,
-              background: "#25D366",
-              color: "#0A0A0A",
+              background: "linear-gradient(135deg, #25D366, #1EAC52)",
+              color: "#FFFFFF",
+              textShadow: "0 1px 2px rgba(0,0,0,0.2)"
             }}
           >
-            {busy ? "Mencatat permintaan..." : "Kirim & buka WhatsApp"}
+            <span className="relative z-10">{busy ? "Mencatat permintaan..." : "Kirim & Buka WhatsApp"}</span>
+            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300 z-0" />
           </button>
 
           <p className="text-[10px] leading-relaxed" style={{ color: "rgba(255,255,255,0.3)" }}>

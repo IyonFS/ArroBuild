@@ -13,7 +13,7 @@ import type { UserPlanStatus, UserTier } from "@/components/generate/types";
 export type { TierId, ModelClassId };
 
 export function isPaidTier(tier: SubscriptionTier | null | undefined): tier is SubscriptionTier {
-  return tier === TIER.STARTER || tier === TIER.PRO || tier === TIER.PRO_MAX;
+  return tier === TIER.BASE || tier === TIER.CORE || tier === TIER.PRIME;
 }
 
 export async function getUserSubscriptionTier(userId: string): Promise<SubscriptionTier | null> {
@@ -63,10 +63,10 @@ export function tierToOrchestratorUserTier(
 ): "free" | "paid" | "unlimited" {
   if (!tier) return "free";
   switch (tier) {
-    case TIER.PRO_MAX:
+    case TIER.PRIME:
       return "unlimited";
-    case TIER.PRO:
-    case TIER.STARTER:
+    case TIER.CORE:
+    case TIER.BASE:
       return "paid";
     default:
       return "free";

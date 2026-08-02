@@ -320,8 +320,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
       <header
         className="flex-shrink-0 px-4 sm:px-5"
         style={{
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-          background: "rgba(12,12,12,0.96)",
+          borderBottom: "1px solid var(--app-border-default)",
+          background: "var(--app-bg-surface)",
         }}
       >
         <div className="flex items-center gap-3 sm:gap-4 h-[64px]">
@@ -401,7 +401,7 @@ export default function ProjectWorkspace({ projectId }: Props) {
                 {creditHint}
               </span>
             )}
-            {(userTier === "pro" || userTier === "pro_max") && (
+            {(userTier === "core" || userTier === "prime") && (
               <button
                 type="button"
                 onClick={() => setWaModalOpen(true)}
@@ -452,8 +452,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
       <div
         className="flex lg:hidden flex-shrink-0 px-2 gap-1 py-2 sticky top-0 z-20"
         style={{
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          background: "rgba(10,10,10,0.95)",
+          borderBottom: "1px solid var(--app-border-default)",
+          background: "var(--app-bg-surface)",
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
           paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
@@ -474,9 +474,9 @@ export default function ProjectWorkspace({ projectId }: Props) {
             style={{
               borderRadius: 10,
               color:
-                mobileTab === id ? "#0A0A0A" : "rgba(255,255,255,0.5)",
+                mobileTab === id ? "#0A0A0A" : "var(--app-text-tertiary)",
               background:
-                mobileTab === id ? "var(--app-amber)" : "rgba(255,255,255,0.04)",
+                mobileTab === id ? "var(--app-amber)" : "var(--app-bg-elevated)",
             }}
           >
             {label}
@@ -532,8 +532,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
               className="h-full min-h-0 overflow-hidden"
               style={{
                 borderRadius: 16,
-                background: "rgba(18,18,18,0.95)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "var(--app-bg-surface)",
+                border: "1px solid var(--app-border-default)",
               }}
             >
               <FileSidebar
@@ -553,8 +553,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
               className="h-full min-h-0 overflow-hidden"
               style={{
                 borderRadius: 16,
-                background: "rgba(14,14,14,0.98)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "var(--app-bg-elevated)",
+                border: "1px solid var(--app-border-strong)",
               }}
             >
               <DocumentPanel
@@ -571,8 +571,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
               className="h-full min-h-0 overflow-hidden"
               style={{
                 borderRadius: 16,
-                background: "rgba(18,18,18,0.95)",
-                border: "1px solid rgba(255,176,32,0.12)",
+                background: "var(--app-bg-surface)",
+                border: "1px solid rgba(255,176,32,0.15)",
               }}
             >
               <RevisePanel
@@ -595,9 +595,9 @@ export default function ProjectWorkspace({ projectId }: Props) {
             style={{
               width: leftWidth,
               borderRadius: 16,
-              background: "rgba(18,18,18,0.95)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 0 0 1px rgba(0,0,0,0.4)",
+              background: "var(--app-bg-surface)",
+              border: "1px solid var(--app-border-default)",
+              boxShadow: "0 0 0 1px rgba(0,0,0,0.15)",
             }}
           >
             <FileSidebar
@@ -629,8 +629,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
             className="min-h-0 overflow-hidden flex-1 min-w-0"
             style={{
               borderRadius: 16,
-              background: "rgba(14,14,14,0.98)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "var(--app-bg-elevated)",
+              border: "1px solid var(--app-border-strong)",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
             }}
           >
@@ -662,8 +662,8 @@ export default function ProjectWorkspace({ projectId }: Props) {
             style={{
               width: rightWidth,
               borderRadius: 16,
-              background: "rgba(18,18,18,0.95)",
-              border: "1px solid rgba(255,176,32,0.12)",
+              background: "var(--app-bg-surface)",
+              border: "1px solid rgba(255,176,32,0.15)",
               boxShadow: "0 0 24px rgba(255,176,32,0.04)",
             }}
           >

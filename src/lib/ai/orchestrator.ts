@@ -173,11 +173,11 @@ export async function* orchestrateGeneration(
   };
 
   const tierId =
-    enforcement.userTier === "pro_max"
-      ? "PRO_MAX"
-      : enforcement.userTier === "pro"
-        ? "PRO"
-        : "STARTER";
+    enforcement.userTier === "prime"
+      ? "PRIME"
+      : enforcement.userTier === "core"
+        ? "CORE"
+        : "BASE";
   const tierConfig = getTierConfig(tierId);
 
   const docsToGenerate = DOCUMENT_GENERATION_ORDER.filter((k) =>

@@ -50,7 +50,7 @@ const SMART_PRESETS: {
   desc: string;
 }[] = [
   {
-    id: "starter",
+    id: "base",
     label: "Quick Start",
     Icon: Zap,
     docs: ["prd", "architecture", "plan-task"],

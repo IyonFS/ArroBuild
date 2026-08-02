@@ -70,7 +70,7 @@ export async function fetchTierCapacities(): Promise<Record<string, CapacityInfo
   const map: Record<string, CapacityInfo> = {};
   for (const c of data.capacities) {
     const key =
-      c.tier === "PRO_MAX" ? "pro_max" : c.tier === "PRO" ? "pro" : "starter";
+      c.tier === "PRIME" ? "prime" : c.tier === "CORE" ? "core" : "base";
     map[key] = c;
   }
   return map;

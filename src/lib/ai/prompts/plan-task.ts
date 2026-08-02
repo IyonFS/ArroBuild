@@ -3,20 +3,20 @@ import { buildFeatIdContextBlock } from "./yaml-metadata";
 import type { PromptDepthTier } from "@/lib/config/documents";
 
 const DEPTH: Record<PromptDepthTier, string> = {
-  STARTER: `
+  BASE: `
 Buat **plan-task.md** — hanya §1 Pembagian Fase:
 - Fase, fokus, FEAT-ID terkait, estimasi waktu
 - Format task: \`- [ ] Task (est: Xh)\`
 - JANGAN duplikasi keputusan teknis dari Architecture`,
 
-  PRO: `
+  CORE: `
 Buat **plan-task.md** dengan:
 §1 Pembagian Fase
 §2 Urutan Pengerjaan & Ketergantungan
 §3 Estimasi Biaya Operasional per fase (ringkas)
 - Jangan duplikasi detail teknis dari architecture.md`,
 
-  PRO_MAX: `
+  PRIME: `
 Buat **plan-task.md** lengkap:
 §1–§3 seperti Pro
 §4 Breakdown Sprint/Minggu dengan Definition of Done
@@ -25,7 +25,7 @@ Buat **plan-task.md** lengkap:
 
 export function buildPlanTaskPrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "STARTER",
+  tier: PromptDepthTier = "BASE",
   accumulatedContext = ""
 ): string {
   const base = buildBaseContext(input);

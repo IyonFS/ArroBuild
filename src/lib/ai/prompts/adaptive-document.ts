@@ -21,7 +21,7 @@ const ADAPTIVE_SECTIONS: Record<string, string> = {
 
 export function buildAdaptiveDocumentPrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "PRO_MAX",
+  tier: PromptDepthTier = "PRIME",
   accumulatedContext = ""
 ): string {
   const productType = input.productType ?? "saas";
@@ -39,7 +39,7 @@ ${accumulatedContext ? `<context>\n${accumulatedContext}\n</context>\n` : ""}
 
 Focus area: ${section}
 
-Depth: ${tier === "PRO_MAX" ? "Strategic but actionable — 4-6 sections, concrete recommendations" : "Brief summary"}
+Depth: ${tier === "PRIME" ? "Strategic but actionable — 4-6 sections, concrete recommendations" : "Brief summary"}
 
 RULES:
 - This is a HIGH-LEVEL strategy doc — not duplicate optional modules in detail

@@ -1,8 +1,8 @@
 /**
  * agents-prompt.ts — Tier-aware agents.md prompt builder (v3)
  *
- * PRO:     Role definition, rules dasar, tool-specific format (cursor/claude).
- * PRO_MAX: Architectural rules, quality standards, escalation rules, sangat spesifik.
+ * CORE:     Role definition, rules dasar, tool-specific format (cursor/claude).
+ * PRIME: Architectural rules, quality standards, escalation rules, sangat spesifik.
  */
 
 import {
@@ -40,15 +40,15 @@ const AGENT_TOOL_FORMATS: Record<AgentToolPreset, { fileName: string; format: st
 };
 
 const DEPTH_INSTRUCTIONS: Record<V3Tier, string> = {
-  STARTER: ``,
-  PRO: `
+  BASE: ``,
+  CORE: `
 Buat agents.md dengan:
 - AI Agent Role Definition: persona dan tanggung jawab agent
 - Project-specific coding rules (naming convention, file structure)
 - Tech stack rules: hal yang HARUS dan TIDAK BOLEH dilakukan spesifik untuk framework terpilih
 - Response format preferences`,
 
-  PRO_MAX: `
+  PRIME: `
 Buat agents.md yang sangat detail dan production-grade:
 - Agent Persona: role, expertise level, communication style
 - Architectural Rules: pattern yang dipakai, anti-patterns yang dihindari
@@ -69,7 +69,7 @@ Dokumen ini harus bisa di-paste langsung sebagai system prompt dan membuat AI ag
 
 export function buildAgentsPrompt(
   input: GenerationInput,
-  tier: V3Tier = "PRO",
+  tier: V3Tier = "CORE",
   accumulatedContext = ""
 ): string {
   const base = buildBaseContext(input);
@@ -88,7 +88,7 @@ export function buildAgentsPrompt(
   const toolInstruction =
     aiToolInstructions[input.presets.agentTool] || aiToolInstructions.default;
 
-  const instruction = tier === "PRO_MAX" ? DEPTH_INSTRUCTIONS.PRO_MAX : DEPTH_INSTRUCTIONS.PRO;
+  const instruction = tier === "PRIME" ? DEPTH_INSTRUCTIONS.PRIME : DEPTH_INSTRUCTIONS.CORE;
 
   return `Anda adalah principal engineer yang ahli pengembangan berbantuan AI.
 

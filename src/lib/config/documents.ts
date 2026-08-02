@@ -5,7 +5,7 @@
 import { modelClassSlugToId } from "@/lib/ai-gateway/model-router";
 import { validateModelClassForTier, type TierId } from "./tiers";
 
-export type UserTier = "starter" | "pro" | "pro_max";
+export type UserTier = "base" | "core" | "prime";
 export type ModelClass = "hemat" | "menengah" | "flagship" | "ultra";
 
 export const CORE_DOCUMENT_KEYS = [
@@ -71,9 +71,9 @@ export interface DocumentDefinition {
 }
 
 const TIER_RANK: Record<UserTier, number> = {
-  starter: 1,
-  pro: 2,
-  pro_max: 3,
+  base: 1,
+  core: 2,
+  prime: 3,
 };
 
 export function tierMeetsMin(userTier: UserTier, minTier: UserTier): boolean {
@@ -89,9 +89,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "📝",
     phase: "Core",
     kind: "core",
-    minTier: "starter",
-    tokenBudget: { starter: 4096, pro: 5000, pro_max: 8000 },
-    defaultModelClass: { starter: "hemat", pro: "menengah", pro_max: "flagship" },
+    minTier: "base",
+    tokenBudget: { base: 4096, core: 5000, prime: 8000 },
+    defaultModelClass: { base: "hemat", core: "menengah", prime: "flagship" },
     sortOrder: 10,
   },
   architecture: {
@@ -102,9 +102,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "🏗️",
     phase: "Core",
     kind: "core",
-    minTier: "starter",
-    tokenBudget: { starter: 4096, pro: 4000, pro_max: 7000 },
-    defaultModelClass: { starter: "hemat", pro: "menengah", pro_max: "flagship" },
+    minTier: "base",
+    tokenBudget: { base: 4096, core: 4000, prime: 7000 },
+    defaultModelClass: { base: "hemat", core: "menengah", prime: "flagship" },
     sortOrder: 20,
   },
   "plan-task": {
@@ -115,9 +115,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "🗺️",
     phase: "Core",
     kind: "core",
-    minTier: "starter",
-    tokenBudget: { starter: 3072, pro: 3000, pro_max: 5000 },
-    defaultModelClass: { starter: "hemat", pro: "hemat", pro_max: "menengah" },
+    minTier: "base",
+    tokenBudget: { base: 3072, core: 3000, prime: 5000 },
+    defaultModelClass: { base: "hemat", core: "hemat", prime: "menengah" },
     sortOrder: 30,
   },
   "design-system": {
@@ -128,9 +128,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "🎨",
     phase: "Core",
     kind: "core",
-    minTier: "pro",
-    tokenBudget: { starter: 0, pro: 3000, pro_max: 5000 },
-    defaultModelClass: { starter: "hemat", pro: "menengah", pro_max: "menengah" },
+    minTier: "core",
+    tokenBudget: { base: 0, core: 3000, prime: 5000 },
+    defaultModelClass: { base: "hemat", core: "menengah", prime: "menengah" },
     sortOrder: 40,
   },
   "agent-rules": {
@@ -141,9 +141,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "🤖",
     phase: "Core",
     kind: "core",
-    minTier: "pro",
-    tokenBudget: { starter: 0, pro: 2500, pro_max: 4000 },
-    defaultModelClass: { starter: "hemat", pro: "hemat", pro_max: "flagship" },
+    minTier: "core",
+    tokenBudget: { base: 0, core: 2500, prime: 4000 },
+    defaultModelClass: { base: "hemat", core: "hemat", prime: "flagship" },
     sortOrder: 50,
   },
   "adaptive-document": {
@@ -154,9 +154,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "🧩",
     phase: "Core",
     kind: "core",
-    minTier: "pro_max",
-    tokenBudget: { starter: 0, pro: 0, pro_max: 6500 },
-    defaultModelClass: { starter: "hemat", pro: "hemat", pro_max: "flagship" },
+    minTier: "prime",
+    tokenBudget: { base: 0, core: 0, prime: 6500 },
+    defaultModelClass: { base: "hemat", core: "hemat", prime: "flagship" },
     sortOrder: 60,
   },
   "cost-infrastructure": {
@@ -167,9 +167,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "💰",
     phase: "Opsional",
     kind: "optional",
-    minTier: "pro",
-    tokenBudget: { starter: 0, pro: 2000, pro_max: 2000 },
-    defaultModelClass: { starter: "hemat", pro: "hemat", pro_max: "hemat" },
+    minTier: "core",
+    tokenBudget: { base: 0, core: 2000, prime: 2000 },
+    defaultModelClass: { base: "hemat", core: "hemat", prime: "hemat" },
     sortOrder: 70,
   },
   "analytics-metrics": {
@@ -180,9 +180,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "📊",
     phase: "Opsional",
     kind: "optional",
-    minTier: "pro",
-    tokenBudget: { starter: 0, pro: 2000, pro_max: 3500 },
-    defaultModelClass: { starter: "hemat", pro: "hemat", pro_max: "menengah" },
+    minTier: "core",
+    tokenBudget: { base: 0, core: 2000, prime: 3500 },
+    defaultModelClass: { base: "hemat", core: "hemat", prime: "menengah" },
     sortOrder: 80,
   },
   "testing-qa": {
@@ -193,9 +193,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "🧪",
     phase: "Opsional",
     kind: "optional",
-    minTier: "pro",
-    tokenBudget: { starter: 0, pro: 2500, pro_max: 4000 },
-    defaultModelClass: { starter: "hemat", pro: "menengah", pro_max: "menengah" },
+    minTier: "core",
+    tokenBudget: { base: 0, core: 2500, prime: 4000 },
+    defaultModelClass: { base: "hemat", core: "menengah", prime: "menengah" },
     sortOrder: 90,
   },
   "onboarding-email": {
@@ -206,9 +206,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "✉️",
     phase: "Opsional",
     kind: "optional",
-    minTier: "pro",
-    tokenBudget: { starter: 0, pro: 2500, pro_max: 4000 },
-    defaultModelClass: { starter: "hemat", pro: "menengah", pro_max: "menengah" },
+    minTier: "core",
+    tokenBudget: { base: 0, core: 2500, prime: 4000 },
+    defaultModelClass: { base: "hemat", core: "menengah", prime: "menengah" },
     sortOrder: 100,
   },
   "competitive-analysis": {
@@ -219,9 +219,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "🎯",
     phase: "Opsional",
     kind: "optional",
-    minTier: "pro",
-    tokenBudget: { starter: 0, pro: 3000, pro_max: 3000 },
-    defaultModelClass: { starter: "hemat", pro: "flagship", pro_max: "flagship" },
+    minTier: "core",
+    tokenBudget: { base: 0, core: 3000, prime: 3000 },
+    defaultModelClass: { base: "hemat", core: "flagship", prime: "flagship" },
     sortOrder: 110,
   },
   "security-launch": {
@@ -232,9 +232,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "🛡️",
     phase: "Opsional",
     kind: "optional",
-    minTier: "pro_max",
-    tokenBudget: { starter: 0, pro: 0, pro_max: 5000 },
-    defaultModelClass: { starter: "hemat", pro: "hemat", pro_max: "flagship" },
+    minTier: "prime",
+    tokenBudget: { base: 0, core: 0, prime: 5000 },
+    defaultModelClass: { base: "hemat", core: "hemat", prime: "flagship" },
     sortOrder: 120,
   },
   "database-deep-dive": {
@@ -245,9 +245,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "🗄️",
     phase: "Opsional",
     kind: "optional",
-    minTier: "pro_max",
-    tokenBudget: { starter: 0, pro: 0, pro_max: 4500 },
-    defaultModelClass: { starter: "hemat", pro: "hemat", pro_max: "flagship" },
+    minTier: "prime",
+    tokenBudget: { base: 0, core: 0, prime: 4500 },
+    defaultModelClass: { base: "hemat", core: "hemat", prime: "flagship" },
     sortOrder: 130,
   },
   "compliance-legal": {
@@ -258,9 +258,9 @@ export const DOCUMENT_DEFINITIONS: Record<DocumentFileKey, DocumentDefinition> =
     icon: "⚖️",
     phase: "Opsional",
     kind: "optional",
-    minTier: "pro_max",
-    tokenBudget: { starter: 0, pro: 0, pro_max: 3500 },
-    defaultModelClass: { starter: "hemat", pro: "hemat", pro_max: "flagship" },
+    minTier: "prime",
+    tokenBudget: { base: 0, core: 0, prime: 3500 },
+    defaultModelClass: { base: "hemat", core: "hemat", prime: "flagship" },
     sortOrder: 140,
   },
 };
@@ -272,9 +272,9 @@ export const DOCUMENT_GENERATION_ORDER: DocumentFileKey[] = (
   .map((d) => d.key);
 
 export const DEFAULT_CORE_DOCS_BY_TIER: Record<UserTier, DocumentFileKey[]> = {
-  starter: ["prd", "architecture", "plan-task"],
-  pro: ["prd", "architecture", "plan-task", "design-system", "agent-rules"],
-  pro_max: [
+  base: ["prd", "architecture", "plan-task"],
+  core: ["prd", "architecture", "plan-task", "design-system", "agent-rules"],
+  prime: [
     "prd",
     "architecture",
     "plan-task",
@@ -287,7 +287,7 @@ export const DEFAULT_CORE_DOCS_BY_TIER: Record<UserTier, DocumentFileKey[]> = {
 export function canAccessDocument(key: DocumentFileKey, tier: UserTier): boolean {
   const def = DOCUMENT_DEFINITIONS[key];
   if (!tierMeetsMin(tier, def.minTier)) return false;
-  if (def.kind === "optional" && tier === "starter") return false;
+  if (def.kind === "optional" && tier === "base") return false;
   return def.tokenBudget[tier] > 0 || def.kind === "core";
 }
 
@@ -352,34 +352,34 @@ export function getDefaultModelClass(
   return DOCUMENT_DEFINITIONS[key].defaultModelClass[tier];
 }
 
-export type PromptDepthTier = "STARTER" | "PRO" | "PRO_MAX";
+export type PromptDepthTier = "BASE" | "CORE" | "PRIME";
 
 export function userTierToPromptDepth(tier: UserTier): PromptDepthTier {
-  if (tier === "pro_max") return "PRO_MAX";
-  if (tier === "pro") return "PRO";
-  return "STARTER";
+  if (tier === "prime") return "PRIME";
+  if (tier === "core") return "CORE";
+  return "BASE";
 }
 
 export function legacyTierSlugToUserTier(tier: string | undefined | null): UserTier {
   switch (tier) {
-    case "pro_max":
-    case "PRO_MAX":
+    case "prime":
+    case "PRIME":
     case "unlimited":
     case "UNLIMITED":
-      return "pro_max";
-    case "pro":
-    case "PRO":
+      return "prime";
+    case "core":
+    case "CORE":
     case "paid":
-      return "pro";
+      return "core";
     default:
-      return "starter";
+      return "base";
   }
 }
 
 export function userTierToTierId(tier: UserTier): TierId {
-  if (tier === "pro_max") return "PRO_MAX";
-  if (tier === "pro") return "PRO";
-  return "STARTER";
+  if (tier === "prime") return "PRIME";
+  if (tier === "core") return "CORE";
+  return "BASE";
 }
 
 /** Drop per-document model overrides that exceed the user's tier allowance. */

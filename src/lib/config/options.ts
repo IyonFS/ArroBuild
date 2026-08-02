@@ -86,7 +86,7 @@ export const MODEL_CLASS_SLUGS = ["hemat", "menengah", "flagship", "ultra"] as c
 
 export const FEATURE_PRIORITIES = ["must-have", "nice-to-have"] as const;
 
-export const FRONTEND_TIER_SLUGS = ["starter", "pro", "pro_max"] as const;
+export const FRONTEND_TIER_SLUGS = ["base", "core", "prime"] as const;
 
 export type Framework = (typeof FRAMEWORKS)[number];
 export type DesignPreset = (typeof DESIGN_PRESETS)[number];

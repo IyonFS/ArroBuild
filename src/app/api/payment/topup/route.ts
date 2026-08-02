@@ -47,11 +47,11 @@ export async function POST(req: Request) {
   }
 
   const subscriptionTier = tierIdToSubscriptionTier(
-    profile.tierId === "PRO_MAX"
-      ? "pro_max"
-      : profile.tierId === "PRO"
-        ? "pro"
-        : "starter"
+    profile.tierId === "PRIME"
+      ? "prime"
+      : profile.tierId === "CORE"
+        ? "core"
+        : "base"
   );
 
   try {

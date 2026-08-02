@@ -32,7 +32,7 @@ RULES:
 
 export function buildCostInfrastructurePrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "PRO",
+  tier: PromptDepthTier = "CORE",
   ctx = ""
 ) {
   return buildModulePrompt("Cost & Infrastructure Estimate", input, tier, ctx, [
@@ -46,43 +46,43 @@ export function buildCostInfrastructurePrompt(
 
 export function buildAnalyticsMetricsPrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "PRO",
+  tier: PromptDepthTier = "CORE",
   ctx = ""
 ) {
   return buildModulePrompt("Analytics & Metrics Spec", input, tier, ctx, [
     { title: "1. Daftar Event", bullets: "name, trigger, properties, FEAT-ID" },
-    { title: "2. Funnel Utama", bullets: tier === "PRO_MAX" ? "Per-segment + North Star Metric" : "1 main funnel" },
+    { title: "2. Funnel Utama", bullets: tier === "PRIME" ? "Per-segment + North Star Metric" : "1 main funnel" },
     { title: "3. Dashboard Metrik Inti", bullets: "metric, calculation, target" },
   ]);
 }
 
 export function buildTestingQaPrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "PRO",
+  tier: PromptDepthTier = "CORE",
   ctx = ""
 ) {
   return buildModulePrompt("Testing & QA Plan", input, tier, ctx, [
     { title: "1. Strategi Testing", bullets: "unit/integration/E2E ratio + tools" },
     { title: "2. Skenario Test Prioritas", bullets: "TEST-XXX linked to FEAT-ID, P0 first" },
-    { title: "3. Target Coverage", bullets: tier === "PRO_MAX" ? "+ regression checklist" : "Realistic targets" },
+    { title: "3. Target Coverage", bullets: tier === "PRIME" ? "+ regression checklist" : "Realistic targets" },
   ]);
 }
 
 export function buildOnboardingEmailPrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "PRO",
+  tier: PromptDepthTier = "CORE",
   ctx = ""
 ) {
   return buildModulePrompt("Onboarding & Email Flow", input, tier, ctx, [
     { title: "1. Peta Alur Onboarding", bullets: "signup → aha moment → next action" },
     { title: "2. Email Transaksional", bullets: "welcome, verification, feature-triggered" },
-    { title: "3. Sequence Retensi", bullets: tier === "PRO_MAX" ? "Draft copy + exact intervals" : "Timing + purpose" },
+    { title: "3. Sequence Retensi", bullets: tier === "PRIME" ? "Draft copy + exact intervals" : "Timing + purpose" },
   ]);
 }
 
 export function buildCompetitiveAnalysisPrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "PRO",
+  tier: PromptDepthTier = "CORE",
   ctx = ""
 ) {
   return buildModulePrompt("Competitive Analysis", input, tier, ctx, [
@@ -95,7 +95,7 @@ export function buildCompetitiveAnalysisPrompt(
 
 export function buildSecurityLaunchPrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "PRO_MAX",
+  tier: PromptDepthTier = "PRIME",
   ctx = ""
 ) {
   return buildModulePrompt("Security & Launch Checklist", input, tier, ctx, [
@@ -108,7 +108,7 @@ export function buildSecurityLaunchPrompt(
 
 export function buildDatabaseDeepDivePrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "PRO_MAX",
+  tier: PromptDepthTier = "PRIME",
   ctx = ""
 ) {
   return buildModulePrompt("Database Deep-Dive", input, tier, ctx, [
@@ -122,7 +122,7 @@ export function buildDatabaseDeepDivePrompt(
 
 export function buildComplianceLegalPrompt(
   input: GenerationInput,
-  tier: PromptDepthTier = "PRO_MAX",
+  tier: PromptDepthTier = "PRIME",
   ctx = ""
 ) {
   return buildModulePrompt("Compliance & Legal Checklist", input, tier, ctx, [

@@ -30,27 +30,54 @@ function FeaturedCard({ tool }: { tool: ShowcaseToolMeta }) {
   return (
     <Link
       href={tool.href}
+      className="group"
       style={{
         display: "flex",
         flexDirection: "column",
         gap: 16,
-        padding: "28px 28px 24px",
-        borderRadius: 12,
+        padding: "32px 32px 28px",
+        borderRadius: 24,
         textDecoration: "none",
-        background: "#1F2A44",
+        background: "rgba(10, 15, 25, 0.6)",
         border: "1px solid rgba(255,176,32,0.35)",
-        transition: "border-color 150ms ease, background 150ms ease",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+        backdropFilter: "blur(12px)",
+        transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        position: "relative",
+        overflow: "hidden",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "#FFB020";
-        e.currentTarget.style.background = "#293656";
+        e.currentTarget.style.background = "rgba(255, 176, 32, 0.05)";
+        e.currentTarget.style.transform = "translateY(-8px)";
+        e.currentTarget.style.boxShadow = "0 20px 50px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255, 176, 32, 0.1), 0 0 40px rgba(255, 176, 32, 0.2)";
+        const arrow = e.currentTarget.querySelector('.tool-arrow') as SVGElement;
+        if (arrow) arrow.style.transform = "translateX(10px) scale(1.1)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "rgba(255,176,32,0.35)";
-        e.currentTarget.style.background = "#1F2A44";
+        e.currentTarget.style.background = "rgba(10, 15, 25, 0.6)";
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "0 10px 30px rgba(0,0,0,0.4)";
+        const arrow = e.currentTarget.querySelector('.tool-arrow') as SVGElement;
+        if (arrow) arrow.style.transform = "translateX(0) scale(1)";
       }}
     >
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        background: `linear-gradient(135deg, rgba(255,176,32, 0.15) 0%, transparent 50%)`,
+        opacity: 0,
+        transition: "opacity 0.4s ease",
+        pointerEvents: "none",
+      }}
+      className="card-highlight"
+      />
+      
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, position: "relative", zIndex: 2 }}>
         <span
           style={{
             fontFamily: "var(--font-jetbrains-mono), monospace",
@@ -113,10 +140,12 @@ function FeaturedCard({ tool }: { tool: ShowcaseToolMeta }) {
         style={{
           margin: 0,
           fontFamily: "var(--font-jetbrains-mono), monospace",
-          fontSize: 13,
-          lineHeight: 1.65,
-          color: "rgba(240,243,250,0.62)",
+          fontSize: 14,
+          lineHeight: 1.7,
+          color: "var(--lp-text-secondary)",
           maxWidth: 480,
+          position: "relative",
+          zIndex: 2,
         }}
       >
         {tool.description}
@@ -128,18 +157,20 @@ function FeaturedCard({ tool }: { tool: ShowcaseToolMeta }) {
           alignItems: "center",
           gap: 8,
           alignSelf: "flex-start",
-          marginTop: 4,
-          padding: "10px 16px",
-          borderRadius: 8,
+          marginTop: 8,
+          padding: "12px 24px",
+          borderRadius: 999,
           fontFamily: "var(--font-jetbrains-mono), monospace",
-          fontSize: 13,
-          fontWeight: 700,
+          fontSize: 14,
+          fontWeight: 800,
           background: "#FFB020",
           color: "#0D1321",
+          position: "relative",
+          zIndex: 2,
         }}
       >
         Mulai generate
-        <ArrowRight size={14} strokeWidth={2.25} />
+        <ArrowRight className="tool-arrow" size={16} strokeWidth={2.5} style={{ transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }} />
       </span>
     </Link>
   );
@@ -149,9 +180,9 @@ function ToolCard({ tool, index }: { tool: ShowcaseToolMeta; index: number }) {
   const accent = getAccent(tool.accent);
   const Icon = tool.icon;
   const tierColor =
-    tool.minTier === "PRO_MAX"
+    tool.minTier === "PRIME"
       ? "#FFB020"
-      : tool.minTier === "PRO"
+      : tool.minTier === "CORE"
         ? "#38BDF8"
         : "rgba(240,243,250,0.55)";
 
@@ -164,34 +195,63 @@ function ToolCard({ tool, index }: { tool: ShowcaseToolMeta; index: number }) {
     >
       <Link
         href={tool.href}
+        className="group"
         style={{
           display: "flex",
           flexDirection: "column",
           height: "100%",
-          minHeight: 168,
-          padding: 20,
-          borderRadius: 12,
+          minHeight: 180,
+          padding: 24,
+          borderRadius: 20,
           textDecoration: "none",
-          background: "#1F2A44",
-          border: "0.5px solid rgba(240,243,250,0.08)",
-          transition: "border-color 150ms ease, background 150ms ease",
+          background: "rgba(10, 15, 25, 0.6)",
+          border: "1px solid rgba(255, 255, 255, 0.06)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+          backdropFilter: "blur(12px)",
+          transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+          position: "relative",
+          overflow: "hidden",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = "rgba(240,243,250,0.18)";
-          e.currentTarget.style.background = "#293656";
+          e.currentTarget.style.borderColor = `rgba(${tool.minTier === "PRIME" ? "255, 176, 32" : tool.minTier === "CORE" ? "56, 189, 248" : "255, 255, 255"}, 0.4)`;
+          e.currentTarget.style.background = `rgba(${tool.minTier === "PRIME" ? "255, 176, 32" : tool.minTier === "CORE" ? "56, 189, 248" : "255, 255, 255"}, 0.05)`;
+          e.currentTarget.style.transform = "translateY(-6px)";
+          e.currentTarget.style.boxShadow = `0 16px 40px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(${tool.minTier === "PRIME" ? "255, 176, 32" : tool.minTier === "CORE" ? "56, 189, 248" : "255, 255, 255"}, 0.1), 0 0 20px rgba(${tool.minTier === "PRIME" ? "255, 176, 32" : tool.minTier === "CORE" ? "56, 189, 248" : "255, 255, 255"}, 0.15)`;
+          const arrow = e.currentTarget.querySelector('.tool-arrow') as SVGElement;
+          if (arrow) arrow.style.transform = "translateX(6px) scale(1.1)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = "rgba(240,243,250,0.08)";
-          e.currentTarget.style.background = "#1F2A44";
+          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.06)";
+          e.currentTarget.style.background = "rgba(10, 15, 25, 0.6)";
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "0 10px 30px rgba(0,0,0,0.4)";
+          const arrow = e.currentTarget.querySelector('.tool-arrow') as SVGElement;
+          if (arrow) arrow.style.transform = "translateX(0) scale(1)";
         }}
       >
+        <div style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: `linear-gradient(135deg, rgba(${tool.minTier === "PRIME" ? "255, 176, 32" : tool.minTier === "CORE" ? "56, 189, 248" : "255, 255, 255"}, 0.1) 0%, transparent 50%)`,
+          opacity: 0,
+          transition: "opacity 0.4s ease",
+          pointerEvents: "none",
+        }}
+        className="card-highlight"
+        />
+        
         <div
           style={{
             display: "flex",
             alignItems: "flex-start",
             justifyContent: "space-between",
             gap: 12,
-            marginBottom: 14,
+            marginBottom: 16,
+            position: "relative",
+            zIndex: 2,
           }}
         >
           <span
@@ -229,24 +289,28 @@ function ToolCard({ tool, index }: { tool: ShowcaseToolMeta; index: number }) {
 
         <h3
           style={{
-            margin: "0 0 6px",
-            fontFamily: "var(--font-jetbrains-mono), monospace",
-            fontSize: 14,
-            fontWeight: 700,
+            margin: "0 0 8px",
+            fontFamily: "var(--font-unbounded), Unbounded, sans-serif",
+            fontSize: 16,
+            fontWeight: 800,
             color: "#F0F3FA",
-            letterSpacing: "0.01em",
+            letterSpacing: "-0.01em",
+            position: "relative",
+            zIndex: 2,
           }}
         >
           {tool.name}
         </h3>
         <p
           style={{
-            margin: "0 0 16px",
+            margin: "0 0 20px",
             flex: 1,
             fontFamily: "var(--font-jetbrains-mono), monospace",
-            fontSize: 12,
+            fontSize: 13,
             lineHeight: 1.6,
-            color: "rgba(240,243,250,0.62)",
+            color: "var(--lp-text-secondary)",
+            position: "relative",
+            zIndex: 2,
           }}
         >
           {tool.tagline}
@@ -257,13 +321,15 @@ function ToolCard({ tool, index }: { tool: ShowcaseToolMeta; index: number }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            position: "relative",
+            zIndex: 2,
           }}
         >
           <span
             style={{
               fontFamily: "var(--font-jetbrains-mono), monospace",
               fontSize: 12,
-              color: "rgba(240,243,250,0.35)",
+              color: "rgba(240,243,250,0.4)",
             }}
           >
             {tool.credits === "free" ? "Gratis" : `${tool.credits} kredit`}
@@ -274,12 +340,13 @@ function ToolCard({ tool, index }: { tool: ShowcaseToolMeta; index: number }) {
               alignItems: "center",
               gap: 4,
               fontFamily: "var(--font-jetbrains-mono), monospace",
-              fontSize: 12,
-              fontWeight: 600,
-              color: "#38BDF8",
+              fontSize: 13,
+              fontWeight: 700,
+              color: tierColor,
             }}
           >
-            Buka <ArrowRight size={12} />
+            Buka 
+            <ArrowRight className="tool-arrow" size={14} style={{ transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }} />
           </span>
         </div>
       </Link>
@@ -465,16 +532,47 @@ export default function ToolsShowcase({
   const showFeatured = filter === "all" || filter === "free";
 
   return (
-    <div className="tools-app relative min-h-screen" style={{ background: "#0D1321" }}>
+    <div className="tools-app relative min-h-screen" style={{ background: "var(--lp-bg-base)", overflow: "hidden" }}>
+      {/* Global Background Orbs & Grid */}
+      <div style={{
+        position: "fixed",
+        top: "-10%",
+        left: "-5%",
+        width: 800,
+        height: 800,
+        background: "radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 60%)",
+        pointerEvents: "none",
+        filter: "blur(60px)",
+        zIndex: 0,
+      }} />
+      <div style={{
+        position: "fixed",
+        bottom: "-20%",
+        right: "-10%",
+        width: 1000,
+        height: 1000,
+        background: "radial-gradient(circle, rgba(255, 176, 32, 0.05) 0%, transparent 60%)",
+        pointerEvents: "none",
+        filter: "blur(80px)",
+        zIndex: 0,
+      }} />
+      <div style={{
+        position: "fixed",
+        inset: 0,
+        backgroundSize: "40px 40px",
+        backgroundImage: "linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px)",
+        WebkitMaskImage: "radial-gradient(ellipse 100% 100% at 50% 30%, black, transparent)",
+        maskImage: "radial-gradient(ellipse 100% 100% at 50% 30%, black, transparent)",
+        pointerEvents: "none",
+        zIndex: 0,
+      }} />
+
       {/* Hero — blueprint sekali per halaman */}
       <section
         style={{
-          borderBottom: "0.5px solid rgba(240,243,250,0.08)",
-          background: "#131A2C",
-          backgroundImage:
-            "linear-gradient(rgba(56,189,248,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.06) 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-          padding: "48px 24px 56px",
+          position: "relative",
+          zIndex: 10,
+          padding: "80px 24px 60px",
         }}
       >
         <div style={{ maxWidth: 1080, margin: "0 auto" }}>
@@ -508,31 +606,30 @@ export default function ToolsShowcase({
 
               <h1
                 style={{
-                  margin: "0 0 14px",
+                  margin: "0 0 20px",
                   fontFamily: "var(--font-unbounded), Unbounded, sans-serif",
-                  fontSize: "clamp(28px, 4vw, 40px)",
+                  fontSize: "clamp(36px, 5vw, 56px)",
                   fontWeight: 800,
-                  letterSpacing: "-0.02em",
-                  lineHeight: 1.15,
+                  letterSpacing: "-0.03em",
+                  lineHeight: 1.1,
                   color: "#F0F3FA",
-                  maxWidth: 420,
+                  maxWidth: 500,
                 }}
               >
-                Tools kecil buat kerjaan harian.
+                Etalase Utilitas Cerdas.
               </h1>
 
               <p
                 style={{
-                  margin: "0 0 16px",
+                  margin: "0 0 32px",
                   fontFamily: "var(--font-jetbrains-mono), monospace",
-                  fontSize: 14,
+                  fontSize: 16,
                   lineHeight: 1.7,
-                  color: "rgba(240,243,250,0.62)",
+                  color: "var(--lp-text-secondary)",
                   maxWidth: 480,
                 }}
               >
-                Utilitas cepat di luar generate dokumen utama — scaffolding, copy, schema, dan
-                prompt. Pilih tool, isi singkat, langsung pakai.
+                Utilitas cepat dan cerdas di luar ekosistem utama. Lengkapi workflow Anda dengan scaffolding, copy, schema, dan prompt sekali klik tanpa repot.
               </p>
 
               {tierId && (
@@ -622,8 +719,9 @@ export default function ToolsShowcase({
       {/* Shelf — surface tone, bukan blueprint lagi */}
       <section
         style={{
-          background: "#161D2E",
-          padding: "48px 24px 72px",
+          position: "relative",
+          zIndex: 10,
+          padding: "20px 24px 100px",
         }}
       >
         <div style={{ maxWidth: 1080, margin: "0 auto" }}>
@@ -663,7 +761,17 @@ export default function ToolsShowcase({
               </p>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ 
+              display: "flex", 
+              flexWrap: "nowrap", 
+              gap: 12, 
+              overflowX: "auto", 
+              paddingBottom: 8, 
+              scrollSnapType: "x mandatory", 
+              WebkitOverflowScrolling: "touch",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none"
+            }} className="minimal-scrollbar">
               {FILTERS.map((f) => {
                 const active = filter === f.id;
                 return (
@@ -672,17 +780,31 @@ export default function ToolsShowcase({
                     type="button"
                     onClick={() => setFilter(f.id)}
                     style={{
-                      padding: "8px 12px",
-                      borderRadius: 6,
+                      padding: "10px 20px",
+                      borderRadius: 999,
                       fontFamily: "var(--font-jetbrains-mono), monospace",
-                      fontSize: 12,
-                      fontWeight: 600,
+                      fontSize: 13,
+                      fontWeight: 700,
                       cursor: "pointer",
                       border: active
-                        ? "0.5px solid rgba(255,176,32,0.45)"
-                        : "0.5px solid rgba(240,243,250,0.12)",
-                      background: active ? "rgba(255,176,32,0.1)" : "transparent",
-                      color: active ? "#FFB020" : "rgba(240,243,250,0.45)",
+                        ? "1px solid rgba(255,176,32,0.6)"
+                        : "1px solid rgba(255,255,255,0.1)",
+                      background: active ? "rgba(255,176,32,0.15)" : "rgba(255,255,255,0.02)",
+                      color: active ? "#FFB020" : "var(--lp-text-secondary)",
+                      transition: "all 0.3s ease",
+                      boxShadow: active ? "0 4px 14px rgba(255,176,32,0.2)" : "none",
+                      scrollSnapAlign: "start",
+                      flexShrink: 0,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+                      }
                     }}
                   >
                     {f.label}
@@ -766,11 +888,14 @@ export default function ToolsShowcase({
 
 
       <style>{`
+        .group:hover .card-highlight {
+          opacity: 1 !important;
+        }
         @media (min-width: 900px) {
           .tools-hero-grid {
             grid-template-columns: 1fr 1fr !important;
-            align-items: start;
-            gap: 40px !important;
+            align-items: center;
+            gap: 60px !important;
           }
           .tools-shelf-head {
             flex-direction: row !important;
