@@ -16,6 +16,7 @@ import type {
 import { FILE_META, TIER_FILE_KEYS, resolvePreviewTier, isSubscribed } from "./types";
 import { DocIcon } from "@/lib/ui/app-icons";
 import { trackEvent } from "@/lib/analytics";
+import { classifyGenerationFailure } from "@/lib/analytics-policy";
 import { parseApiErrorMessage } from "@/lib/parse-api-error";
 
 type FileStatus = "pending" | "generating" | "done" | "error";
@@ -275,7 +276,9 @@ export default function GenerationProgress({
                   lastError ??
                   "Generation failed. Please try again.";
                 pushLog(`✗ build failed · ${errMsg.slice(0, 100)}`);
-                trackEvent("generation_failed", { error: errMsg });
+                trackEvent("generation_failed", {
+                  errorCode: classifyGenerationFailure(errMsg),
+                });
                 setError(errMsg);
                 setGlobalStatus("error");
                 return;
@@ -291,7 +294,9 @@ export default function GenerationProgress({
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Generation failed";
         pushLog(`✗ fatal · ${msg.slice(0, 120)}`);
-        trackEvent("generation_failed", { error: msg });
+        trackEvent("generation_failed", {
+          errorCode: classifyGenerationFailure(msg),
+        });
         setError(msg);
         setGlobalStatus("error");
       }

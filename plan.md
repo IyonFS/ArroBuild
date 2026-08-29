@@ -741,3 +741,19 @@ Jangan memulai Living Blueprint sebelum lima langkah tersebut selesai. Fondasi p
 
 - `DIRECT_URL` dan `DATABASE_URL` saat ini ditolak provider database dengan kode `XX000`: tenant/user yang dikonfigurasi tidak ditemukan. Karena itu status migration `20260829120000_add_generation_provenance` dan penerapan RLS remote belum dapat diverifikasi.
 - Credential/connection string database perlu diperbarui sebelum migration, cross-user RLS E2E, payment settlement, dan core paid-loop smoke test dapat dijalankan.
+
+### 29 Agustus 2026 — Analytics Privacy Guard
+
+**Selesai**
+
+- Menambahkan schema allowlist properti analytics terpusat per event.
+- Menghapus pengiriman pesan error generation mentah dan menggantinya dengan kode kategori stabil seperti `provider_quota`, `timeout`, `network`, atau `unknown`.
+- Memastikan properti tak dikenal, email, prompt, object, dan detail error tidak diteruskan ke Vercel Analytics maupun log analytics development.
+- Menambahkan regression test privacy analytics ke security suite.
+
+**Hasil verifikasi**
+
+- Analytics privacy regression: 7/7 lulus.
+- Security suite gabungan: 62/62 lulus.
+- `npm run lint`: lulus, 0 error dan 0 warning.
+- `npm run build`: lulus; TypeScript lulus dan 58 halaman statis dibuat.

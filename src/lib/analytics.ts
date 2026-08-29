@@ -10,35 +10,29 @@
  */
 
 import { track } from "@vercel/analytics";
+import {
+  sanitizeAnalyticsProperties,
+  type AnalyticsEvent,
+  type AnalyticsEventProperties,
+} from "@/lib/analytics-policy";
+
+export type { AnalyticsEvent } from "@/lib/analytics-policy";
 
 // ─── Event catalog ────────────────────────────────────────────────────────────
 
-export type AnalyticsEvent =
-  | "idea_submitted"
-  | "generation_started"
-  | "generation_completed"
-  | "generation_failed"
-  | "email_captured"
-  | "zip_downloaded"
-  | "download_fallback"
-  | "tab_switched"
-  | "copy_to_clipboard"
-  | "raw_toggle";
-
-export type EventProperties = Record<string, string | number | boolean>;
-
 // ─── Track helper ─────────────────────────────────────────────────────────────
 
-export function trackEvent(
-  event: AnalyticsEvent,
-  properties?: EventProperties
+export function trackEvent<E extends AnalyticsEvent>(
+  event: E,
+  properties?: AnalyticsEventProperties<E>,
 ): void {
+  const safeProperties = sanitizeAnalyticsProperties(event, properties);
   try {
-    track(event, properties);
+    track(event, safeProperties);
   } catch {
     // Silently fail in environments where analytics isn't available
     if (process.env.NODE_ENV === "development") {
-      console.log(`[Analytics] ${event}`, properties ?? {});
+      console.log(`[Analytics] ${event}`, safeProperties ?? {});
     }
   }
 }

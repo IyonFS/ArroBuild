@@ -12,7 +12,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
     "test:validation": "tsx scripts/test-validation.ts",
     "test:errors": "tsx scripts/test-errors.ts",
-    "test:security": "tsx scripts/test-security.ts && tsx scripts/test-safe-markdown.tsx && tsx scripts/test-request-body.ts && tsx scripts/test-request-policy.ts && node scripts/test-integration-environment.mjs",
+    "test:security": "tsx scripts/test-security.ts && tsx scripts/test-safe-markdown.tsx && tsx scripts/test-request-body.ts && tsx scripts/test-request-policy.ts && tsx scripts/test-analytics-privacy.ts && node scripts/test-integration-environment.mjs",
     "test:content": "tsx scripts/test-learn-content.ts",
     "test:tiers": "tsx scripts/test-tiers.ts",
     "test:credits": "tsx scripts/test-credit-ledger.ts",
