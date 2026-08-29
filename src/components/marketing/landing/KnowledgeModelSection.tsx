@@ -810,7 +810,8 @@ export default function KnowledgeModelSection() {
           transition={{ duration: 0.4, delay: 0.15 }}
           className="km-caption"
         >
-          Base: 3 file inti · Core: 5 inti + modul opsional tertentu · Prime: semua 14 dokumen.
+          Base: 3 file inti · Core: 5 file inti · Prime: semua 14 dokumen termasuk 8 modul
+          opsional.
         </motion.p>
       </div>
 

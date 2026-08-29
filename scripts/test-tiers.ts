@@ -17,6 +17,7 @@ import {
   TIER_CREDIT_POOL,
   TIER_MODEL_CLASSES,
 } from "../src/components/generate/types";
+import { readFileSync } from "node:fs";
 
 let passed = 0;
 let failed = 0;
@@ -98,6 +99,16 @@ for (const optionalDocument of OPTIONAL_DOCUMENT_KEYS) {
       canAccessDocument(optionalDocument, "prime"),
   );
 }
+
+const knowledgeModelCopy = readFileSync(
+  new URL("../src/components/marketing/landing/KnowledgeModelSection.tsx", import.meta.url),
+  "utf8",
+);
+assert(
+  "landing states that optional modules are Prime-only",
+  knowledgeModelCopy.includes("Prime: semua 14 dokumen termasuk 8 modul") &&
+    !knowledgeModelCopy.includes("Core: 5 inti + modul opsional"),
+);
 
 const creditMultiplierBySlug = {
   hemat: CREDIT_MULTIPLIER[MODEL_CLASS.HEMAT],
