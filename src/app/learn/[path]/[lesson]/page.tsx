@@ -51,7 +51,7 @@ export default async function LearnLessonPage({ params }: Props) {
         />
       }
     >
-      <LessonContent blocks={lesson.blocks} variant="learn" />
+      <LessonContent blocks={lesson.blocks} />
     </LearnLessonDashboard>
   );
 }

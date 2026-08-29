@@ -23,10 +23,10 @@ import {
   buildArroDesignUrlContextPrompt,
   parseArroDesignOutput,
   type ArroDesignInput,
-  type ArroDesignInputType,
   type ArroDesignResult,
   ARRODESIGN_CREDITS,
 } from "@/lib/config/arrodesign-prompt";
+import { validatePublicHttpUrl } from "@/lib/security/safe-url";
 
 export type ArroDesignProgressStep =
   | "init"
@@ -55,7 +55,7 @@ async function gatherImageContext(params: {
 
   if (!isOpenRouterConfigured()) {
     throw new Error(
-      "OPENROUTER_API_KEY belum dikonfigurasi. Tambahkan ke .env.local untuk mengaktifkan analisis gambar."
+      "OPENROUTER_API_KEY belum dikonfigurasi. Tambahkan ke .env.local untuk mengaktifkan analisis gambar.",
     );
   }
 
@@ -81,10 +81,7 @@ async function gatherImageContext(params: {
 
 // ─── Path B: URL → Fetch + Search → Text Analysis ────────────────────────────
 
-async function gatherUrlContext(params: {
-  url: string;
-  onProgress: OnProgress;
-}): Promise<string> {
+async function gatherUrlContext(params: { url: string; onProgress: OnProgress }): Promise<string> {
   const { url, onProgress } = params;
 
   // Step 1: Fetch HTML
@@ -134,7 +131,7 @@ async function gatherUrlContext(params: {
 
 export async function runArroDesignEngine(
   input: ArroDesignInput,
-  onProgress?: OnProgress
+  onProgress?: OnProgress,
 ): Promise<ArroDesignResult> {
   const progress = onProgress ?? (() => {});
 
@@ -159,12 +156,9 @@ export async function runArroDesignEngine(
       throw new Error("Mode URL membutuhkan URL yang valid.");
     }
 
-    // Validasi URL
-    try {
-      new URL(referenceUrl);
-    } catch {
-      throw new Error(`URL tidak valid: ${referenceUrl}`);
-    }
+    // Validasi ulang di boundary fetch. fetchPageHtml juga mengunci DNS/IP
+    // yang sudah diperiksa dan memvalidasi ulang setiap redirect.
+    await validatePublicHttpUrl(referenceUrl);
 
     const urlContext = await gatherUrlContext({
       url: referenceUrl,

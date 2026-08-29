@@ -15,11 +15,11 @@ export default function CTAFinalSection() {
           padding: "160px 24px",
           borderTop: "0.5px solid var(--lp-border-default)",
           position: "relative",
-          overflow: "hidden"
+          overflow: "hidden",
         }}
       >
         {/* Glow effect in background */}
-        <div 
+        <div
           style={{
             position: "absolute",
             top: "50%",
@@ -28,11 +28,19 @@ export default function CTAFinalSection() {
             width: "600px",
             height: "600px",
             background: "radial-gradient(circle, rgba(255,176,32,0.08) 0%, transparent 60%)",
-            pointerEvents: "none"
+            pointerEvents: "none",
           }}
         />
 
-        <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 10 }}>
+        <div
+          style={{
+            maxWidth: 800,
+            margin: "0 auto",
+            textAlign: "center",
+            position: "relative",
+            zIndex: 10,
+          }}
+        >
           <motion.h2
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -73,20 +81,35 @@ export default function CTAFinalSection() {
                 display: "inline-flex",
                 alignItems: "center",
                 transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                boxShadow: "0 8px 32px rgba(255,176,32,0.25)"
+                boxShadow: "0 8px 32px rgba(255,176,32,0.25)",
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-4px)";
-                (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 12px 40px rgba(255,176,32,0.4)";
+                (e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                  "0 12px 40px rgba(255,176,32,0.4)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)";
-                (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 8px 32px rgba(255,176,32,0.25)";
+                (e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                  "0 8px 32px rgba(255,176,32,0.25)";
               }}
             >
-              Mulai gratis sekarang
+              Isi brief gratis
             </Link>
           </motion.div>
+          <p
+            style={{
+              margin: "20px auto 0",
+              maxWidth: 520,
+              fontFamily: "var(--font-jetbrains-mono)",
+              fontSize: 13,
+              lineHeight: 1.7,
+              color: "var(--lp-text-tertiary)",
+            }}
+          >
+            Daftar dan eksplorasi form tanpa biaya. Kredit baru digunakan saat kamu menjalankan
+            generation AI.
+          </p>
         </div>
       </section>
 

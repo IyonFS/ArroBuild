@@ -83,7 +83,7 @@ export default function FileListingSection() {
                   marginLeft: 16,
                   display: "inline-block" 
                 }}>
-                  // {file.desc}
+                  {"// "}{file.desc}
                 </span>
               </div>
               <div style={{ fontSize: 12, fontWeight: 500, color: "var(--lp-text-tertiary)", textTransform: "uppercase", letterSpacing: "0.1em" }}>

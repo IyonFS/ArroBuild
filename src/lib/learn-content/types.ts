@@ -4,6 +4,8 @@ export type LessonLevel = "pemula" | "menengah" | "lanjut";
 
 export type LearnTrack = "foundation" | "workflow" | "advanced";
 
+export type PublicationStatus = "published" | "draft";
+
 export type PathIconId = "foundation" | "document" | "workflow" | "toolkit";
 
 export type BlockType =
@@ -36,6 +38,7 @@ export interface Lesson {
 
 export interface LearningPath {
   slug: string;
+  status: PublicationStatus;
   title: string;
   description: string;
   level: LessonLevel;

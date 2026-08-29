@@ -3,6 +3,7 @@ import { buildPlaceholderLessonBlocks } from "../build-lesson";
 
 export const multiAgentOrchestration: LearningPath = {
   slug: "multi-agent-orchestration",
+  status: "draft",
   title: "Multi-Agent Orchestration",
   description:
     "Desain workflow multi-agent: pembagian role, handoff antar agent, dan manajemen context window untuk project besar.",

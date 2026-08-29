@@ -1,10 +1,7 @@
 import { LEARNING_PATHS, getPath, type LearningPath } from "@/lib/learn-content";
 
 export function getLearnStats() {
-  const lessonCount = LEARNING_PATHS.reduce(
-    (total, path) => total + path.lessons.length,
-    0
-  );
+  const lessonCount = LEARNING_PATHS.reduce((total, path) => total + path.lessons.length, 0);
   return {
     pathCount: LEARNING_PATHS.length,
     lessonCount,
@@ -26,10 +23,7 @@ export function getPathPreview(pathSlug: string) {
 }
 
 /** Track colors: pemula=violet, menengah=sky, lanjut=amber */
-export const PATH_THEMES: Record<
-  string,
-  { accent: string; tint: string; border: string }
-> = {
+export const PATH_THEMES: Record<string, { accent: string; tint: string; border: string }> = {
   "vibe-coding-fundamentals": {
     accent: "#9D4EDD",
     tint: "rgba(157,78,221,0.08)",
@@ -128,40 +122,10 @@ export const LEARN_TUTORIAL_ITEMS = LEARNING_PATHS.map((path) => ({
   lessonCount: path.lessons.length,
 }));
 
-export const LEARN_REFERENCE_ITEMS = [
-  {
-    title: "Vibe Coding",
-    href: "/learn/vibe-coding-fundamentals/apa-itu-vibe-coding",
-    description: "Konsep dasar membangun dengan AI agent",
-  },
-  {
-    title: "PRD untuk AI",
-    href: "/learn/product-planning-for-ai/anatomi-prd-untuk-ai",
-    description: "Struktur dokumen kebutuhan produk",
-  },
-  {
-    title: "context.md",
-    href: "/learn/product-planning-for-ai/context-md-living-doc",
-    description: "Master reference project untuk AI",
-  },
-  {
-    title: "design-system.md",
-    href: "/learn/product-planning-for-ai/design-system-md",
-    description: "Panduan konsistensi visual",
-  },
-  {
-    title: "agents.md",
-    href: "/learn/product-planning-for-ai/agents-md-dan-scope-control",
-    description: "Konfigurasi perilaku AI agent",
-  },
-  {
-    title: ".cursorrules",
-    href: "/learn/setup-tooling/cursorrules-dasar",
-    description: "Instruksi permanen untuk Cursor",
-  },
-  {
-    title: "CLAUDE.md",
-    href: "/learn/setup-tooling/claude-code-dan-claude-md",
-    description: "Konfigurasi untuk Claude Code",
-  },
-];
+export const LEARN_REFERENCE_ITEMS = LEARNING_PATHS.flatMap((path) =>
+  path.lessons.map((lesson) => ({
+    title: lesson.title,
+    href: `/learn/${path.slug}/${lesson.slug}`,
+    description: lesson.outcome,
+  })),
+);

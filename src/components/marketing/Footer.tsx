@@ -22,12 +22,7 @@ const FOOTER_LINKS = {
     { href: "/terms", label: "Syarat & Ketentuan" },
     { href: "/privacy", label: "Kebijakan Privasi" },
   ],
-  socials: [
-    { href: "#", label: "Twitter / X" },
-    { href: "#", label: "LinkedIn" },
-    { href: "#", label: "GitHub" },
-    { href: "mailto:hello@hygione.com", label: "Hubungi Kami" },
-  ],
+  socials: [{ href: "mailto:hello@hygione.com", label: "Hubungi Kami" }],
 };
 
 function FooterColumn({
@@ -94,18 +89,12 @@ export default function Footer() {
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        
         {/* Main Grid: Huge Statement + Links */}
-        <div
-          className="flex flex-col lg:flex-row gap-16 lg:gap-24 mb-24"
-        >
+        <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 mb-24">
           {/* Left / Top: Editorial Statement */}
           <div className="flex-1 flex flex-col justify-between">
             <div>
-              <Link
-                href="/"
-                style={{ textDecoration: "none" }}
-              >
+              <Link href="/" style={{ textDecoration: "none" }}>
                 <h2
                   style={{
                     fontFamily: "var(--font-unbounded), Unbounded, sans-serif",
@@ -131,70 +120,18 @@ export default function Footer() {
                   maxWidth: 380,
                 }}
               >
-                Dari ide ke dokumen fondasi. Sebelum AI agent sempat ngasal. Arsitektur yang kokoh dimulai dari desain sistem yang tepat.
+                Dari ide ke dokumen fondasi. Sebelum AI agent sempat ngasal. Arsitektur yang kokoh
+                dimulai dari desain sistem yang tepat.
               </p>
-              
-              {/* Newsletter / Contact mini form to add elements */}
-              <div style={{ marginTop: 40, maxWidth: 360 }}>
-                <p style={{
-                  fontFamily: "var(--font-jetbrains-mono), monospace",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--lp-text-primary)",
-                  margin: "0 0 12px",
-                }}>
-                  Berlangganan Update
-                </p>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input 
-                    type="email" 
-                    placeholder="Alamat email Anda"
-                    style={{
-                      flex: 1,
-                      background: "rgba(255,255,255,0.03)",
-                      border: "0.5px solid var(--lp-border-default)",
-                      borderRadius: 8,
-                      padding: "10px 16px",
-                      fontFamily: "var(--font-jetbrains-mono), monospace",
-                      fontSize: 13,
-                      color: "var(--lp-text-primary)",
-                      outline: "none",
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = "var(--lp-amber)"}
-                    onBlur={(e) => e.target.style.borderColor = "var(--lp-border-default)"}
-                  />
-                  <button style={{
-                    background: "var(--lp-amber, #FFB020)",
-                    color: "#0D1321",
-                    border: "none",
-                    borderRadius: 8,
-                    padding: "0 16px",
-                    fontFamily: "var(--font-jetbrains-mono), monospace",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    transition: "opacity 0.2s"
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-                  >
-                    Daftar
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
 
           {/* Right / Bottom: Clean Link Columns */}
-          <div 
-            className="flex-[1.8] grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-8 pt-4"
-          >
+          <div className="flex-[1.8] grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-8 pt-4">
             <FooterColumn title="Produk" links={FOOTER_LINKS.product} />
             <FooterColumn title="Sumber Daya" links={FOOTER_LINKS.resources} />
             <FooterColumn title="Akun" links={FOOTER_LINKS.account} />
-            <FooterColumn title="Sosial" links={FOOTER_LINKS.socials} />
+            <FooterColumn title="Kontak" links={FOOTER_LINKS.socials} />
           </div>
         </div>
 

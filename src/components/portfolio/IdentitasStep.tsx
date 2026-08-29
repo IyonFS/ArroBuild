@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { IdentitasData, Profesi } from "./types";
+import type { IdentitasData } from "./types";
 import { PROFESI_DEMO } from "./types";
 
 interface Props {

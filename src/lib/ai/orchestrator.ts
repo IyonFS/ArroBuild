@@ -37,7 +37,6 @@ import {
   modelClassSlugToId,
   resolveModelForClass,
   resolveModelsForClass,
-  routedModelToProvider,
   isModelConfigured,
 } from "@/lib/ai-gateway/model-router";
 import { getTierConfig, validateModelClassForTier, type ModelClassId } from "@/lib/config/tiers";

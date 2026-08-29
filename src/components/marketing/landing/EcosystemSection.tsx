@@ -8,40 +8,37 @@ const SECTIONS = [
   {
     id: "learn",
     label: "Belajar",
-    title: "Mulai dari nol. Gratis selamanya.",
-    desc: "Ratusan konten yang dirancang khusus untuk developer yang belajar bangun produk dengan AI agent. Dari konsep dasar sampai workflow advanced — semua bisa diakses tanpa akun berbayar.",
+    title: "Mulai dari nol. Gratis dibaca.",
+    desc: "Satu learning path berisi empat lesson fondasi untuk developer yang mulai membangun produk bersama AI agent. Bisa dibaca gratis tanpa login.",
     cta: "Lihat learning path →",
     ctaHref: "/learn",
     items: [
-      "01 — Pengenalan AI Agent",
-      "02 — Prompt Engineering Dasar",
-      "03 — Membuat PRD yang Efektif",
+      "01 — Apa itu Vibe Coding?",
+      "02 — Peran Arsitek dan Eksekutor",
+      "03 — Ekosistem Tools AI Coding",
+      "04 — Iterasi Pertama dengan AI",
     ],
   },
   {
     id: "build",
     label: "Build",
     title: "Dokumen fondasi, sebelum baris kode pertama.",
-    desc: "Generate PRD, arsitektur, design system, dan agent rules dari deskripsi ide kamu. Semua file langsung terhubung lewat FEAT-ID — tidak ada lagi inkonsistensi antar dokumen.",
+    desc: "Generate PRD, arsitektur, design system, dan agent rules dari deskripsi ide kamu. Referensi FEAT-ID membantu menjaga hubungan antar dokumen tetap jelas.",
     cta: "Mulai generate →",
     ctaHref: "/generate",
-    items: [
-      "→ prd.md",
-      "→ architecture.md",
-      "→ design-system.md",
-    ],
+    items: ["→ prd.md", "→ architecture.md", "→ design-system.md"],
   },
   {
     id: "integrate",
     label: "Integrate",
-    title: "Export ke tools yang kamu pakai.",
-    desc: "Output ArroBuild dirancang langsung untuk Cursor, Claude Code, dan Windsurf. Paste ke root proyek, AI agent kamu langsung punya konteks lengkap — tanpa setup manual.",
+    title: "Bawa konteks ke tool yang kamu pakai.",
+    desc: "Unduh file Markdown dan agent rules, tempatkan di repo, lalu gunakan sebagai konteks di Cursor, Claude Code, atau Windsurf. Sinkronisasi akun dan editor otomatis belum tersedia.",
     cta: "Lihat integrasi →",
     ctaHref: "/integrations",
     items: [
-      "Cursor",
-      "Claude Code",
-      "Windsurf",
+      "Cursor — melalui file repo",
+      "Claude Code — melalui file repo",
+      "Windsurf — melalui file repo",
     ],
   },
 ];
@@ -71,7 +68,8 @@ export default function EcosystemSection() {
             margin: "0 0 64px",
           }}
         >
-          Satu akun.<br />
+          Satu akun.
+          <br />
           <span style={{ color: "var(--lp-text-tertiary)" }}>Tiga cara pakai.</span>
         </motion.h2>
 
@@ -187,13 +185,17 @@ export default function EcosystemSection() {
                           paddingBottom: 4,
                           transition: "opacity 0.2s",
                         }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = "0.7"; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = "1"; }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLAnchorElement).style.opacity = "0.7";
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLAnchorElement).style.opacity = "1";
+                        }}
                       >
                         {section.cta}
                       </Link>
                     </motion.div>
-                  )
+                  ),
               )}
             </AnimatePresence>
           </div>

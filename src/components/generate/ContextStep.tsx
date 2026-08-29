@@ -411,7 +411,6 @@ function QualityIndicator({ value, featureCount }: { value: ContextData; feature
     { label: "Excellent", color: "#FFB020", tip: "Konteks sangat lengkap — output AI akan sangat spesifik" },
   ];
   const level = levels[Math.max(0, score - 1)] ?? levels[0];
-  const pct = (score / 5) * 100;
 
   return (
     <div
@@ -898,4 +897,3 @@ export default function ContextStep({ productType, value, onChange, features, on
     </div>
   );
 }
-

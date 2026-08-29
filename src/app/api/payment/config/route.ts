@@ -8,7 +8,6 @@ import {
 } from "@/lib/midtrans";
 
 export async function GET() {
-  const hint = getMidtransConfigHint();
   return NextResponse.json({
     configured: isMidtransConfigured(),
     clientKeyValid: isClientKeyValid(),

@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { usePathname, useSearchParams } from "next/navigation";
 import DashboardSidebar, {
   resolveDashboardNavId,

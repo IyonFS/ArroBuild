@@ -6,6 +6,14 @@ import {
   type ModelClassId,
 } from "@/lib/config/tiers";
 import { logger } from "@/lib/logger";
+import {
+  assertOwnedReservation,
+  calculateReservationSettlement,
+  CreditServiceError,
+  reservationIdFromMetadata,
+} from "@/lib/services/credit-ledger";
+
+export { CreditServiceError } from "@/lib/services/credit-ledger";
 
 export interface CreditReservation {
   reservationId: string;
@@ -26,17 +34,6 @@ export interface CreditBalance {
   reserved_for: { projectId: string; amount: number }[];
 }
 
-export class CreditServiceError extends Error {
-  constructor(
-    public code: string,
-    message: string,
-    public statusCode: number = 400
-  ) {
-    super(message);
-    this.name = "CreditServiceError";
-  }
-}
-
 async function sumLedgerBalance(
   userId: string,
   tx: Prisma.TransactionClient = prisma
@@ -46,6 +43,21 @@ async function sumLedgerBalance(
     _sum: { amount: true },
   });
   return result._sum.amount ?? 0;
+}
+
+async function findReservationRelease(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  reservationId: string
+) {
+  return tx.creditLedger.findFirst({
+    where: {
+      userId,
+      type: "RESERVATION_RELEASE",
+      metadata: { path: ["reservationId"], equals: reservationId },
+    },
+    select: { id: true },
+  });
 }
 
 export const CreditService = {
@@ -133,20 +145,13 @@ export const CreditService = {
           const reservation = await tx.creditLedger.findUniqueOrThrow({
             where: { id: reservationId },
           });
+          const holdedCredits = assertOwnedReservation(reservation, userId, projectId);
 
-          if (reservation.type !== "RESERVATION_HOLD") {
+          if (await findReservationRelease(tx, userId, reservationId)) {
             throw new CreditServiceError(
-              "INVALID_RESERVATION",
-              `Reservation ${reservationId} bukan RESERVATION_HOLD`,
-              400
-            );
-          }
-
-          if (reservation.userId !== userId) {
-            throw new CreditServiceError(
-              "RESERVATION_MISMATCH",
-              `Reservation ${reservationId} bukan milik user ${userId}`,
-              403
+              "RESERVATION_SETTLED",
+              "Reservation sudah diselesaikan",
+              409
             );
           }
 
@@ -155,16 +160,12 @@ export const CreditService = {
             actualCreditsUsed += estimateCreditsPerDocument(doc.tokensUsed, doc.modelClass);
           }
 
-          const holdedCredits = Math.abs(reservation.amount);
           const sumBalance = await sumLedgerBalance(userId, tx);
-
-          if (actualCreditsUsed > holdedCredits) {
-            throw new CreditServiceError(
-              "CREDIT_OVERCHARGE",
-              `Kredit terpakai (${actualCreditsUsed}) melebihi hold (${holdedCredits})`,
-              500
-            );
-          }
+          const settlement = calculateReservationSettlement(
+            sumBalance,
+            holdedCredits,
+            actualCreditsUsed
+          );
 
           const generateEntry = await tx.creditLedger.create({
             data: {
@@ -172,7 +173,7 @@ export const CreditService = {
               type: "GENERATE_DOCUMENT" as CreditLedgerType,
               amount: -actualCreditsUsed,
               projectId,
-              balanceAfter: sumBalance - actualCreditsUsed,
+              balanceAfter: settlement.chargeBalanceAfter,
               metadata: {
                 ...metadata,
                 documentsGenerated,
@@ -181,28 +182,23 @@ export const CreditService = {
             },
           });
 
-          const surplus = holdedCredits - actualCreditsUsed;
-          let finalBalance = generateEntry.balanceAfter;
-
-          if (surplus > 0) {
-            const releaseEntry = await tx.creditLedger.create({
-              data: {
-                userId,
-                type: "RESERVATION_RELEASE" as CreditLedgerType,
-                amount: surplus,
-                projectId,
-                balanceAfter: generateEntry.balanceAfter + surplus,
-                metadata: {
-                  reservationId,
-                  holdedCredits,
-                  actualCreditsUsed,
-                  surplus,
-                  reason: "release_surplus_from_reservation",
-                },
+          const releaseEntry = await tx.creditLedger.create({
+            data: {
+              userId,
+              type: "RESERVATION_RELEASE" as CreditLedgerType,
+              amount: settlement.releaseAmount,
+              projectId,
+              balanceAfter: settlement.finalBalance,
+              metadata: {
+                reservationId,
+                holdedCredits,
+                actualCreditsUsed,
+                surplus: settlement.surplus,
+                reason: "settle_generation_reservation",
               },
-            });
-            finalBalance = releaseEntry.balanceAfter;
-          }
+            },
+          });
+          const finalBalance = releaseEntry.balanceAfter;
 
           await tx.user.update({
             where: { id: userId },
@@ -253,26 +249,19 @@ export const CreditService = {
           const reservation = await tx.creditLedger.findUniqueOrThrow({
             where: { id: reservationId },
           });
+          const holdedCredits = assertOwnedReservation(reservation, userId, projectId);
 
-          if (reservation.type !== "RESERVATION_HOLD") {
+          if (await findReservationRelease(tx, userId, reservationId)) {
             throw new CreditServiceError(
-              "INVALID_RESERVATION",
-              `Reservation ${reservationId} bukan RESERVATION_HOLD`,
-              400
+              "RESERVATION_SETTLED",
+              "Reservation sudah diselesaikan",
+              409
             );
           }
 
-          if (reservation.userId !== userId) {
-            throw new CreditServiceError(
-              "RESERVATION_MISMATCH",
-              `Reservation ${reservationId} bukan milik user ${userId}`,
-              403
-            );
-          }
-
-          const holdedCredits = Math.abs(reservation.amount);
           const used = Math.min(Math.max(actualCreditsUsed, 1), holdedCredits);
           const sumBalance = await sumLedgerBalance(userId, tx);
+          const settlement = calculateReservationSettlement(sumBalance, holdedCredits, used);
 
           const revisionEntry = await tx.creditLedger.create({
             data: {
@@ -280,7 +269,7 @@ export const CreditService = {
               type: "REVISION" as CreditLedgerType,
               amount: -used,
               projectId,
-              balanceAfter: sumBalance - used,
+              balanceAfter: settlement.chargeBalanceAfter,
               metadata: {
                 ...metadata,
                 reservationId,
@@ -289,25 +278,23 @@ export const CreditService = {
             },
           });
 
-          const surplus = holdedCredits - used;
-          let finalBalance = revisionEntry.balanceAfter;
-
-          if (surplus > 0) {
-            const releaseEntry = await tx.creditLedger.create({
-              data: {
-                userId,
-                type: "RESERVATION_RELEASE" as CreditLedgerType,
-                amount: surplus,
-                projectId,
-                balanceAfter: revisionEntry.balanceAfter + surplus,
-                metadata: {
-                  reservationId,
-                  reason: "revision_surplus_release",
-                },
+          const releaseEntry = await tx.creditLedger.create({
+            data: {
+              userId,
+              type: "RESERVATION_RELEASE" as CreditLedgerType,
+              amount: settlement.releaseAmount,
+              projectId,
+              balanceAfter: settlement.finalBalance,
+              metadata: {
+                reservationId,
+                holdedCredits,
+                actualCreditsUsed: used,
+                surplus: settlement.surplus,
+                reason: "settle_revision_reservation",
               },
-            });
-            finalBalance = releaseEntry.balanceAfter;
-          }
+            },
+          });
+          const finalBalance = releaseEntry.balanceAfter;
 
           await tx.user.update({
             where: { id: userId },
@@ -379,51 +366,156 @@ export const CreditService = {
     };
   },
 
+  async commitToolReservation(
+    userId: string,
+    reservationId: string,
+    toolId: string,
+    actualCreditsUsed: number,
+    metadata?: Record<string, unknown>
+  ): Promise<CreditCommit> {
+    return prisma.$transaction(
+      async (tx) => {
+        const reservation = await tx.creditLedger.findUniqueOrThrow({
+          where: { id: reservationId },
+        });
+        const holdedCredits = assertOwnedReservation(reservation, userId);
+
+        if (await findReservationRelease(tx, userId, reservationId)) {
+          throw new CreditServiceError(
+            "RESERVATION_SETTLED",
+            "Reservation sudah diselesaikan",
+            409
+          );
+        }
+
+        const currentBalance = await sumLedgerBalance(userId, tx);
+        const settlement = calculateReservationSettlement(
+          currentBalance,
+          holdedCredits,
+          actualCreditsUsed
+        );
+
+        const usageEntry = await tx.creditLedger.create({
+          data: {
+            userId,
+            type: "TOOL_USAGE" as CreditLedgerType,
+            amount: -actualCreditsUsed,
+            projectId: reservation.projectId,
+            toolId,
+            balanceAfter: settlement.chargeBalanceAfter,
+            metadata: {
+              ...metadata,
+              tool: toolId,
+              reservationId,
+              holdedCredits,
+            } as Prisma.InputJsonValue,
+          },
+        });
+
+        await tx.creditLedger.create({
+          data: {
+            userId,
+            type: "RESERVATION_RELEASE" as CreditLedgerType,
+            amount: settlement.releaseAmount,
+            projectId: reservation.projectId,
+            balanceAfter: settlement.finalBalance,
+            metadata: {
+              reservationId,
+              holdedCredits,
+              actualCreditsUsed,
+              surplus: settlement.surplus,
+              reason: "settle_tool_reservation",
+            },
+          },
+        });
+
+        await tx.user.update({
+          where: { id: userId },
+          data: { creditBalance: settlement.finalBalance },
+        });
+
+        logger.info("tool_reservation_committed", {
+          userId,
+          toolId,
+          reservationId,
+          actualCreditsUsed,
+          finalBalance: settlement.finalBalance,
+        });
+
+        return {
+          transactionId: usageEntry.id,
+          balanceAfter: settlement.finalBalance,
+          actualCreditsUsed,
+        };
+      },
+      {
+        isolationLevel: "Serializable",
+        maxWait: 5000,
+        timeout: 30000,
+      }
+    );
+  },
+
   async releaseReservation(
     userId: string,
     reservationId: string,
     reason = "generation_failed"
   ): Promise<void> {
-    await prisma.$transaction(async (tx) => {
-      const reservation = await tx.creditLedger.findUniqueOrThrow({
-        where: { id: reservationId },
-      });
+    await prisma.$transaction(
+      async (tx) => {
+        const reservation = await tx.creditLedger.findUniqueOrThrow({
+          where: { id: reservationId },
+        });
+        const holdedAmount = assertOwnedReservation(reservation, userId);
 
-      if (reservation.type !== "RESERVATION_HOLD") {
-        throw new Error(`${reservationId} bukan RESERVATION_HOLD`);
+        if (await findReservationRelease(tx, userId, reservationId)) return;
+
+        const currentBalance = await sumLedgerBalance(userId, tx);
+        const newBalance = currentBalance + holdedAmount;
+
+        await tx.creditLedger.create({
+          data: {
+            userId,
+            type: "RESERVATION_RELEASE" as CreditLedgerType,
+            amount: holdedAmount,
+            projectId: reservation.projectId,
+            balanceAfter: newBalance,
+            metadata: { reservationId, reason },
+          },
+        });
+
+        await tx.user.update({
+          where: { id: userId },
+          data: { creditBalance: newBalance },
+        });
+
+        logger.info("credit_released", { userId, reservationId, reason });
+      },
+      {
+        isolationLevel: "Serializable",
+        maxWait: 5000,
+        timeout: 30000,
       }
-
-      const holdedAmount = Math.abs(reservation.amount);
-      const newBalance = reservation.balanceAfter + holdedAmount;
-
-      await tx.creditLedger.create({
-        data: {
-          userId,
-          type: "RESERVATION_RELEASE" as CreditLedgerType,
-          amount: holdedAmount,
-          projectId: reservation.projectId,
-          balanceAfter: newBalance,
-          metadata: { reservationId, reason },
-        },
-      });
-
-      await tx.user.update({
-        where: { id: userId },
-        data: { creditBalance: newBalance },
-      });
-
-      logger.info("credit_released", { userId, reservationId, reason });
-    });
+    );
   },
 
   async getBalance(userId: string): Promise<CreditBalance> {
     const ledger = await prisma.creditLedger.findMany({
       where: { userId },
-      select: { amount: true, type: true, projectId: true },
+      select: { id: true, amount: true, type: true, projectId: true, metadata: true },
     });
 
     const current = ledger.reduce((sum, entry) => sum + entry.amount, 0);
-    const reservedEntries = ledger.filter((e) => e.type === "RESERVATION_HOLD");
+    const releasedReservationIds = new Set(
+      ledger
+        .filter((entry) => entry.type === "RESERVATION_RELEASE")
+        .map((entry) => reservationIdFromMetadata(entry.metadata))
+        .filter((id): id is string => id !== null)
+    );
+    const reservedEntries = ledger.filter(
+      (entry) =>
+        entry.type === "RESERVATION_HOLD" && !releasedReservationIds.has(entry.id)
+    );
     const reserved = Math.abs(
       reservedEntries.reduce((sum, e) => sum + e.amount, 0)
     );

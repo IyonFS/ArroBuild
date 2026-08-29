@@ -80,7 +80,7 @@ export async function assertMiniToolAccess(
     if (used >= limit) {
       throw new TierCapabilityError(
         "MINI_TOOL_LIMIT",
-        `Kuota trial mini tool bulan ini habis (${used}/${limit}). Upgrade ke Pro untuk akses penuh.`,
+        `Kuota trial mini tool bulan ini habis (${used}/${limit}). Upgrade ke Core untuk akses lebih luas.`,
         429
       );
     }
@@ -139,10 +139,13 @@ export async function settleMiniToolReservation(
   const tool = MINI_TOOLS[toolId];
   const amount = creditsOverride ?? tool.credits;
   try {
-    await CreditService.releaseReservation(userId, reservationId, "tool_settling").catch(
-      () => {}
+    return await CreditService.commitToolReservation(
+      userId,
+      reservationId,
+      toolId,
+      amount,
+      metadata
     );
-    return await CreditService.chargeToolCredits(userId, amount, toolId, metadata);
   } catch (err) {
     if (err instanceof CreditServiceError) {
       throw new TierCapabilityError(err.code, err.message, err.statusCode);

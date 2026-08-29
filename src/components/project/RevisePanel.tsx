@@ -408,7 +408,7 @@ export default function RevisePanel({ projectId, file, onAccepted }: Props) {
           <span>Estimasi kredit</span>
           <span style={{ color: "var(--app-amber)", fontWeight: 700 }}>
             {preview?.isFreeRevision || (!preview && freeRevisionAvailable)
-              ? "Gratis (1×/bulan Pro)"
+              ? "Gratis (1×/bulan Core)"
               : `~${preview?.estimatedCredits ?? estimate} kredit`}
           </span>
         </div>

@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db/prisma";
 import { createClient } from "@/lib/supabase/server";
 import type { UserTier as OrchestratorUserTier } from "@/lib/ai/prompts/shared";
 import { getModelsForTier } from "@/components/generate/types";
-import { legacyTierSlugToUserTier } from "@/lib/config/documents";
 import {
   getUserSubscriptionTier,
   tierToOrchestratorUserTier,

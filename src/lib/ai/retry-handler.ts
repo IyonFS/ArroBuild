@@ -5,7 +5,7 @@
  * yang masih diizinkan oleh tier user.
  */
 
-import { V3_TIER_CONFIG, type V3Tier, type ModelId } from "./tier-enforcer";
+import { type ModelId } from "./tier-enforcer";
 
 // ─── Fallback Chain ─────────────────────────────────────────────────────────
 
@@ -100,5 +100,3 @@ export function getBackoffMs(err: unknown, attempt: number): number {
   // Other errors: flat 500ms
   return 500 * (attempt + 1);
 }
-
-

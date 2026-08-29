@@ -22,7 +22,7 @@ const CAPABILITY_MAP: Record<
   whatsapp_chat: "whatsappChatPerMonth",
 };
 
-export const PRO_FREE_REVISIONS_PER_MONTH = 1;
+export const CORE_FREE_REVISIONS_PER_MONTH = 1;
 
 export class TierCapabilityError extends Error {
   constructor(
@@ -153,7 +153,7 @@ export async function getRevisionQuota(userId: string): Promise<RevisionQuota | 
 
   if (tierId === TIER.CORE) {
     const used = await countMonthlyFreeRevisions(userId);
-    const freeRemaining = Math.max(0, PRO_FREE_REVISIONS_PER_MONTH - used);
+    const freeRemaining = Math.max(0, CORE_FREE_REVISIONS_PER_MONTH - used);
     return {
       tierId,
       freeRemaining,

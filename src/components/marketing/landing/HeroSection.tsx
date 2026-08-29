@@ -1,94 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import HeroBlueprintBackground from "./HeroBlueprintBackground";
 
 // ── Live Stats Badge ─────────────────────────────────────────
-
-interface StatsData {
-  documentsGenerated: number;
-  activeUsers: number;
-}
-
-function useCountUp(target: number, duration: number = 1200) {
-  const [count, setCount] = useState(0);
-  const started = useRef(false);
-
-  const start = () => {
-    if (started.current || target === 0) return;
-    started.current = true;
-    const startTime = performance.now();
-    const tick = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * target));
-      if (progress < 1) requestAnimationFrame(tick);
-      else setCount(target);
-    };
-    requestAnimationFrame(tick);
-  };
-
-  return { count, start };
-}
-
-function LiveStatsBadge() {
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [error, setError] = useState(false);
-  const docsCounter = useCountUp(stats?.documentsGenerated ?? 0);
-  const usersCounter = useCountUp(stats?.activeUsers ?? 0);
-  const triggered = useRef(false);
-
-  useEffect(() => {
-    fetch("/api/stats/public")
-      .then((r) => r.json())
-      .then((data: StatsData) => setStats(data))
-      .catch(() => setError(true));
-  }, []);
-
-  useEffect(() => {
-    if (stats && !triggered.current) {
-      triggered.current = true;
-      docsCounter.start();
-      usersCounter.start();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stats]);
-
-  if (error || !stats) return null;
-
-  return (
-    <div
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        fontFamily: "var(--font-jetbrains-mono)",
-        fontSize: 11,
-        fontWeight: 400,
-        color: "var(--lp-sky)",
-        letterSpacing: "0.02em",
-      }}
-    >
-      <span
-        style={{
-          display: "inline-block",
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: "var(--lp-sky)",
-          animation: "lpPulse 2s ease-in-out infinite",
-        }}
-      />
-      {docsCounter.count.toLocaleString("id-ID")} dokumen di-generate ·{" "}
-      {usersCounter.count.toLocaleString("id-ID")} developer aktif
-    </div>
-  );
-}
-
-// ── Minimal Command Input Visual ──────────────────────────────
 
 function MinimalCommandInput() {
   const [typedChars, setTypedChars] = useState(0);
@@ -263,7 +180,6 @@ export default function HeroSection() {
             />
             Sistem aktif · Beta
           </div>
-          <LiveStatsBadge />
         </motion.div>
 
         {/* H1 */}

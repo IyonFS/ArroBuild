@@ -229,7 +229,7 @@ export async function runInterviewTurn(params: {
       maxOutputTokens: 1024,
       temperature: 0.4,
     });
-  } catch (error) {
+  } catch {
     const fallbackMessage =
       nextTurn >= INTERVIEW_MAX_TURNS
         ? "Sepertinya ini butuh diskusi lebih detail — yuk lanjut isi sisanya manual, jawabanmu sejauh ini tetap tersimpan."

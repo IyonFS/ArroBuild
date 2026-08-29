@@ -1,10 +1,6 @@
 // Portfolio Prompt Generator — builds a complete prompt from form data
 
-import type {
-  PortfolioFormState,
-  ColorTheme,
-  FontPair,
-} from "./types";
+import type { PortfolioFormState } from "./types";
 import {
   COLOR_THEMES,
   FONT_PAIRS,

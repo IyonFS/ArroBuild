@@ -2,7 +2,9 @@
  * Test Midtrans configuration — run: npm run test:midtrans
  */
 import { config } from "dotenv";
+import { assertSafeIntegrationEnvironment } from "./lib/integration-environment.mjs";
 config({ path: ".env.local" });
+assertSafeIntegrationEnvironment();
 
 const serverKey = process.env.MIDTRANS_SERVER_KEY ?? "";
 const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ?? "";

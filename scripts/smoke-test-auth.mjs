@@ -9,7 +9,6 @@ import { resolve } from "path";
 
 const BASE = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 const DEMO_PROJECT = "cmwdemo320000seedarrobuild";
-const USER_ID = "105da727-55e9-4e82-8b9f-5bf94121ac72";
 
 function loadEnv() {
   const raw = readFileSync(resolve(process.cwd(), ".env.local"), "utf8");

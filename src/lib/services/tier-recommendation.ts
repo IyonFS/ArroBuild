@@ -54,12 +54,12 @@ export function recommendTierForPlan(params: {
     }
   }
 
-  const starterPool = TIER_CONFIG[TIER.BASE].creditsPerMonth;
-  const proPool = TIER_CONFIG[TIER.CORE].creditsPerMonth;
+  const basePool = TIER_CONFIG[TIER.BASE].creditsPerMonth;
+  const corePool = TIER_CONFIG[TIER.CORE].creditsPerMonth;
 
-  if (params.estimatedCredits > proPool) {
+  if (params.estimatedCredits > corePool) {
     minimum = "prime";
-  } else if (params.estimatedCredits > starterPool) {
+  } else if (params.estimatedCredits > basePool) {
     if (TIER_RANK[minimum] < TIER_RANK.core) minimum = "core";
   }
 
@@ -72,14 +72,14 @@ export function recommendTierForPlan(params: {
     reasons.push("plan butuh lebih dari 3 dokumen inti atau model Menengah+");
   }
 
-  if (params.estimatedCredits > starterPool && recommended === "base") {
+  if (params.estimatedCredits > basePool && recommended === "base") {
     recommended = "core";
-    reasons.push(`estimasi ${params.estimatedCredits} kredit melebihi pool Base (${starterPool})`);
+    reasons.push(`estimasi ${params.estimatedCredits} kredit melebihi pool Base (${basePool})`);
   }
 
-  if (params.estimatedCredits > proPool && recommended !== "prime") {
+  if (params.estimatedCredits > corePool && recommended !== "prime") {
     recommended = "prime";
-    reasons.push(`estimasi ${params.estimatedCredits} kredit melebihi pool Core (${proPool})`);
+    reasons.push(`estimasi ${params.estimatedCredits} kredit melebihi pool Core (${corePool})`);
   }
 
   if (reasons.length === 0) {

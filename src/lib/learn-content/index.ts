@@ -14,12 +14,13 @@ export type {
   Lesson,
   LessonLevel,
   PathIconId,
+  PublicationStatus,
 } from "./types";
 
 export { buildLessonBlocks, buildPlaceholderLessonBlocks } from "./build-lesson";
 export type { LessonContentInput } from "./build-lesson";
 
-export const LEARNING_PATHS: LearningPath[] = [
+export const ALL_LEARNING_PATHS: LearningPath[] = [
   vibeCodingFundamentals,
   setupTooling,
   productPlanningForAi,
@@ -28,13 +29,18 @@ export const LEARNING_PATHS: LearningPath[] = [
   reliabilityDeployment,
 ];
 
+/** Public source of truth. Draft paths must never reach navigation, search, SSG, or sitemap. */
+export const LEARNING_PATHS: LearningPath[] = ALL_LEARNING_PATHS.filter(
+  (path) => path.status === "published",
+);
+
 export function getPath(slug: string): LearningPath | undefined {
   return LEARNING_PATHS.find((p) => p.slug === slug);
 }
 
 export function getLesson(
   pathSlug: string,
-  lessonSlug: string
+  lessonSlug: string,
 ): { path: LearningPath; lesson: import("./types").Lesson; index: number } | undefined {
   const path = getPath(pathSlug);
   if (!path) return undefined;

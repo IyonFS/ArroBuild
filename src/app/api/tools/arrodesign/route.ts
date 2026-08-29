@@ -16,18 +16,19 @@ import {
 } from "@/lib/services/mini-tools.service";
 import { CreditService } from "@/lib/services/credit.service";
 import { TierCapabilityError } from "@/lib/services/tier-capabilities";
-import {
-  runArroDesignEngine,
-  getArroDesignCapabilities,
-} from "@/lib/ai/arrodesign-engine";
+import { runArroDesignEngine, getArroDesignCapabilities } from "@/lib/ai/arrodesign-engine";
 import {
   estimateArroDesignCredits,
   type ArroDesignInputType,
 } from "@/lib/config/arrodesign-prompt";
 import type { ArroDesignProgress } from "@/lib/ai/arrodesign-engine";
+import { logger } from "@/lib/logger";
+import { SafeUrlError, validatePublicHttpUrl } from "@/lib/security/safe-url";
+import { readJsonBody, RequestBodyError } from "@/lib/http/read-json-body";
 
 export const runtime = "nodejs";
 export const maxDuration = 180; // analisis bisa lama — 3 menit
+const MAX_ARRODESIGN_BODY_BYTES = 8_500_000;
 
 const BodySchema = z.object({
   inputType: z.enum(["image", "url"]),
@@ -48,16 +49,20 @@ export async function POST(req: NextRequest) {
 
   let body: unknown;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    body = await readJsonBody(req, MAX_ARRODESIGN_BODY_BYTES);
+  } catch (error) {
+    const requestError = error instanceof RequestBodyError ? error : null;
+    return NextResponse.json(
+      { error: requestError?.message ?? "Invalid JSON" },
+      { status: requestError?.statusCode ?? 400 }
+    );
   }
 
   const parsed = BodySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Payload tidak valid: " + parsed.error.issues[0]?.message },
-      { status: 422 }
+      { status: 422 },
     );
   }
 
@@ -65,16 +70,26 @@ export async function POST(req: NextRequest) {
 
   // Validasi input sesuai tipe
   if (inputType === "image" && !imageDataUrl) {
-    return NextResponse.json(
-      { error: "Mode gambar membutuhkan imageDataUrl." },
-      { status: 422 }
-    );
+    return NextResponse.json({ error: "Mode gambar membutuhkan imageDataUrl." }, { status: 422 });
   }
   if (inputType === "url" && !referenceUrl) {
     return NextResponse.json(
       { error: "Mode URL membutuhkan referenceUrl yang valid." },
-      { status: 422 }
+      { status: 422 },
     );
+  }
+
+  if (inputType === "url" && referenceUrl) {
+    try {
+      await validatePublicHttpUrl(referenceUrl);
+    } catch (error) {
+      const message = error instanceof SafeUrlError ? error.message : "URL referensi tidak aman.";
+      logger.warn("arrodesign_reference_url_rejected", {
+        userId: dbUser.id,
+        code: error instanceof SafeUrlError ? error.code : "UNKNOWN",
+      });
+      return NextResponse.json({ error: message, code: "UNSAFE_REFERENCE_URL" }, { status: 422 });
+    }
   }
 
   // Check capabilities
@@ -87,7 +102,7 @@ export async function POST(req: NextRequest) {
         code: "VISION_NOT_CONFIGURED",
         missingKeys: ["OPENROUTER_API_KEY"],
       },
-      { status: 503 }
+      { status: 503 },
     );
   }
 
@@ -109,7 +124,7 @@ export async function POST(req: NextRequest) {
       dbUser.id,
       "arrodesign",
       { inputType, mode: mode ?? "fresh" },
-      creditsNeeded
+      creditsNeeded,
     );
     reservationId = reservation.reservationId;
   } catch (err) {
@@ -149,7 +164,7 @@ export async function POST(req: NextRequest) {
             projectContext,
             mode: mode ?? "fresh",
           },
-          onProgress
+          onProgress,
         );
 
         // Settle kredit
@@ -158,7 +173,7 @@ export async function POST(req: NextRequest) {
           reservationId!,
           "arrodesign",
           { inputType, mode: mode ?? "fresh" },
-          creditsNeeded
+          creditsNeeded,
         );
 
         send({
@@ -177,12 +192,11 @@ export async function POST(req: NextRequest) {
           await CreditService.releaseReservation(
             dbUser.id,
             reservationId,
-            "arrodesign_failed"
+            "arrodesign_failed",
           ).catch(() => {});
         }
 
-        const message =
-          err instanceof Error ? err.message : "Gagal menjalankan ArroDesign.";
+        const message = err instanceof Error ? err.message : "Gagal menjalankan ArroDesign.";
         send({ type: "error", error: message });
       } finally {
         controller.close();

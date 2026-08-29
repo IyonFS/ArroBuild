@@ -5,7 +5,6 @@ import { ARRODESIGN_CREDITS } from "@/lib/config/arrodesign-prompt";
 import type {
   ArroDesignFormState,
   ArroDesignProgressEvent,
-  ArroDesignProgressStep,
 } from "./types";
 import { getProgressPercent } from "./types";
 
@@ -17,15 +16,6 @@ interface ConfirmStepProps {
   onBack: () => void;
   onGenerate: () => void;
 }
-
-const STEP_ORDER: ArroDesignProgressStep[] = [
-  "init",
-  "fetching",
-  "searching",
-  "analyzing",
-  "generating",
-  "done",
-];
 
 function ProgressBar({ events }: { events: ArroDesignProgressEvent[] }) {
   const latest = events[events.length - 1];

@@ -8,8 +8,10 @@ import { createClient } from "@supabase/supabase-js";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
+import { assertSafeIntegrationEnvironment } from "./lib/integration-environment.mjs";
 
 config({ path: ".env.local" });
+assertSafeIntegrationEnvironment();
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);

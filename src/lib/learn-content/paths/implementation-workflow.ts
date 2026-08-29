@@ -3,6 +3,7 @@ import { buildPlaceholderLessonBlocks } from "../build-lesson";
 
 export const implementationWorkflow: LearningPath = {
   slug: "implementation-workflow",
+  status: "draft",
   title: "Implementation Workflow",
   description:
     "Alur implementasi harian: prompt yang tepat, iterasi cepat, debugging output AI, dan quality gates sebelum merge.",

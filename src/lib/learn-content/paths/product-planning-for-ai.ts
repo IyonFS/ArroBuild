@@ -3,6 +3,7 @@ import { buildPlaceholderLessonBlocks } from "../build-lesson";
 
 export const productPlanningForAi: LearningPath = {
   slug: "product-planning-for-ai",
+  status: "draft",
   title: "Product Planning for AI",
   description:
     "Rancang PRD, context.md, design-system.md, dan agents.md yang benar-benar berguna sebagai konteks untuk AI agent.",

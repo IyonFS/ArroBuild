@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation";
 
 export default function CustomCursor() {
   const [isVisible, setIsVisible] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
+  const [hoveredPathname, setHoveredPathname] = useState<string | null>(null);
   const pathname = usePathname();
+  const isHovering = hoveredPathname === pathname;
 
   // Mouse position values (using spring for a very slight smoothness, but very tight)
   const cursorX = useMotionValue(-100);
@@ -26,25 +27,25 @@ export default function CustomCursor() {
     const moveCursor = (e: MouseEvent) => {
       cursorX.set(e.clientX);
       cursorY.set(e.clientY);
-      if (!isVisible) setIsVisible(true);
+      setIsVisible(true);
     };
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       // Check if we are hovering over clickable elements
-      const isClickable = 
+      const isClickable =
         target.tagName.toLowerCase() === "a" ||
         target.tagName.toLowerCase() === "button" ||
         target.closest("a") ||
         target.closest("button") ||
         target.closest("[role='button']") ||
         window.getComputedStyle(target).cursor === "pointer";
-        
-      setIsHovering(Boolean(isClickable));
+
+      setHoveredPathname(isClickable ? pathname : null);
     };
 
     const handleMouseOut = () => {
-      setIsHovering(false);
+      setHoveredPathname(null);
     };
 
     const handleMouseLeave = () => setIsVisible(false);
@@ -63,12 +64,7 @@ export default function CustomCursor() {
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseenter", handleMouseEnter);
     };
-  }, [cursorX, cursorY, isVisible]);
-
-  // Reset hover state on navigation
-  useEffect(() => {
-    setIsHovering(false);
-  }, [pathname]);
+  }, [cursorX, cursorY, pathname]);
 
   if (!isVisible) return null;
 

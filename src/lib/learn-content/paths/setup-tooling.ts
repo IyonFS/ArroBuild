@@ -3,6 +3,7 @@ import { buildPlaceholderLessonBlocks } from "../build-lesson";
 
 export const setupTooling: LearningPath = {
   slug: "setup-tooling",
+  status: "draft",
   title: "Setup Tooling",
   description:
     "Konfigurasi Cursor, Claude Code, dan file aturan project (.cursorrules, CLAUDE.md) dari nol sampai siap dipakai.",

@@ -31,7 +31,7 @@ const TIERS = [
       "30 proyek per bulan",
     ],
     ctaLabel: "Mulai Core",
-    ctaHref: "/signup?plan=pro",
+    ctaHref: "/signup?plan=core",
     theme: "core",
     popular: true,
   },
@@ -47,7 +47,7 @@ const TIERS = [
       "60 proyek per bulan + Revisi unlimited",
     ],
     ctaLabel: "Mulai Prime",
-    ctaHref: "/signup?plan=pro_max",
+    ctaHref: "/signup?plan=prime",
     theme: "prime",
   },
 ];

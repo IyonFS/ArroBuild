@@ -1,3 +1,6 @@
+import { logger } from "@/lib/logger";
+import { fetchPublicHtml, SafeUrlError } from "@/lib/security/safe-url";
+
 /**
  * Tavily integration — web search + content extraction.
  * Free tier: 1.000 credit/bulan (terus-menerus).
@@ -72,38 +75,18 @@ export async function fetchPageHtml(url: string): Promise<{
   error?: string;
 }> {
   try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; ArroBuild-Design-Analyzer/1.0; +https://arrobuild.com)",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-      },
-      signal: AbortSignal.timeout(20_000),
-      redirect: "follow",
+    const result = await fetchPublicHtml(url, {
+      timeoutMs: 20_000,
+      maxBytes: 150_000,
+      maxRedirects: 3,
     });
-
-    if (!res.ok) {
-      return {
-        html: "",
-        finalUrl: url,
-        error: `HTTP ${res.status} ${res.statusText}`,
-      };
-    }
-
-    const contentType = res.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html")) {
-      return {
-        html: "",
-        finalUrl: res.url,
-        error: `Bukan halaman HTML (content-type: ${contentType})`,
-      };
-    }
-
-    const html = await res.text();
-    return { html: html.slice(0, 150_000), finalUrl: res.url };
+    return { html: result.html, finalUrl: result.finalUrl };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    if (err instanceof SafeUrlError) {
+      logger.warn("public_html_fetch_rejected", { code: err.code });
+    }
+    const message =
+      err instanceof SafeUrlError ? err.message : "Halaman referensi tidak dapat diambil.";
     return { html: "", finalUrl: url, error: message };
   }
 }

@@ -1,34 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { checkIpRateLimit } from "@/lib/rate-limit";
-
-const PROTECTED_PREFIXES = [
-  "/generate",
-  "/dashboard",
-  "/project",
-  "/api/generate",
-  "/api/export",
-  "/api/interview",
-  "/api/project",
-  "/api/payment",
-  "/api/user",
-  "/api/whatsapp",
-];
-
-function isProtectedPath(pathname: string): boolean {
-  return PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
-}
-
-function isLocalDevRequest(ip: string): boolean {
-  if (process.env.NODE_ENV !== "development") return false;
-  return (
-    ip === "unknown" ||
-    ip === "127.0.0.1" ||
-    ip === "::1" ||
-    ip.startsWith("192.168.") ||
-    ip.startsWith("10.")
-  );
-}
+import { isLocalDevelopmentIp, isProtectedPath } from "@/lib/security/request-policy";
 
 function hasAuthCookie(request: NextRequest): boolean {
   return request.cookies
@@ -44,7 +17,7 @@ export async function proxy(request: NextRequest) {
     "unknown";
 
   // IP rate limit hanya untuk API — halaman UI tidak ikut terhitung
-  if (pathname.startsWith("/api/") && !isLocalDevRequest(ip)) {
+  if (pathname.startsWith("/api/") && !isLocalDevelopmentIp(ip, process.env.NODE_ENV)) {
     const ipAllowed = await checkIpRateLimit(ip);
     if (!ipAllowed) {
       return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });

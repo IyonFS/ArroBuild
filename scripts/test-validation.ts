@@ -2,7 +2,6 @@ import {
   endsAbruptly,
   validateGeneratedContent,
   countHeadings,
-  sanitizeGeneratedContent,
   dedupeRepeatedDocument,
   mergeContinuationContent,
 } from "../src/lib/ai/validation";

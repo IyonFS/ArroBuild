@@ -1,21 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { Fragment, type ReactNode } from "react";
 import type { Block } from "@/lib/learn-content";
 
 interface Props {
   blocks: Block[];
-  variant?: "learn" | "default";
 }
 
-export default function LessonContent({ blocks, variant = "learn" }: Props) {
+export default function LessonContent({ blocks }: Props) {
   return (
     <div className="flex flex-col gap-5">
       {blocks.map((block, i) => {
-        if (variant === "learn" && block.type === "cta-link") {
-          return null;
-        }
-
         switch (block.type) {
           case "heading":
             return (
@@ -30,13 +26,9 @@ export default function LessonContent({ blocks, variant = "learn" }: Props) {
 
           case "text":
             return (
-              <p
-                key={i}
-                className="learn-body"
-                dangerouslySetInnerHTML={{
-                  __html: renderInline(block.content ?? ""),
-                }}
-              />
+              <p key={i} className="learn-body">
+                {renderInline(block.content ?? "")}
+              </p>
             );
 
           case "list":
@@ -48,12 +40,7 @@ export default function LessonContent({ blocks, variant = "learn" }: Props) {
                       className="mt-[0.4rem] w-1.5 h-1.5 rounded-full flex-shrink-0"
                       style={{ background: "var(--learn-accent)" }}
                     />
-                    <span
-                      className="leading-relaxed"
-                      dangerouslySetInnerHTML={{
-                        __html: renderInline(item),
-                      }}
-                    />
+                    <span className="leading-relaxed">{renderInline(item)}</span>
                   </li>
                 ))}
               </ul>
@@ -105,19 +92,11 @@ export default function LessonContent({ blocks, variant = "learn" }: Props) {
                 }}
               >
                 {block.label && (
-                  <p
-                    className="learn-label mb-2"
-                    style={{ color: "var(--app-amber)" }}
-                  >
+                  <p className="learn-label mb-2" style={{ color: "var(--app-amber)" }}>
                     {block.label}
                   </p>
                 )}
-                <p
-                  className="learn-body-sm"
-                  dangerouslySetInnerHTML={{
-                    __html: renderInline(block.content ?? ""),
-                  }}
-                />
+                <p className="learn-body-sm">{renderInline(block.content ?? "")}</p>
               </div>
             );
 
@@ -139,12 +118,7 @@ export default function LessonContent({ blocks, variant = "learn" }: Props) {
                     Tip · {block.label}
                   </p>
                 )}
-                <p
-                  className="learn-body-sm"
-                  dangerouslySetInnerHTML={{
-                    __html: renderInline(block.content ?? ""),
-                  }}
-                />
+                <p className="learn-body-sm">{renderInline(block.content ?? "")}</p>
               </div>
             );
 
@@ -166,12 +140,7 @@ export default function LessonContent({ blocks, variant = "learn" }: Props) {
                     Perhatian · {block.label}
                   </p>
                 )}
-                <p
-                  className="learn-body-sm"
-                  dangerouslySetInnerHTML={{
-                    __html: renderInline(block.content ?? ""),
-                  }}
-                />
+                <p className="learn-body-sm">{renderInline(block.content ?? "")}</p>
               </div>
             );
 
@@ -195,14 +164,38 @@ export default function LessonContent({ blocks, variant = "learn" }: Props) {
   );
 }
 
-function renderInline(text: string): string {
+function renderInline(text: string): ReactNode[] {
   return text
-    .replace(
-      /\*\*(.+?)\*\*/g,
-      '<strong style="color:var(--color-text-primary)">$1</strong>'
-    )
-    .replace(
-      /`(.+?)`/g,
-      '<code style="font-family:var(--font-jetbrains-mono),monospace;font-size:12px;padding:1px 5px;border-radius:3px;background:var(--learn-accent-tint);color:var(--learn-accent);border:0.5px solid var(--learn-accent-border)">$1</code>'
-    );
+    .split(/(\*\*.+?\*\*|`.+?`)/g)
+    .filter(Boolean)
+    .map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return (
+          <strong key={index} style={{ color: "var(--color-text-primary)" }}>
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+
+      if (part.startsWith("`") && part.endsWith("`")) {
+        return (
+          <code
+            key={index}
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+              fontSize: 12,
+              padding: "1px 5px",
+              borderRadius: 3,
+              background: "var(--learn-accent-tint)",
+              color: "var(--learn-accent)",
+              border: "0.5px solid var(--learn-accent-border)",
+            }}
+          >
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+
+      return <Fragment key={index}>{part}</Fragment>;
+    });
 }

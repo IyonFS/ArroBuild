@@ -39,6 +39,9 @@ import {
   sanitizePerDocumentModelClass,
   legacyTierSlugToUserTier,
 } from "@/lib/config/documents";
+import { readJsonBody, RequestBodyError } from "@/lib/http/read-json-body";
+
+const MAX_GENERATE_BODY_BYTES = 256_000;
 
 const FeatureSchema = z.object({
   id: z.string(),
@@ -98,10 +101,11 @@ export const maxDuration = 180;
 export async function POST(req: NextRequest) {
   let body: unknown;
   try {
-    body = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400,
+    body = await readJsonBody(req, MAX_GENERATE_BODY_BYTES);
+  } catch (error) {
+    const requestError = error instanceof RequestBodyError ? error : null;
+    return new Response(JSON.stringify({ error: requestError?.message ?? "Invalid JSON body" }), {
+      status: requestError?.statusCode ?? 400,
       headers: { "Content-Type": "application/json" },
     });
   }

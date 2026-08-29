@@ -1,29 +1,32 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Unbounded } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/react";
 import { ToastProvider } from "@/components/ui/Toast";
 
-const inter = Inter({
+const inter = localFont({
+  src: "../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: "100 900",
+  fallback: ["system-ui", "Arial"],
 });
 
-const unbounded = Unbounded({
+const unbounded = localFont({
+  src: "../../node_modules/@fontsource-variable/unbounded/files/unbounded-latin-wght-normal.woff2",
   variable: "--font-unbounded",
-  subsets: ["latin"],
   display: "swap",
-  weight: ["300", "400", "600", "700", "800", "900"],
+  weight: "200 900",
+  fallback: ["Arial", "sans-serif"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const jetbrainsMono = localFont({
+  src: "../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2",
   variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
   display: "swap",
-  weight: ["300", "400", "500", "600", "700"],
+  weight: "100 800",
+  fallback: ["ui-monospace", "Cascadia Code", "monospace"],
 });
 
 export const metadata: Metadata = {

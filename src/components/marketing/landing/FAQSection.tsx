@@ -10,11 +10,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Apakah file yang dihasilkan bisa langsung dipakai di Cursor/Claude Code?",
-    a: "Ya. Output ArroBuild dirancang spesifik untuk paste langsung ke root proyek. Cursor akan membaca CLAUDE.md dan agent-rules.md secara otomatis, Claude Code membaca AGENTS.md, Windsurf membaca .windsurfrules. Tidak ada modifikasi manual yang dibutuhkan.",
+    a: "Ya, melalui file ZIP berisi dokumen Markdown dan agent rules. Kamu tetap perlu mengekstrak file, menempatkannya di repo, lalu mengikuti aturan konteks tool yang dipakai. Sinkronisasi akun atau editor otomatis belum tersedia.",
   },
   {
     q: "Apakah data proyek saya aman?",
-    a: "Deskripsi proyek hanya digunakan untuk generate dokumen saat itu. Kami tidak menggunakan data kamu untuk melatih model atau berbagi ke pihak ketiga. Setiap proyek tersimpan di akun kamu dan bisa dihapus kapan saja.",
+    a: "Project tersimpan di akunmu dan input yang diperlukan dikirim ke provider AI saat generation. ArroBuild tidak memakai konten project untuk melatih model sendiri. Hindari memasukkan secret, password, atau data pribadi sensitif ke dalam brief.",
   },
   {
     q: "Bisa coba sebelum bayar?",
@@ -22,11 +22,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Metode pembayaran apa yang didukung?",
-    a: "Pembayaran diproses via Midtrans. Mendukung transfer bank (BCA, BRI, Mandiri, BNI), virtual account, GoPay, OVO, Dana, dan kartu kredit/debit Visa/Mastercard.",
+    a: "Pembayaran diproses melalui Midtrans. Metode yang tersedia mengikuti opsi yang ditampilkan pada halaman Snap Checkout saat transaksi dibuat.",
   },
   {
     q: "Bagaimana kalau dokumen yang dihasilkan tidak sesuai ekspektasi?",
-    a: "Kamu bisa melakukan revisi / regenerate pada fitur yang spesifik tanpa harus bayar / generate ulang semuanya. Paket Prime bahkan memberikan revisi unlimited.",
+    a: "Kamu dapat merevisi section tertentu. Core mendapat satu revisi gratis per bulan, sedangkan Prime mendapat revisi tanpa batas jumlah; revisi berbayar lain menggunakan kredit. Regenerate per file tersedia untuk Prime.",
   },
 ];
 

@@ -7,8 +7,10 @@ import { createClient } from "@supabase/supabase-js";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
+import { assertSafeIntegrationEnvironment } from "./lib/integration-environment.mjs";
 
 config({ path: ".env.local" });
+assertSafeIntegrationEnvironment();
 
 const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;

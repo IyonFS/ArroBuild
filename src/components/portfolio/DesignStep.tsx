@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { DesignData, ColorThemeId, FontPairId, Vibe, HeroLayout, BgEffect, BorderStyle } from "./types";
+import type { DesignData, HeroLayout, BgEffect, BorderStyle } from "./types";
 import { COLOR_THEMES, FONT_PAIRS, VIBES } from "./types";
 
 interface Props {

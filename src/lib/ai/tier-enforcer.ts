@@ -3,7 +3,7 @@
  */
 
 import { prisma } from "@/lib/db/prisma";
-import { getTierConfig, type TierId } from "@/lib/config/tiers";
+import { getTierConfig } from "@/lib/config/tiers";
 import {
   type DocumentFileKey,
   type PromptDepthTier,

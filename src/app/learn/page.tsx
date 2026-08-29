@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Learn Hub — ArroBuild",
   description:
-    "Resource edukasi vibe coding dan agent engineering. Belajar dari nol sampai deploy project pertamamu dengan AI agent.",
+    "Path gratis berisi empat lesson fondasi untuk memulai workflow software development bersama AI agent.",
 };
 
 export default function LearnPage() {
@@ -18,14 +18,12 @@ export default function LearnPage() {
       <LearnHubHero />
       <LearnHowTo />
 
-      <section
-        id="path-katalog"
-        style={{ background: "var(--app-bg-base)" }}
-      >
+      <section id="path-katalog" style={{ background: "var(--app-bg-base)" }}>
         <div className="max-w-6xl mx-auto px-6 pt-14 pb-6">
           <h2 className="learn-section-title-lg mb-3">Katalog path</h2>
           <p className="learn-body-sm" style={{ maxWidth: 480 }}>
-            Dikelompokkan menurut level. Mulai dari pemula, lanjut ke workflow, lalu advanced.
+            Mulai dari satu path fondasi yang sudah lengkap. Path berikutnya akan terbit setelah
+            materinya lolos review.
           </p>
         </div>
 

@@ -77,7 +77,7 @@ export default function TermsPage() {
 
       <h2 style={h2}>7. Kontak</h2>
       <p>
-        Pertanyaan legal: hubungi founder melalui dashboard (paket Pro ke atas) atau email
+        Pertanyaan legal: hubungi founder melalui dashboard (paket Core ke atas) atau email
         yang tertera di situs.
       </p>
     </main>

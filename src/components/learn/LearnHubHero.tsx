@@ -24,8 +24,8 @@ export default function LearnHubHero() {
         </h1>
 
         <p className="learn-body mb-8" style={{ maxWidth: 480 }}>
-          Kursus vibe coding dan workflow AI agent. Pilih path, baca overview,
-          lalu ikuti lesson berurutan sebelum masuk ke editor.
+          Empat lesson fondasi untuk memahami peran, memilih tool, dan menjalankan iterasi pertamamu
+          bersama AI agent.
         </p>
 
         <div className="flex flex-wrap items-center gap-3 mb-10">

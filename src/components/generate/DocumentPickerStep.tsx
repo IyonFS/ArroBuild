@@ -229,7 +229,7 @@ export default function DocumentPickerStep({
             >
               Dokumen Inti
             </p>
-            {coreDocs.map((key) => renderDocRow(key, true))}
+            {coreDocs.map((key) => renderDocRow(key))}
 
             {/* Extended docs */}
             <p
@@ -238,7 +238,7 @@ export default function DocumentPickerStep({
             >
               Dokumen Lanjutan
             </p>
-            {optionalDocs.map((key) => renderDocRow(key, false))}
+            {optionalDocs.map((key) => renderDocRow(key))}
 
             <div
               className="flex items-center justify-between px-3 py-2 mt-2 rounded-lg"
@@ -326,7 +326,7 @@ export default function DocumentPickerStep({
                 </p>
                 <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
                   {singleClassTier
-                    ? "Hanya kelas Hemat — Gemini Flash & DeepSeek. Upgrade ke Pro untuk Menengah/Flagship."
+                    ? "Hanya kelas Hemat — Gemini Flash & DeepSeek. Upgrade ke Core untuk Menengah/Flagship."
                     : `Kelas tersedia: ${availableClasses
                         .map((id) => MODEL_CLASSES.find((c) => c.id === id)?.label ?? id)
                         .join(" · ")}`}
@@ -696,7 +696,7 @@ export default function DocumentPickerStep({
 
   // ── Render helper ──
 
-  function renderDocRow(key: FileKey, _isCore: boolean) {
+  function renderDocRow(key: FileKey) {
     const meta = FILE_META[key];
     const locked = !canAccessDocument(key, tier);
     const isSelected = !locked && value.includes(key);
@@ -803,4 +803,3 @@ export default function DocumentPickerStep({
     );
   }
 }
-

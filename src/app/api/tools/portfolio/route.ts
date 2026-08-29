@@ -7,7 +7,6 @@ import {
   TierCapabilityError,
   getUserTierId,
 } from "@/lib/services/tier-capabilities";
-import { getTierConfig } from "@/lib/config/tiers";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;

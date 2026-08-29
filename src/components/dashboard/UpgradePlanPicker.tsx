@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { PRICING_TIERS } from "@/lib/pricing";
 import type { PricingTierId } from "@/lib/pricing";
 import type { UserPlanStatus } from "@/components/generate/types";
@@ -588,4 +588,3 @@ export default function UpgradePlanPicker({
     </div>
   );
 }
-

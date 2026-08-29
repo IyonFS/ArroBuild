@@ -3,6 +3,7 @@ import { buildPlaceholderLessonBlocks } from "../build-lesson";
 
 export const reliabilityDeployment: LearningPath = {
   slug: "reliability-deployment",
+  status: "draft",
   title: "Reliability & Deployment",
   description:
     "Deploy project pertama, observability dasar, safety rails untuk AI di production, dan maintenance dokumentasi.",

@@ -1,4 +1,4 @@
-const TIER_LIKE = /^(pro|starter|unlimited|free|gratis)$/i;
+const TIER_LIKE = /^(base|core|prime|pro|starter|unlimited|free|gratis)$/i;
 
 /** Nama tampilan di dashboard — hindari kata yang mirip nama paket. */
 export function getDisplayName(name: string | null | undefined, email: string): string {

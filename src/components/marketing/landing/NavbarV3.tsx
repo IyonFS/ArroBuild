@@ -394,7 +394,7 @@ export default function NavbarV3({ solid = false }: { solid?: boolean }) {
                 borderRadius: 999,
               }}
             >
-              Mulai gratis
+              Isi brief gratis
             </Link>
               </>
             )}

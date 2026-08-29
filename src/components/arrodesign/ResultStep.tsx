@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Copy, Check, RotateCcw, Eye, EyeOff, Download, ExternalLink } from "lucide-react";
 import type { ArroDesignFormState } from "./types";
+import SafeMarkdown from "@/components/ui/SafeMarkdown";
 
 interface ResultStepProps {
   state: ArroDesignFormState;
@@ -88,57 +89,7 @@ function DownloadButton({ content, filename }: { content: string; filename: stri
 }
 
 /** Render design.md dengan highlight [INFERRED] tags */
-function DesignMdPreview({
-  content,
-  showInferred,
-}: {
-  content: string;
-  showInferred: boolean;
-}) {
-  // Proses konten — toggle visibility [INFERRED]
-  const processedLines = content.split("\n").map((line, i) => {
-    const hasInferred = line.includes("[INFERRED]");
-    const hasExtracted = line.includes("[EXTRACTED]");
-
-    if (!showInferred && hasInferred && !hasExtracted) {
-      return null; // sembunyikan baris pure-inferred
-    }
-
-    const rendered = line
-      // highlight [EXTRACTED]
-      .replace(
-        /\[EXTRACTED\]/g,
-        '<span style="background:rgba(52,211,153,0.15);color:#34D399;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700;">[EXTRACTED]</span>'
-      )
-      // highlight [INFERRED]
-      .replace(
-        /\[INFERRED\]/g,
-        '<span style="background:rgba(157,78,221,0.12);color:#9D4EDD;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700;">[INFERRED]</span>'
-      )
-      // bold headers
-      .replace(/^(#{1,3})\s(.+)/, (_, hashes, text) => {
-        const size = hashes.length === 1 ? 16 : hashes.length === 2 ? 14 : 13;
-        return `<strong style="display:block;margin-top:${hashes.length === 1 ? 20 : 12}px;font-size:${size}px;color:#F0F3FA;">${text}</strong>`;
-      });
-
-    return (
-      <div
-        key={i}
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: rendered }}
-        style={{
-          fontFamily: "var(--font-jetbrains-mono), monospace",
-          fontSize: 12,
-          lineHeight: 1.75,
-          color: line.startsWith("#") ? "#F0F3FA" : "rgba(240,243,250,0.75)",
-          opacity: hasInferred && !showInferred ? 0.4 : 1,
-          borderLeft:
-            line.startsWith("|") ? "none" : undefined,
-        }}
-      />
-    );
-  });
-
+function DesignMdPreview({ content, showInferred }: { content: string; showInferred: boolean }) {
   return (
     <div style={{ overflowX: "auto" }}>
       <div
@@ -150,7 +101,7 @@ function DesignMdPreview({
           minHeight: 200,
         }}
       >
-        {processedLines}
+        <SafeMarkdown content={content} showInferred={showInferred} />
       </div>
     </div>
   );
@@ -161,8 +112,7 @@ export default function ResultStep({ state, onChange, onReset }: ResultStepProps
 
   if (!result) return null;
 
-  const { designMd, stitchPrompt, creditsUsed, balanceAfter, tavilyConfigured, inputType } =
-    result;
+  const { designMd, stitchPrompt, creditsUsed, balanceAfter, tavilyConfigured, inputType } = result;
 
   return (
     <div style={{ maxWidth: 780, margin: "0 auto" }}>
@@ -254,16 +204,23 @@ export default function ResultStep({ state, onChange, onReset }: ResultStepProps
         >
           ⚠️ Hasil ini{" "}
           <strong style={{ color: "rgba(240,243,250,0.65)" }}>&quot;terinspirasi dari&quot;</strong>{" "}
-          referensi, bukan identik.{" "}
-          <span style={{ color: "#34D399" }}>■</span>{" "}
+          referensi, bukan identik. <span style={{ color: "#34D399" }}>■</span>{" "}
           <code style={{ color: "#34D399" }}>[EXTRACTED]</code> = data nyata dari referensi.{" "}
           <span style={{ color: "#9D4EDD" }}>■</span>{" "}
-          <code style={{ color: "#9D4EDD" }}>[INFERRED]</code> = dugaan terarah — verifikasi sebelum dipakai final.
+          <code style={{ color: "#9D4EDD" }}>[INFERRED]</code> = dugaan terarah — verifikasi sebelum
+          dipakai final.
         </p>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 0, marginBottom: 0, borderBottom: "0.5px solid rgba(240,243,250,0.08)" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 0,
+          marginBottom: 0,
+          borderBottom: "0.5px solid rgba(240,243,250,0.08)",
+        }}
+      >
         {(["design", "stitch"] as const).map((tab) => {
           const active = activeTab === tab;
           return (
@@ -317,9 +274,7 @@ export default function ResultStep({ state, onChange, onReset }: ResultStepProps
                   padding: "6px 12px",
                   borderRadius: 6,
                   border: "0.5px solid rgba(157,78,221,0.25)",
-                  background: showInferred
-                    ? "rgba(157,78,221,0.08)"
-                    : "rgba(240,243,250,0.04)",
+                  background: showInferred ? "rgba(157,78,221,0.08)" : "rgba(240,243,250,0.04)",
                   fontFamily: "var(--font-jetbrains-mono), monospace",
                   fontSize: 11,
                   fontWeight: 600,
@@ -332,11 +287,7 @@ export default function ResultStep({ state, onChange, onReset }: ResultStepProps
               </button>
 
               <div style={{ display: "flex", gap: 8 }}>
-                <CopyButton
-                  text={designMd}
-                  label="Copy design.md"
-                  id="arrodesign-copy-design"
-                />
+                <CopyButton text={designMd} label="Copy design.md" id="arrodesign-copy-design" />
                 <DownloadButton content={designMd} filename="design.md" />
               </div>
             </div>
@@ -385,11 +336,7 @@ export default function ResultStep({ state, onChange, onReset }: ResultStepProps
                   Buka Stitch <ExternalLink size={10} />
                 </a>
               </div>
-              <CopyButton
-                text={stitchPrompt}
-                label="Copy Prompt"
-                id="arrodesign-copy-stitch"
-              />
+              <CopyButton text={stitchPrompt} label="Copy Prompt" id="arrodesign-copy-stitch" />
             </div>
 
             {stitchPrompt ? (

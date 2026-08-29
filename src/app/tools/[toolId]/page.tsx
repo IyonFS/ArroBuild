@@ -22,6 +22,8 @@ export default async function MiniToolPage({ params }: PageProps) {
 
   const tool = MINI_TOOLS[toolId as MiniToolId];
   // Never pass buildPrompt (function) across the server→client boundary
-  const { buildPrompt: _omit, ...serializable } = tool;
+  const serializable = Object.fromEntries(
+    Object.entries(tool).filter(([key]) => key !== "buildPrompt"),
+  ) as Omit<typeof tool, "buildPrompt">;
   return <MiniToolRunner tool={serializable} />;
 }

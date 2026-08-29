@@ -485,7 +485,7 @@ export default function GenerationProgress({
 
       {/* File list */}
       <div className="flex flex-col gap-3 mb-8 relative z-10">
-        {files.map((file, i) => {
+        {files.map((file) => {
           const meta = FILE_META[file.key];
           const isGenerating = file.status === "generating";
           
@@ -648,4 +648,3 @@ export default function GenerationProgress({
     </div>
   );
 }
-

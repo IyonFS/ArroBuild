@@ -1,7 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 
 const STEPS = [
   {
@@ -27,16 +26,9 @@ const STEPS = [
 ];
 
 export default function HowItWorksSection() {
-  const containerRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
-
   return (
     <section
       id="how-it-works"
-      ref={containerRef}
       style={{
         background: "var(--lp-bg-base)",
         position: "relative",
@@ -92,7 +84,7 @@ export default function HowItWorksSection() {
 
         {/* Right Scrolling Column */}
         <div style={{ padding: "160px 0", display: "flex", flexDirection: "column", gap: 160 }}>
-          {STEPS.map((step, i) => (
+          {STEPS.map((step) => (
             <motion.div
               key={step.num}
               initial={{ opacity: 0, y: 50 }}

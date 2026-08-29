@@ -20,19 +20,24 @@ import {
   settleMiniToolReservation,
 } from "@/lib/services/mini-tools.service";
 import { TierCapabilityError } from "@/lib/services/tier-capabilities";
+import { readJsonBody, RequestBodyError } from "@/lib/http/read-json-body";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
+const MAX_TOOL_BODY_BYTES = 20_000_000;
 
 const ImageSchema = z.object({
-  sectionLabel: z.string().optional(),
-  dataUrl: z.string().min(32).max(6_000_000),
+  sectionLabel: z.string().max(120).optional(),
+  dataUrl: z.string().min(32).max(1_800_000),
 });
 
 const BodySchema = z.object({
-  toolId: z.string(),
-  input: z.record(z.string(), z.string()),
-  images: z.array(ImageSchema).max(12).optional(),
+  toolId: z.string().min(1).max(64),
+  input: z.record(z.string().max(64), z.string().max(12_000)).refine(
+    (input) => Object.keys(input).length <= 30,
+    "Terlalu banyak field input"
+  ),
+  images: z.array(ImageSchema).max(10).optional(),
   reserve: z.boolean().optional(),
 });
 
@@ -70,9 +75,13 @@ export async function POST(req: NextRequest) {
 
   let body: unknown;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    body = await readJsonBody(req, MAX_TOOL_BODY_BYTES);
+  } catch (error) {
+    const requestError = error instanceof RequestBodyError ? error : null;
+    return NextResponse.json(
+      { error: requestError?.message ?? "Invalid JSON" },
+      { status: requestError?.statusCode ?? 400 }
+    );
   }
 
   const parsed = BodySchema.safeParse(body);

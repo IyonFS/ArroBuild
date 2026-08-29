@@ -7,8 +7,10 @@ import { createClient } from "@supabase/supabase-js";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
+import { assertSafeIntegrationEnvironment } from "./lib/integration-environment.mjs";
 
 config({ path: ".env.local" });
+assertSafeIntegrationEnvironment();
 
 const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -205,6 +207,68 @@ async function main() {
   if (projectApiB.status === 403 || projectApiB.status === 404) {
     ok(`User B GET project A → ${projectApiB.status}`);
   } else fail("cross-user project", `got ${projectApiB.status}`);
+
+  const filePatchB = await api(`/api/project/${project.id}/files/prd`, {
+    method: "PATCH",
+    cookie: userB.cookie,
+    body: { content: "# Unauthorized replacement" },
+  });
+  if (filePatchB.status === 403 || filePatchB.status === 404) {
+    ok(`User B PATCH file project A → ${filePatchB.status}`);
+  } else fail("cross-user file patch", `got ${filePatchB.status}`);
+
+  const deleteProjectB = await api(`/api/project/${project.id}`, {
+    method: "DELETE",
+    cookie: userB.cookie,
+  });
+  if (deleteProjectB.status === 403 || deleteProjectB.status === 404) {
+    ok(`User B DELETE project A → ${deleteProjectB.status}`);
+  } else fail("cross-user project delete", `got ${deleteProjectB.status}`);
+
+  const { tsImport } = await import("tsx/esm/api");
+  const { CreditService, CreditServiceError } = await tsImport(
+    "../src/lib/services/credit.service.ts",
+    import.meta.url
+  );
+  await prisma.creditLedger.create({
+    data: {
+      userId: userA.id,
+      type: "MONTHLY_REFRESH",
+      amount: 100,
+      balanceAfter: 100,
+      metadata: { automatedTest: true },
+    },
+  });
+  const reservation = await CreditService.reserveCredit(userA.id, 8, project.id, {
+    automatedTest: true,
+  });
+  let ownershipError = null;
+  try {
+    await CreditService.releaseReservation(userB.id, reservation.reservationId, "cross_user_test");
+  } catch (error) {
+    ownershipError = error;
+  }
+  if (
+    ownershipError instanceof CreditServiceError &&
+    ownershipError.code === "RESERVATION_MISMATCH" &&
+    ownershipError.statusCode === 403
+  ) {
+    ok("User B release reservation user A → 403");
+  } else {
+    fail("cross-user reservation release", ownershipError?.message ?? "release unexpectedly worked");
+  }
+
+  await CreditService.releaseReservation(userA.id, reservation.reservationId, "automated_test");
+  await CreditService.releaseReservation(userA.id, reservation.reservationId, "automated_test_retry");
+  const releaseCount = await prisma.creditLedger.count({
+    where: {
+      userId: userA.id,
+      type: "RESERVATION_RELEASE",
+      metadata: { path: ["reservationId"], equals: reservation.reservationId },
+    },
+  });
+  if (releaseCount === 1) ok("reservation release retry is idempotent");
+  else fail("reservation release idempotency", `created ${releaseCount} release rows`);
 
   // --- Draft limit ---
   console.log("\nF. Draft server-side");

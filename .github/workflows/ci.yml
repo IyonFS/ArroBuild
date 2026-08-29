@@ -32,6 +32,24 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Validation tests
+        run: npm run test:validation
+
+      - name: Error formatting tests
+        run: npm run test:errors
+
+      - name: Security regression tests
+        run: npm run test:security
+
+      - name: Published content tests
+        run: npm run test:content
+
+      - name: Tier mapping tests
+        run: npm run test:tiers
+
+      - name: Credit ledger invariant tests
+        run: npm run test:credits
+
       - name: Build
         run: npm run build
 

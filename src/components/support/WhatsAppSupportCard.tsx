@@ -179,7 +179,7 @@ export default function WhatsAppSupportCard({
           }}
         >
           <p className="mb-3">
-            Chat WhatsApp founder tersedia mulai paket <strong>Pro</strong> (2×/bulan) dan{" "}
+            Chat WhatsApp founder tersedia mulai paket <strong>Core</strong> (2×/bulan) dan{" "}
             <strong>Prime</strong> (5×/bulan, prioritas).
           </p>
           <Link
