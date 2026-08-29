@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js" alt="Next.js" /></a>
+  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-16.3-black?style=flat-square&logo=next.js" alt="Next.js" /></a>
   <a href="https://react.dev"><img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React" /></a>
   <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></a>
   <a href="https://supabase.com"><img src="https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" /></a>
@@ -36,12 +36,12 @@
 
 ArroBuild dibuat untuk **vibe coders**, indie hackers, dan solo developers yang ingin fondasi proyek rapi sebelum menulis kode pertama.
 
-| Masalah | Solusi ArroBuild |
-|---------|------------------|
+| Masalah                                         | Solusi ArroBuild                                         |
+| ----------------------------------------------- | -------------------------------------------------------- |
 | Langsung coding tanpa perencanaan → scope creep | Generate PRD, arsitektur, dan plan terstruktur dari awal |
-| Context hilang tiap sesi AI baru | Knowledge Model JSON + FEAT-ID lintas dokumen |
-| Desain & komponen ad-hoc | Design System & Agent Rules siap diikuti agent |
-| Tidak ada source of truth | Workspace IDE + export ZIP dengan folder tree |
+| Context hilang tiap sesi AI baru                | Knowledge Model JSON + FEAT-ID lintas dokumen            |
+| Desain & komponen ad-hoc                        | Design System & Agent Rules siap diikuti agent           |
+| Tidak ada source of truth                       | Workspace IDE + export ZIP dengan folder tree            |
 
 > **Prinsip:** Dokumentasi bukan beban — itu fondasi yang membuat AI coding agent bekerja konsisten dari hari pertama.
 
@@ -77,25 +77,29 @@ Interview chat ~8 turn yang mengekstrak konteks produk dan mengisi form generate
 
 ### Learn Hub
 
-6 learning paths · 24 lessons · 3 tracks (Foundation → Workflow → Advanced). Gratis, tanpa login.
+Satu learning path yang sudah direview dan dipublikasikan berisi 4 lesson. Lima path lain tetap disimpan sebagai draft dan tidak muncul di navigasi atau sitemap publik.
 
 ### Mini Tools
 
-| Tool | Fungsi |
-|------|--------|
-| Prompt Doctor | Rapikan prompt untuk Cursor / Claude Code |
-| MVP Scope Cutter | Potong scope ke MVP yang realistis |
-| Stitch Composer | Compose prompt untuk Google Stitch |
-| README Generator | Generate README + setup script |
-| Landing Copy | Hero, value props, FAQ dari konteks produk |
-| Schema Visualizer | ER diagram Mermaid dari deskripsi schema |
+| Tool                | Fungsi                                                            |
+| ------------------- | ----------------------------------------------------------------- |
+| Portfolio Generator | Susun prompt website portfolio dari identitas, konten, dan desain |
+| Prompt Doctor       | Rapikan prompt untuk Cursor / Claude Code                         |
+| MVP Scope Cutter    | Potong scope ke MVP yang realistis                                |
+| ArroDesign          | Screenshot/URL menjadi `design.md` dan prompt Stitch              |
+| README Generator    | Generate README profesional                                       |
+| Copy Studio         | Copy landing page dari template, diskusi, atau screenshot         |
+| Stack Advisor       | Rekomendasi stack curated dan estimasi biaya                      |
+| Schema Visualizer   | ER diagram Mermaid dari deskripsi schema                          |
+
+Beberapa mode vision/search membutuhkan `OPENROUTER_API_KEY` atau `TAVILY_API_KEY`. Tool yang belum memiliki route aktif ditampilkan terpisah sebagai “Segera”.
 
 ### Monetisasi & paket
 
-| Paket | Harga | Highlight |
-|-------|-------|-----------|
-| **Base** | Rp 65K/bulan | 3 dokumen inti · 3.000 kredit · model Hemat |
-| **Core** | Rp 145K/bulan | 5 dokumen inti · 7.000 kredit · fork & presets |
+| Paket     | Harga         | Highlight                                                 |
+| --------- | ------------- | --------------------------------------------------------- |
+| **Base**  | Rp 65K/bulan  | 3 dokumen inti · 3.000 kredit · model Hemat               |
+| **Core**  | Rp 145K/bulan | 5 dokumen inti · 7.000 kredit · fork & presets            |
 | **Prime** | Rp 199K/bulan | 6 inti + 8 opsional · revisi unlimited · semua mini tools |
 
 Pembayaran via **Midtrans** (QRIS, GoPay, OVO, VA, kartu). Top-up kredit tersedia. Sistem kredit dengan multiplier per kelas model.
@@ -118,19 +122,19 @@ SSE Generate → Workspace IDE → Revisi / Regen → Export ZIP
 
 ## Tech Stack
 
-| Layer | Teknologi |
-|-------|-----------|
-| **Framework** | Next.js 16.2 (App Router) · React 19 · TypeScript 5 |
-| **Styling** | Tailwind CSS v4 · Design System **Neon Blueprint v3.1** |
-| **UI** | shadcn/ui · Lucide · Simple Icons · Framer Motion |
-| **Database** | PostgreSQL (Supabase) · Prisma 7.8 |
-| **Auth** | Supabase Auth (Email + Google OAuth) |
-| **AI** | Multi-provider gateway + orchestrator + SSE streaming |
-| **Payment** | Midtrans Snap |
-| **Rate limit** | Upstash Redis |
-| **Validation** | Zod 4.4 |
-| **Observability** | Sentry · Vercel Analytics |
-| **CI/CD** | GitHub Actions · Vercel |
+| Layer             | Teknologi                                               |
+| ----------------- | ------------------------------------------------------- |
+| **Framework**     | Next.js 16.3 (App Router) · React 19 · TypeScript 5     |
+| **Styling**       | Tailwind CSS v4 · Design System **Neon Blueprint v3.1** |
+| **UI**            | shadcn/ui · Lucide · Simple Icons · Framer Motion       |
+| **Database**      | PostgreSQL (Supabase) · Prisma 7.10                     |
+| **Auth**          | Supabase Auth (Email + Google OAuth)                    |
+| **AI**            | Multi-provider gateway + orchestrator + SSE streaming   |
+| **Payment**       | Midtrans Snap                                           |
+| **Rate limit**    | Upstash Redis                                           |
+| **Validation**    | Zod 4.4                                                 |
+| **Observability** | Vercel Analytics · Sentry saat DSN dikonfigurasi        |
+| **CI/CD**         | GitHub Actions · Vercel                                 |
 
 ---
 
@@ -146,7 +150,7 @@ SSE Generate → Workspace IDE → Revisi / Regen → Export ZIP
 ### Installation
 
 ```bash
-git clone https://github.com/IyonFS/ArroBuild.git
+git clone https://github.com/gyonmd-tech/ArroBuild.git
 cd ArroBuild
 
 npm install
@@ -164,15 +168,20 @@ Buka **[http://localhost:3000](http://localhost:3000)**.
 
 ### Scripts
 
-| Command | Deskripsi |
-|---------|-----------|
-| `npm run dev` | Development server |
-| `npm run build` | Production build |
-| `npm run lint` | ESLint |
-| `npm run test:validation` | Validasi AI output |
-| `npm run test:generate` | Test API generate |
-| `npm run test:backend` | Test suite backend |
-| `npm run test:production` | Automated production checks |
+| Command                     | Deskripsi                                                               |
+| --------------------------- | ----------------------------------------------------------------------- |
+| `npm run dev`               | Development server                                                      |
+| `npm run build`             | Production build                                                        |
+| `npm run lint`              | ESLint                                                                  |
+| `npm run test:validation`   | Validasi AI output                                                      |
+| `npm run test:security`     | SSRF, safe Markdown, request limit, route policy, dan integration guard |
+| `npm run test:tiers`        | Konsistensi harga, tier, dokumen, model, dan kredit                     |
+| `npm run test:credits`      | Invariant reservation dan settlement kredit                             |
+| `npm run test:content`      | Validasi konten Learn Hub yang dipublikasikan                           |
+| `npm run test:ai-benchmark` | Regression test evaluator benchmark AI                                  |
+| `npm run check:release-db`  | Audit read-only status migration, schema provenance, dan RLS            |
+
+Script `test:generate`, `test:backend`, `test:production`, dan `test:midtrans` adalah integration test. Jalankan hanya pada environment test terisolasi dengan opt-in yang dijelaskan di [`docs/11-TESTING.md`](docs/11-TESTING.md).
 
 ---
 
@@ -239,20 +248,20 @@ ArroBuild/
 
 Semua spesifikasi produk & teknis ada di folder [`docs/`](docs/):
 
-| Dokumen | Isi |
-|---------|-----|
-| [`01-PRD.md`](docs/01-PRD.md) | Product requirements & scope |
-| [`02-ARCHITECTURE.md`](docs/02-ARCHITECTURE.md) | Arsitektur teknis & blueprint |
+| Dokumen                                           | Isi                               |
+| ------------------------------------------------- | --------------------------------- |
+| [`01-PRD.md`](docs/01-PRD.md)                     | Product requirements & scope      |
+| [`02-ARCHITECTURE.md`](docs/02-ARCHITECTURE.md)   | Arsitektur teknis & blueprint     |
 | [`03-DESIGN-SYSTEM.md`](docs/03-DESIGN-SYSTEM.md) | Design system Neon Blueprint v3.1 |
-| [`04-AGENTS.md`](docs/04-AGENTS.md) | Aturan AI agent & konvensi kode |
-| [`05-CONTEXT.md`](docs/05-CONTEXT.md) | Master context untuk AI agents |
-| [`06-BACKEND.md`](docs/06-BACKEND.md) | API, services, payment, cron |
-| [`07-FRONTEND.md`](docs/07-FRONTEND.md) | Struktur frontend & komponen |
-| [`08-MONETIZATION.md`](docs/08-MONETIZATION.md) | Pricing, kredit, bisnis model |
-| [`09-LEARN-HUB.md`](docs/09-LEARN-HUB.md) | Learn Hub structure |
-| [`10-DEPLOYMENT.md`](docs/10-DEPLOYMENT.md) | Deploy, env, infrastruktur |
-| [`11-TESTING.md`](docs/11-TESTING.md) | Strategi testing & scripts |
-| [`12-DECISIONS-LOG.md`](docs/12-DECISIONS-LOG.md) | Log keputusan arsitektur |
+| [`04-AGENTS.md`](docs/04-AGENTS.md)               | Aturan AI agent & konvensi kode   |
+| [`05-CONTEXT.md`](docs/05-CONTEXT.md)             | Master context untuk AI agents    |
+| [`06-BACKEND.md`](docs/06-BACKEND.md)             | API, services, payment, cron      |
+| [`07-FRONTEND.md`](docs/07-FRONTEND.md)           | Struktur frontend & komponen      |
+| [`08-MONETIZATION.md`](docs/08-MONETIZATION.md)   | Pricing, kredit, bisnis model     |
+| [`09-LEARN-HUB.md`](docs/09-LEARN-HUB.md)         | Learn Hub structure               |
+| [`10-DEPLOYMENT.md`](docs/10-DEPLOYMENT.md)       | Deploy, env, infrastruktur        |
+| [`11-TESTING.md`](docs/11-TESTING.md)             | Strategi testing & scripts        |
+| [`12-DECISIONS-LOG.md`](docs/12-DECISIONS-LOG.md) | Log keputusan arsitektur          |
 
 ---
 
@@ -269,11 +278,11 @@ Detail: [`docs/10-DEPLOYMENT.md`](docs/10-DEPLOYMENT.md)
 
 ### Cron jobs (`vercel.json`)
 
-| Job | Jadwal | Fungsi |
-|-----|--------|--------|
-| `expire-subscriptions` | Harian 01:00 UTC | Nonaktifkan langganan kedaluwarsa |
-| `renew-credits` | Harian 02:00 UTC | Refresh kredit bulanan |
-| `reconcile-ledger` | Mingguan 03:00 UTC | Rekonsiliasi ledger kredit |
+| Job                    | Jadwal             | Fungsi                            |
+| ---------------------- | ------------------ | --------------------------------- |
+| `expire-subscriptions` | Harian 01:00 UTC   | Nonaktifkan langganan kedaluwarsa |
+| `renew-credits`        | Harian 02:00 UTC   | Refresh kredit bulanan            |
+| `reconcile-ledger`     | Mingguan 03:00 UTC | Rekonsiliasi ledger kredit        |
 
 ---
 

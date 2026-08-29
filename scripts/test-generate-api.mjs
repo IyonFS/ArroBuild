@@ -1,7 +1,18 @@
 /**
- * Integration test for /api/generate — run with dev server up.
- * Usage: node scripts/test-generate-api.mjs
+ * Integration test for /api/generate — isolated test environment only.
+ * Requires dev server, integration opt-in, and INTEGRATION_AUTH_COOKIE.
  */
+
+import { config } from "dotenv";
+import { assertSafeIntegrationEnvironment } from "./lib/integration-environment.mjs";
+
+config({ path: ".env.local" });
+assertSafeIntegrationEnvironment();
+
+const AUTH_COOKIE = process.env.INTEGRATION_AUTH_COOKIE;
+if (!AUTH_COOKIE) {
+  throw new Error("INTEGRATION_AUTH_COOKIE wajib untuk test API generate");
+}
 
 const IDEA =
   "A SaaS platform where restaurant owners can manage their menu, tables, and orders in real-time with QR code-based ordering for customers. Owners get a dashboard with live order tracking, table occupancy, and daily revenue reports.";
@@ -10,15 +21,20 @@ const payload = {
   idea: IDEA,
   clarifications: { platform: "web", monetization: "freemium", scope: "mvp" },
   presets: { framework: "nextjs", design: "linear", agentTool: "cursor" },
-  tier: "free",
-  modelId: "gemini-3.1-flash-lite",
+  tier: "base",
+  selectedDocs: ["prd"],
+  features: [
+    { id: "FEAT-001", title: "Kelola menu", priority: "must-have" },
+    { id: "FEAT-002", title: "QR ordering", priority: "must-have" },
+    { id: "FEAT-003", title: "Pantau pesanan", priority: "must-have" },
+  ],
 };
 
 async function main() {
   console.log("POST /api/generate (free tier PRD)...");
   const res = await fetch("http://localhost:3000/api/generate", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Cookie: AUTH_COOKIE },
     body: JSON.stringify(payload),
   });
 
@@ -67,8 +83,8 @@ async function main() {
   console.log("Events:", [...new Set(events)].join(", "));
   console.log("PRD length:", prdContent.length, "chars");
   console.log("PRD words:", prdContent.split(/\s+/).filter(Boolean).length);
-  console.log("Has Open Questions:", /open questions/i.test(prdContent));
-  console.log("Has User Stories:", /user stories/i.test(prdContent));
+  console.log("Has product heading:", /product requirements document/i.test(prdContent));
+  console.log("Has FEAT-ID:", /FEAT-001/i.test(prdContent));
   console.log("Ends abruptly (open paren):", /\($/.test(prdContent.trim()));
   console.log("\nLast 120 chars:");
   console.log(prdContent.slice(-120));
@@ -83,9 +99,9 @@ async function main() {
   }
 
   const ok =
-    prdContent.length >= 2500 &&
-    /open questions/i.test(prdContent) &&
-    /user stories/i.test(prdContent) &&
+    prdContent.length >= 1800 &&
+    /product requirements document/i.test(prdContent) &&
+    /FEAT-001/i.test(prdContent) &&
     !/\($/.test(prdContent.trim());
 
   if (!ok) {

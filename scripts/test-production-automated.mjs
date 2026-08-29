@@ -85,7 +85,7 @@ async function createTestUser(label) {
   if (error) throw new Error(`createUser ${label}: ${error.message}`);
   await prisma.user.upsert({
     where: { id },
-    create: { id, email, name: `Auto ${label}`, tier: "STARTER", creditBalance: 5000 },
+    create: { id, email, name: `Auto ${label}`, tier: "BASE", creditBalance: 5000 },
     update: { email },
   });
   const { data, error: signErr } = await anon.auth.signInWithPassword({ email, password });
@@ -228,7 +228,7 @@ async function main() {
   const { tsImport } = await import("tsx/esm/api");
   const { CreditService, CreditServiceError } = await tsImport(
     "../src/lib/services/credit.service.ts",
-    import.meta.url
+    import.meta.url,
   );
   await prisma.creditLedger.create({
     data: {
@@ -255,11 +255,18 @@ async function main() {
   ) {
     ok("User B release reservation user A → 403");
   } else {
-    fail("cross-user reservation release", ownershipError?.message ?? "release unexpectedly worked");
+    fail(
+      "cross-user reservation release",
+      ownershipError?.message ?? "release unexpectedly worked",
+    );
   }
 
   await CreditService.releaseReservation(userA.id, reservation.reservationId, "automated_test");
-  await CreditService.releaseReservation(userA.id, reservation.reservationId, "automated_test_retry");
+  await CreditService.releaseReservation(
+    userA.id,
+    reservation.reservationId,
+    "automated_test_retry",
+  );
   const releaseCount = await prisma.creditLedger.count({
     where: {
       userId: userA.id,
@@ -311,10 +318,10 @@ async function main() {
   const multi = await api("/api/payment/create", {
     method: "POST",
     cookie: payUser.cookie,
-    body: { tierId: "pro", billingMonths: 3 },
+    body: { tierId: "core", billingMonths: 3 },
   });
   if (multi.status === 200 && multi.json.snapToken) {
-    ok("Pro 3 bulan snap token created");
+    ok("Core 3 bulan snap token created");
     if (multi.json.orderId?.includes("m3-")) ok("orderId contains m3- tag");
     else fail("orderId multi-bulan", multi.json.orderId ?? "missing");
   } else {
@@ -323,25 +330,25 @@ async function main() {
 
   // --- Tier gating ---
   console.log("\nK. Tier capabilities");
-  const starterUser = await createTestUser("starter-cap");
+  const baseUser = await createTestUser("base-cap");
   await prisma.user.update({
-    where: { id: starterUser.id },
-    data: { tier: "STARTER" },
+    where: { id: baseUser.id },
+    data: { tier: "BASE" },
   });
   await prisma.subscription.create({
     data: {
-      userId: starterUser.id,
-      tier: "STARTER",
+      userId: baseUser.id,
+      tier: "BASE",
       status: "ACTIVE",
       startDate: new Date(),
       renewalDate: new Date(Date.now() + 30 * 86400000),
       expiresAt: new Date(Date.now() + 30 * 86400000),
     },
   });
-  const starterProject = await prisma.project.create({
+  const baseProject = await prisma.project.create({
     data: {
-      userId: starterUser.id,
-      idea: "Starter regen test",
+      userId: baseUser.id,
+      idea: "Base regen test",
       status: "DONE",
       clarifications: {},
       presets: { agentTool: "cursor" },
@@ -358,20 +365,20 @@ async function main() {
       },
     },
   });
-  const regenStarter = await api(`/api/project/${starterProject.id}/regen`, {
+  const regenBase = await api(`/api/project/${baseProject.id}/regen`, {
     method: "POST",
-    cookie: starterUser.cookie,
+    cookie: baseUser.cookie,
     body: { fileKey: "prd" },
   });
-  if (regenStarter.status === 403) ok("Starter regen per file → 403");
-  else fail("Starter regen", `expected 403, got ${regenStarter.status}`);
+  if (regenBase.status === 403) ok("Base regen per file → 403");
+  else fail("Base regen", `expected 403, got ${regenBase.status}`);
 
-  const proUser = await createTestUser("pro-cap");
-  await prisma.user.update({ where: { id: proUser.id }, data: { tier: "PRO" } });
+  const coreUser = await createTestUser("core-cap");
+  await prisma.user.update({ where: { id: coreUser.id }, data: { tier: "CORE" } });
   await prisma.subscription.create({
     data: {
-      userId: proUser.id,
-      tier: "PRO",
+      userId: coreUser.id,
+      tier: "CORE",
       status: "ACTIVE",
       startDate: new Date(),
       renewalDate: new Date(Date.now() + 30 * 86400000),
@@ -380,21 +387,21 @@ async function main() {
   });
   await prisma.creditLedger.create({
     data: {
-      userId: proUser.id,
+      userId: coreUser.id,
       type: "MONTHLY_REFRESH",
       amount: 7000,
       balanceAfter: 7000,
     },
   });
   await prisma.user.update({
-    where: { id: proUser.id },
+    where: { id: coreUser.id },
     data: { creditBalance: 7000 },
   });
-  const mePro = await api("/api/user/me", { cookie: proUser.cookie });
-  if (mePro.status === 200 && (mePro.json.tier === "pro" || mePro.json.plan === "pro")) {
-    ok("Pro user /api/user/me shows pro tier");
+  const meCore = await api("/api/user/me", { cookie: coreUser.cookie });
+  if (meCore.status === 200 && (meCore.json.tier === "core" || meCore.json.plan === "core")) {
+    ok("Core user /api/user/me shows core tier");
   } else {
-    fail("Pro user me", JSON.stringify(mePro.json?.tier ?? mePro.json));
+    fail("Core user me", JSON.stringify(meCore.json?.tier ?? meCore.json));
   }
 
   // --- Export tree via tsx (real module) ---
@@ -403,7 +410,7 @@ async function main() {
     const { execSync } = await import("node:child_process");
     const out = execSync(
       `npx tsx -e "import { buildExportTree } from './src/lib/export-tree.ts'; const t = buildExportTree([{fileName:'PRD.md'}],{agentTool:'cursor'}); console.log(JSON.stringify(t.children?.map(c=>c.name)))"`,
-      { cwd: process.cwd(), encoding: "utf8" }
+      { cwd: process.cwd(), encoding: "utf8" },
     ).trim();
     const names = JSON.parse(out);
     if (names.includes("PRD.md") && names.includes(".cursorrules")) {

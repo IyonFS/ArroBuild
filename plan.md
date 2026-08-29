@@ -720,3 +720,24 @@ Jangan memulai Living Blueprint sebelum lima langkah tersebut selesai. Fondasi p
 **Gate berikutnya**
 
 - Generate baseline untuk seluruh fixture menggunakan environment AI test, review false-positive evaluator, lalu aktifkan quality gate wajib sebelum perubahan prompt produksi.
+
+### 29 Agustus 2026 — Release Stabilization Audit
+
+**Selesai**
+
+- Menyelaraskan README dan dokumentasi lokal dengan status Late Beta / Pre-Production, stack Next.js 16.3.3 + Prisma 7.10, paket Base/Core/Prime, entitlement modul opsional Prime-only, model route aktual, dan Learn Hub publik 1 path/4 lesson.
+- Memperbaiki integration fixture yang masih memakai enum Prisma legacy `STARTER`/`PRO` dan slug checkout `pro` menjadi `BASE`/`CORE` serta `core`.
+- Menambahkan guard autentikasi pada smoke test generate dan mempertahankan fail-closed opt-in pada seluruh script yang dapat menyentuh layanan eksternal.
+- Menambahkan `npm run check:release-db`, pemeriksaan read-only untuk migration, schema provenance, dan RLS tanpa mencetak credential.
+
+**Hasil verifikasi**
+
+- 147 assertion deterministik lulus: validation 12, errors 4, security 55, content 11, tiers 41, credits 16, dan AI benchmark 8.
+- `npm run lint`: lulus, 0 error dan 0 warning.
+- `npm run build`: lulus; TypeScript lulus dan 58 halaman statis dibuat.
+- Seluruh integration script lolos pemeriksaan sintaks dan menolak eksekusi tanpa opt-in environment test eksplisit.
+
+**Blocker eksternal yang ditemukan**
+
+- `DIRECT_URL` dan `DATABASE_URL` saat ini ditolak provider database dengan kode `XX000`: tenant/user yang dikonfigurasi tidak ditemukan. Karena itu status migration `20260829120000_add_generation_provenance` dan penerapan RLS remote belum dapat diverifikasi.
+- Credential/connection string database perlu diperbarui sebelum migration, cross-user RLS E2E, payment settlement, dan core paid-loop smoke test dapat dijalankan.

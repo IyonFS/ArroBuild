@@ -100,7 +100,7 @@ async function main() {
       id: TEST_USER_ID,
       email: TEST_EMAIL,
       name: "Test V2",
-      tier: "STARTER",
+      tier: "BASE",
       creditBalance: 0,
     },
     update: { email: TEST_EMAIL },
@@ -126,7 +126,11 @@ async function main() {
 
   const withAuth = await api("/api/user/credits", { cookie });
   if (withAuth.status === 200) ok("credits returns 200 when logged in");
-  else fail("credits logged in", `${withAuth.status} ${withAuth.text?.slice?.(0, 80) ?? withAuth.json}`);
+  else
+    fail(
+      "credits logged in",
+      `${withAuth.status} ${withAuth.text?.slice?.(0, 80) ?? withAuth.json}`,
+    );
 
   // 3. Credit ledger
   console.log("\n3. Credit system");
@@ -145,10 +149,7 @@ async function main() {
   });
 
   const creditsAfterGrant = await api("/api/user/credits", { cookie });
-  if (
-    creditsAfterGrant.status === 200 &&
-    creditsAfterGrant.json.creditBalance >= 100
-  ) {
+  if (creditsAfterGrant.status === 200 && creditsAfterGrant.json.creditBalance >= 100) {
     ok(`credit balance visible (${creditsAfterGrant.json.creditBalance})`);
   } else {
     fail("credit balance", JSON.stringify(creditsAfterGrant.json));
@@ -157,8 +158,7 @@ async function main() {
   // 4. Generate without subscription should fail
   console.log("\n4. Generate paywall");
   const genPayload = {
-    idea:
-      "A SaaS platform where restaurant owners manage menu, tables, and orders in real-time with QR code ordering for customers.",
+    idea: "A SaaS platform where restaurant owners manage menu, tables, and orders in real-time with QR code ordering for customers.",
     clarifications: { platform: "web", monetization: "freemium", scope: "mvp" },
     presets: { framework: "nextjs", design: "linear", agentTool: "cursor" },
     tier: "starter",
@@ -178,7 +178,10 @@ async function main() {
   } else if (genNoSub.status === 401) {
     fail("generate paywall", "cookie auth not accepted by generate route");
   } else {
-    fail("generate paywall", `expected 402/403, got ${genNoSub.status}: ${genNoSub.text?.slice?.(0, 100)}`);
+    fail(
+      "generate paywall",
+      `expected 402/403, got ${genNoSub.status}: ${genNoSub.text?.slice?.(0, 100)}`,
+    );
   }
 
   // 5. Payment create (Snap token)
@@ -199,7 +202,7 @@ async function main() {
   const sub = await prisma.subscription.create({
     data: {
       userId: TEST_USER_ID,
-      tier: "STARTER",
+      tier: "BASE",
       status: "ACTIVE",
       startDate: new Date(),
       renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -208,7 +211,7 @@ async function main() {
   });
   await prisma.user.update({
     where: { id: TEST_USER_ID },
-    data: { tier: "STARTER" },
+    data: { tier: "BASE" },
   });
   ok(`subscription ACTIVE (${sub.id.slice(0, 8)}...)`);
 
@@ -232,9 +235,7 @@ async function main() {
   console.log("\n7. Database schema");
   const tables = ["credit_ledger", "payment_events", "subscriptions", "payments"];
   for (const table of tables) {
-    const rows = await prisma.$queryRawUnsafe(
-      `SELECT COUNT(*)::int AS c FROM "${table}"`
-    );
+    const rows = await prisma.$queryRawUnsafe(`SELECT COUNT(*)::int AS c FROM "${table}"`);
     ok(`table ${table} accessible (rows: ${rows[0].c})`);
   }
 

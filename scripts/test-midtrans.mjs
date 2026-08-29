@@ -19,9 +19,7 @@ function detectMode() {
 
 const mode = detectMode();
 const snapBase =
-  mode === "production"
-    ? "https://app.midtrans.com"
-    : "https://app.sandbox.midtrans.com";
+  mode === "production" ? "https://app.midtrans.com" : "https://app.sandbox.midtrans.com";
 
 console.log("Mode:", mode);
 console.log("Server key length:", serverKey.length);
@@ -43,10 +41,8 @@ const res = await fetch(`${snapBase}/snap/v1/transactions`, {
     Authorization: `Basic ${auth}`,
   },
   body: JSON.stringify({
-    transaction_details: { order_id: orderId, gross_amount: 49000 },
-    item_details: [
-      { id: "starter", price: 49000, quantity: 1, name: "ArroBuild Starter" },
-    ],
+    transaction_details: { order_id: orderId, gross_amount: 65000 },
+    item_details: [{ id: "base", price: 65000, quantity: 1, name: "ArroBuild Base" }],
     customer_details: { email: "test@example.com", first_name: "Test" },
   }),
 });
@@ -60,11 +56,11 @@ if (data.token) {
   console.error("\n❌ Midtrans gagal:", res.status, data.error_messages ?? data);
   if (mode === "production") {
     console.error(
-      "Tip: Key mungkin sandbox. Set MIDTRANS_IS_PRODUCTION=false untuk development lokal."
+      "Tip: Key mungkin sandbox. Set MIDTRANS_IS_PRODUCTION=false untuk development lokal.",
     );
   } else {
     console.error(
-      "Tip: Key mungkin production. Set MIDTRANS_IS_PRODUCTION=true jika pakai key dari environment Production di dashboard."
+      "Tip: Key mungkin production. Set MIDTRANS_IS_PRODUCTION=true jika pakai key dari environment Production di dashboard.",
     );
   }
   process.exit(1);

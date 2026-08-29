@@ -1,17 +1,8 @@
 import type { ModelClassId } from "@/lib/config/tiers";
 import { TIER, type TierId } from "@/lib/config/tiers";
-import {
-  buildCopyStudioPrompt,
-  COPY_STUDIO_CREDITS,
-} from "@/lib/config/copy-studio-prompt";
-import {
-  buildReadmePrompt,
-  recordToReadmeInput,
-} from "@/lib/config/readme-prompt";
-import {
-  buildStackAdvisorPrompt,
-  STACK_ADVISOR_CREDITS,
-} from "@/lib/config/stack-advisor-prompt";
+import { buildCopyStudioPrompt, COPY_STUDIO_CREDITS } from "@/lib/config/copy-studio-prompt";
+import { buildReadmePrompt, recordToReadmeInput } from "@/lib/config/readme-prompt";
+import { buildStackAdvisorPrompt, STACK_ADVISOR_CREDITS } from "@/lib/config/stack-advisor-prompt";
 
 export type MiniToolId =
   | "prompt-doctor"
@@ -58,7 +49,7 @@ Given a feature list, force a ruthless MVP cut:
 4. **Saran urutan build** — 2-week sprint order
 Be direct. Same language as input.`;
 
-// ArroDesign — Fase 2 backend belum live. Placeholder prompt untuk scaffold.
+// Prompt generik untuk katalog/runner; route ArroDesign khusus memakai arrodesign-prompt.ts.
 const ARRODESIGN_SYSTEM = `You are ArroDesign, an AI design analyst.
 Analyze the visual reference provided and return a structured design.md with:
 - Color tokens (exact hex from image)
@@ -121,10 +112,11 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
     buildPrompt: (input) =>
       `${MVP_SCOPE_SYSTEM}\n\nProduct context:\n${input.context || "—"}\n\nFeatures:\n${input.features ?? ""}`,
   },
-  "arrodesign": {
+  arrodesign: {
     id: "arrodesign",
     name: "ArroDesign",
-    description: "Ubah screenshot atau URL referensi jadi design.md terstruktur + prompt Stitch siap pakai.",
+    description:
+      "Ubah screenshot atau URL referensi jadi design.md terstruktur + prompt Stitch siap pakai.",
     credits: 200,
     modelClass: "FLAGSHIP",
     maxOutputTokens: 4000,
@@ -173,8 +165,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
   "copy-studio": {
     id: "copy-studio",
     name: "Copy Studio",
-    description:
-      "Script copy landing page per section — dari template, diskusi, atau screenshot.",
+    description: "Script copy landing page per section — dari template, diskusi, atau screenshot.",
     credits: COPY_STUDIO_CREDITS.template,
     modelClass: "MENENGAH",
     maxOutputTokens: 2500,
@@ -190,8 +181,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
   "stack-advisor": {
     id: "stack-advisor",
     name: "Stack Advisor",
-    description:
-      "Curhat kebutuhan proyek — dapat 2–3 paket stack curated (bukan karangan AI).",
+    description: "Curhat kebutuhan proyek — dapat 2–3 paket stack curated (bukan karangan AI).",
     credits: STACK_ADVISOR_CREDITS.cepat,
     modelClass: "MENENGAH",
     maxOutputTokens: 2000,
@@ -222,8 +212,7 @@ export const MINI_TOOLS: Record<MiniToolId, MiniToolDefinition> = {
         required: true,
       },
     ],
-    buildPrompt: (input) =>
-      `${SCHEMA_SYSTEM}\n\nSchema description:\n${input.schema ?? ""}`,
+    buildPrompt: (input) => `${SCHEMA_SYSTEM}\n\nSchema description:\n${input.schema ?? ""}`,
   },
 };
 

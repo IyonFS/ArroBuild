@@ -20,7 +20,7 @@ const prisma = new PrismaClient({ adapter });
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
-  { auth: { autoRefreshToken: false, persistSession: false } }
+  { auth: { autoRefreshToken: false, persistSession: false } },
 );
 
 const TEST_USER_ID = crypto.randomUUID();
@@ -47,7 +47,7 @@ async function main() {
     data: {
       id: TEST_USER_ID,
       email: TEST_EMAIL,
-      tier: "STARTER",
+      tier: "BASE",
       creditBalance: 0,
     },
   });
@@ -59,7 +59,7 @@ async function main() {
     data: {
       orderId,
       userId: TEST_USER_ID,
-      tier: "STARTER",
+      tier: "BASE",
       amount,
       status: "PENDING",
     },
@@ -97,7 +97,10 @@ async function main() {
   console.log("Subscription:", sub?.status, sub?.tier);
   console.log("Payment status:", updatedPayment?.status);
   console.log("Credit ledger entries:", ledger.length);
-  console.log("Credits granted:", ledger.reduce((s, e) => s + e.amount, 0));
+  console.log(
+    "Credits granted:",
+    ledger.reduce((s, e) => s + e.amount, 0),
+  );
 
   const ok =
     sub?.status === "ACTIVE" &&

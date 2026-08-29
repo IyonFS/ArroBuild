@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { assertSafeIntegrationEnvironment } from "./lib/integration-environment.mjs";
 dotenv.config({ path: ".env.local" });
+assertSafeIntegrationEnvironment();
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
