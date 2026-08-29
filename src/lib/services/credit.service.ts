@@ -1,10 +1,6 @@
 import type { CreditLedgerType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import {
-  getTierConfig,
-  estimateCreditsPerDocument,
-  type ModelClassId,
-} from "@/lib/config/tiers";
+import { getTierConfig, estimateCreditsPerDocument, type ModelClassId } from "@/lib/config/tiers";
 import { logger } from "@/lib/logger";
 import {
   assertOwnedReservation,
@@ -34,10 +30,7 @@ export interface CreditBalance {
   reserved_for: { projectId: string; amount: number }[];
 }
 
-async function sumLedgerBalance(
-  userId: string,
-  tx: Prisma.TransactionClient = prisma
-) {
+async function sumLedgerBalance(userId: string, tx: Prisma.TransactionClient = prisma) {
   const result = await tx.creditLedger.aggregate({
     where: { userId },
     _sum: { amount: true },
@@ -48,7 +41,7 @@ async function sumLedgerBalance(
 async function findReservationRelease(
   tx: Prisma.TransactionClient,
   userId: string,
-  reservationId: string
+  reservationId: string,
 ) {
   return tx.creditLedger.findFirst({
     where: {
@@ -65,7 +58,7 @@ export const CreditService = {
     userId: string,
     estimatedCreditsNeeded: number,
     projectId: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<CreditReservation> {
     try {
       return await prisma.$transaction(
@@ -78,7 +71,7 @@ export const CreditService = {
             throw new CreditServiceError(
               "INSUFFICIENT_CREDITS",
               `Kredit tidak cukup. Dibutuhkan ${estimatedCreditsNeeded}, tersedia ${currentBalance}`,
-              402
+              402,
             );
           }
 
@@ -115,7 +108,7 @@ export const CreditService = {
           isolationLevel: "Serializable",
           maxWait: 5000,
           timeout: 30000,
-        }
+        },
       );
     } catch (error) {
       logger.error("credit_reserve_failed", {
@@ -135,9 +128,11 @@ export const CreditService = {
     documentsGenerated: Array<{
       fileKey: string;
       modelClass: ModelClassId;
+      promptVersion?: string;
+      modelRoute?: string;
       tokensUsed: number;
     }>,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<CreditCommit> {
     try {
       return await prisma.$transaction(
@@ -151,7 +146,7 @@ export const CreditService = {
             throw new CreditServiceError(
               "RESERVATION_SETTLED",
               "Reservation sudah diselesaikan",
-              409
+              409,
             );
           }
 
@@ -164,7 +159,7 @@ export const CreditService = {
           const settlement = calculateReservationSettlement(
             sumBalance,
             holdedCredits,
-            actualCreditsUsed
+            actualCreditsUsed,
           );
 
           const generateEntry = await tx.creditLedger.create({
@@ -223,7 +218,7 @@ export const CreditService = {
           isolationLevel: "Serializable",
           maxWait: 5000,
           timeout: 30000,
-        }
+        },
       );
     } catch (error) {
       logger.error("credit_commit_failed", {
@@ -241,7 +236,7 @@ export const CreditService = {
     reservationId: string,
     projectId: string,
     actualCreditsUsed: number,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<CreditCommit> {
     try {
       return await prisma.$transaction(
@@ -255,7 +250,7 @@ export const CreditService = {
             throw new CreditServiceError(
               "RESERVATION_SETTLED",
               "Reservation sudah diselesaikan",
-              409
+              409,
             );
           }
 
@@ -319,7 +314,7 @@ export const CreditService = {
           isolationLevel: "Serializable",
           maxWait: 5000,
           timeout: 30000,
-        }
+        },
       );
     } catch (error) {
       logger.error("revision_credit_commit_failed", {
@@ -335,7 +330,7 @@ export const CreditService = {
   async commitFreeRevision(
     userId: string,
     projectId: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<CreditCommit> {
     const sumBalance = await sumLedgerBalance(userId);
 
@@ -371,7 +366,7 @@ export const CreditService = {
     reservationId: string,
     toolId: string,
     actualCreditsUsed: number,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<CreditCommit> {
     return prisma.$transaction(
       async (tx) => {
@@ -384,7 +379,7 @@ export const CreditService = {
           throw new CreditServiceError(
             "RESERVATION_SETTLED",
             "Reservation sudah diselesaikan",
-            409
+            409,
           );
         }
 
@@ -392,7 +387,7 @@ export const CreditService = {
         const settlement = calculateReservationSettlement(
           currentBalance,
           holdedCredits,
-          actualCreditsUsed
+          actualCreditsUsed,
         );
 
         const usageEntry = await tx.creditLedger.create({
@@ -452,14 +447,14 @@ export const CreditService = {
         isolationLevel: "Serializable",
         maxWait: 5000,
         timeout: 30000,
-      }
+      },
     );
   },
 
   async releaseReservation(
     userId: string,
     reservationId: string,
-    reason = "generation_failed"
+    reason = "generation_failed",
   ): Promise<void> {
     await prisma.$transaction(
       async (tx) => {
@@ -495,7 +490,7 @@ export const CreditService = {
         isolationLevel: "Serializable",
         maxWait: 5000,
         timeout: 30000,
-      }
+      },
     );
   },
 
@@ -510,15 +505,12 @@ export const CreditService = {
       ledger
         .filter((entry) => entry.type === "RESERVATION_RELEASE")
         .map((entry) => reservationIdFromMetadata(entry.metadata))
-        .filter((id): id is string => id !== null)
+        .filter((id): id is string => id !== null),
     );
     const reservedEntries = ledger.filter(
-      (entry) =>
-        entry.type === "RESERVATION_HOLD" && !releasedReservationIds.has(entry.id)
+      (entry) => entry.type === "RESERVATION_HOLD" && !releasedReservationIds.has(entry.id),
     );
-    const reserved = Math.abs(
-      reservedEntries.reduce((sum, e) => sum + e.amount, 0)
-    );
+    const reserved = Math.abs(reservedEntries.reduce((sum, e) => sum + e.amount, 0));
 
     return {
       current,
@@ -568,14 +560,14 @@ export const CreditService = {
     userId: string,
     credits: number,
     toolId: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<CreditCommit> {
     const currentBalance = await sumLedgerBalance(userId);
     if (currentBalance < credits) {
       throw new CreditServiceError(
         "INSUFFICIENT_CREDITS",
         `Kredit tidak cukup. Dibutuhkan ${credits}, tersedia ${currentBalance}`,
-        402
+        402,
       );
     }
 
@@ -611,7 +603,7 @@ export const CreditService = {
     userId: string,
     credits: number,
     paymentId?: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<CreditCommit> {
     const currentBalance = await sumLedgerBalance(userId);
     const newBalance = currentBalance + credits;
@@ -666,7 +658,7 @@ export const CreditService = {
     userId: string,
     amount: number,
     reason: string,
-    adminUserId?: string
+    adminUserId?: string,
   ): Promise<CreditCommit> {
     const currentBalance = await sumLedgerBalance(userId);
     const newBalance = currentBalance + amount;

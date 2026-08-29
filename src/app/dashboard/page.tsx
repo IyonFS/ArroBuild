@@ -118,7 +118,7 @@ function DashboardContent() {
           json.error ??
             (res.status === 429
               ? "Terlalu banyak permintaan. Tunggu sebentar lalu muat ulang."
-              : "Gagal memuat profil. Coba muat ulang halaman.")
+              : "Gagal memuat profil. Coba muat ulang halaman."),
         );
       }
       return false;
@@ -173,7 +173,7 @@ function DashboardContent() {
     await fetch("/api/auth/signout", { method: "POST" });
     const supabase = createClient();
     await supabase.auth.signOut();
-    window.location.href = "/";
+    window.location.assign(new URL("/", window.location.origin));
   }
 
   if (loading) return <LoadingSkeleton />;
@@ -206,8 +206,7 @@ function DashboardContent() {
   const displayName = getDisplayName(data.user.name, data.user.email);
   const quota = deriveQuotaDisplay(data);
   const doneCount = projects.filter((p) => p.status === "DONE").length;
-  const canFork =
-    data.canForkProject ?? (data.plan === "core" || data.plan === "prime");
+  const canFork = data.canForkProject ?? (data.plan === "core" || data.plan === "prime");
 
   return (
     <DashboardShell
@@ -255,17 +254,36 @@ function DashboardContent() {
           }}
         >
           {/* Subtle noise/mesh background */}
-          <div 
-            className="absolute inset-0 pointer-events-none opacity-[0.03]" 
-            style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.03]"
+            style={{
+              backgroundImage:
+                "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')",
+            }}
           />
           {/* Accent glow on top left */}
-          <div 
+          <div
             className="absolute -top-24 -left-24 w-48 h-48 rounded-full pointer-events-none blur-3xl opacity-20"
-            style={{ background: data.tier === "prime" ? "var(--app-amber)" : data.tier === "core" ? "var(--app-sky)" : "transparent" }}
+            style={{
+              background:
+                data.tier === "prime"
+                  ? "var(--app-amber)"
+                  : data.tier === "core"
+                    ? "var(--app-sky)"
+                    : "transparent",
+            }}
           />
 
-          <div className="relative z-10" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 24 }}>
+          <div
+            className="relative z-10"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              marginBottom: 24,
+            }}
+          >
             <div>
               <p
                 style={{
@@ -295,20 +313,20 @@ function DashboardContent() {
                   data.tier === "prime"
                     ? "rgba(255,176,32,0.15)"
                     : data.tier === "core"
-                    ? "rgba(56,189,248,0.15)"
-                    : "rgba(240,243,250,0.07)",
+                      ? "rgba(56,189,248,0.15)"
+                      : "rgba(240,243,250,0.07)",
                 color:
                   data.tier === "prime"
                     ? "var(--app-amber)"
                     : data.tier === "core"
-                    ? "var(--app-sky)"
-                    : "var(--app-text-tertiary)",
+                      ? "var(--app-sky)"
+                      : "var(--app-text-tertiary)",
                 border:
                   data.tier === "prime"
                     ? "1px solid rgba(255,176,32,0.4)"
                     : data.tier === "core"
-                    ? "1px solid rgba(56,189,248,0.4)"
-                    : "1px solid rgba(255,255,255,0.1)",
+                      ? "1px solid rgba(56,189,248,0.4)"
+                      : "1px solid rgba(255,255,255,0.1)",
                 boxShadow: data.tier === "prime" ? "0 0 12px rgba(255,176,32,0.2)" : "none",
               }}
             >

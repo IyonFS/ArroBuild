@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/artifacts/ai-benchmark/
 
 # next.js
 /.next/

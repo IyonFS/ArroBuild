@@ -3,6 +3,7 @@ import {
   TIER_CONFIG,
   getTierConfig,
   pricingSlugFromTierId,
+  type ModelClassId,
   type TierId,
 } from "@/lib/config/tiers";
 
@@ -26,19 +27,48 @@ export interface PricingTier {
 
 export const PAID_TIER_IDS: PricingTierId[] = ["base", "core", "prime"];
 
+const MODEL_CLASS_LABEL: Record<ModelClassId, string> = {
+  HEMAT: "Hemat",
+  MENENGAH: "Menengah",
+  FLAGSHIP: "Flagship",
+  ULTRA: "Ultra",
+};
+
+const PRICING_TIER_ID: Record<PricingTierId, TierId> = {
+  base: TIER.BASE,
+  core: TIER.CORE,
+  prime: TIER.PRIME,
+};
+
+function formatCompactIdr(amount: number): string {
+  return `Rp ${Math.round(amount / 1_000)}K`;
+}
+
+function formatCount(value: number): string {
+  return value.toLocaleString("id-ID");
+}
+
+function formatModelClasses(classes: readonly ModelClassId[]): string {
+  return classes.map((modelClass) => MODEL_CLASS_LABEL[modelClass]).join(", ");
+}
+
+const baseConfig = TIER_CONFIG[TIER.BASE];
+const coreConfig = TIER_CONFIG[TIER.CORE];
+const primeConfig = TIER_CONFIG[TIER.PRIME];
+
 export const PRICING_TIERS: PricingTier[] = [
   {
     id: "base",
     name: "Base",
-    price: "Rp 65K",
-    priceAmount: TIER_CONFIG[TIER.BASE].priceIdr,
+    price: formatCompactIdr(baseConfig.priceIdr),
+    priceAmount: baseConfig.priceIdr,
     period: "/bulan",
     description: "3 dokumen inti — PRD, Architecture, Plan/Task untuk mulai bangun dengan AI.",
     features: [
-      "3 dokumen inti/proyek",
-      "Model AI kelas Hemat",
-      "Hingga 10 proyek/bulan",
-      "3.000 kredit/bulan",
+      `${baseConfig.coreDocuments.length} dokumen inti/proyek`,
+      `Model AI kelas ${formatModelClasses(baseConfig.allowedModelClasses)}`,
+      `Hingga ${baseConfig.maxProjectsPerMonth} proyek/bulan`,
+      `${formatCount(baseConfig.creditsPerMonth)} kredit/bulan`,
       "Download Markdown",
     ],
     cta: "Mulai Base",
@@ -47,16 +77,16 @@ export const PRICING_TIERS: PricingTier[] = [
   {
     id: "core",
     name: "Core",
-    price: "Rp 145K",
-    priceAmount: TIER_CONFIG[TIER.CORE].priceIdr,
+    price: formatCompactIdr(coreConfig.priceIdr),
+    priceAmount: coreConfig.priceIdr,
     period: "/bulan",
     description: "Bundle fondasi lengkap + Design System & Agent Rules.",
     features: [
-      "5 dokumen inti/proyek",
-      "Model Hemat s/d Flagship",
-      "Hingga 30 proyek/bulan",
-      "7.000 kredit/bulan",
-      "Chat WA founder 2x/bulan",
+      `${coreConfig.coreDocuments.length} dokumen inti/proyek`,
+      `Model AI: ${formatModelClasses(coreConfig.allowedModelClasses)}`,
+      `Hingga ${coreConfig.maxProjectsPerMonth} proyek/bulan`,
+      `${formatCount(coreConfig.creditsPerMonth)} kredit/bulan`,
+      `Chat WA founder ${coreConfig.whatsappChatPerMonth}x/bulan`,
     ],
     cta: "Upgrade ke Core",
     ctaHref: "/signup?plan=core",
@@ -67,16 +97,16 @@ export const PRICING_TIERS: PricingTier[] = [
   {
     id: "prime",
     name: "Prime",
-    price: "Rp 199K",
-    priceAmount: TIER_CONFIG[TIER.PRIME].priceIdr,
+    price: formatCompactIdr(primeConfig.priceIdr),
+    priceAmount: primeConfig.priceIdr,
     period: "/bulan",
     description: "Production-ready — 6 dokumen inti + modul opsional.",
     features: [
-      "6 dokumen inti + modul opsional",
-      "Semua kelas model termasuk Ultra",
-      "Hingga 60 proyek/bulan",
-      "14.000 kredit/bulan",
-      "Revisi unlimited + semua mini tools",
+      `${primeConfig.coreDocuments.length} dokumen inti${primeConfig.canAccessOptionalModules ? " + modul opsional" : ""}`,
+      `Model AI: ${formatModelClasses(primeConfig.allowedModelClasses)}`,
+      `Hingga ${primeConfig.maxProjectsPerMonth} proyek/bulan`,
+      `${formatCount(primeConfig.creditsPerMonth)} kredit/bulan`,
+      `${primeConfig.canReviseUnlimited ? "Revisi unlimited" : "Revisi terbatas"} + semua mini tools`,
     ],
     cta: "Upgrade ke Prime",
     ctaHref: "/signup?plan=prime",
@@ -90,25 +120,11 @@ export function getPaidTier(id: string) {
 }
 
 export function getTierConfigByPricingId(id: PricingTierId) {
-  switch (id) {
-    case "base":
-      return getTierConfig(TIER.BASE);
-    case "core":
-      return getTierConfig(TIER.CORE);
-    case "prime":
-      return getTierConfig(TIER.PRIME);
-  }
+  return getTierConfig(PRICING_TIER_ID[id]);
 }
 
 export function pricingIdToTierId(id: PricingTierId): TierId {
-  switch (id) {
-    case "base":
-      return TIER.BASE;
-    case "core":
-      return TIER.CORE;
-    case "prime":
-      return TIER.PRIME;
-  }
+  return PRICING_TIER_ID[id];
 }
 
 export { pricingSlugFromTierId };

@@ -4,18 +4,11 @@
 
 import { streamWithFinishReason, type GenerationConfig } from "./generator";
 import { buildPromptForTier } from "./prompts/build-prompt";
+import { AI_PROMPT_VERSION } from "./prompts/version";
 import { ContextManager } from "./context-manager";
-import {
-  FALLBACK_CHAIN,
-  getBackoffMs,
-  shouldFallback,
-} from "./retry-handler";
+import { FALLBACK_CHAIN, getBackoffMs, shouldFallback } from "./retry-handler";
 import { queueFileWrite, queueProjectStatusUpdate } from "./db-writer";
-import {
-  enforceTier,
-  modelToProvider,
-  toV3Tier,
-} from "./tier-enforcer";
+import { enforceTier, modelToProvider, toV3Tier } from "./tier-enforcer";
 import {
   validateGeneratedContent,
   buildContinuationPrompt,
@@ -54,7 +47,7 @@ export const ALL_FILES: Record<DocumentFileKey, FileDefinition> = Object.fromEnt
   Object.values(DOCUMENT_DEFINITIONS).map((d) => [
     d.key,
     { key: d.key, fileName: d.fileName, label: d.label },
-  ])
+  ]),
 ) as Record<DocumentFileKey, FileDefinition>;
 
 export interface GenerationEvent {
@@ -66,10 +59,14 @@ export interface GenerationEvent {
   content?: string;
   usedModel?: string;
   modelClass?: string;
+  promptVersion?: string;
+  modelRoute?: string;
   tokensUsed?: number;
   documentsGenerated?: Array<{
     fileKey: DocumentFileKey;
     modelClass: "HEMAT" | "MENENGAH" | "FLAGSHIP" | "ULTRA";
+    promptVersion: string;
+    modelRoute: string;
     tokensUsed: number;
   }>;
   files?: Record<string, string>;
@@ -89,7 +86,7 @@ const MAX_CONTINUATIONS = 3;
 async function* streamCompleteFile(
   prompt: string,
   fileKey: DocumentFileKey,
-  genConfig: GenerationConfig
+  genConfig: GenerationConfig,
 ): AsyncGenerator<string, string, undefined> {
   let content = "";
   let currentPrompt = prompt;
@@ -115,9 +112,7 @@ async function* streamCompleteFile(
     if (pass === 0) {
       content = normalizedPass;
     } else if (passMode === "continuation") {
-      content = sanitizeGeneratedContent(
-        mergeContinuationContent(content, normalizedPass)
-      );
+      content = sanitizeGeneratedContent(mergeContinuationContent(content, normalizedPass));
     } else {
       content = normalizedPass;
     }
@@ -147,14 +142,13 @@ async function* streamCompleteFile(
 
 export async function* orchestrateGeneration(
   input: GenerationInput,
-  projectId?: string
+  projectId?: string,
 ): AsyncGenerator<GenerationEvent> {
   const userTier = legacyTierSlugToUserTier(input.tier);
   const promptDepth = toV3Tier(input.tier);
 
   const requestedDocs: DocumentFileKey[] =
-    input.selectedDocs ??
-    DEFAULT_CORE_DOCS_BY_TIER[userTier];
+    input.selectedDocs ?? DEFAULT_CORE_DOCS_BY_TIER[userTier];
 
   const enforcement = enforceTier(requestedDocs, input.modelId, input.tier);
   if (!enforcement.allowed && enforcement.reason) {
@@ -172,15 +166,11 @@ export async function* orchestrateGeneration(
   };
 
   const tierId =
-    enforcement.userTier === "prime"
-      ? "PRIME"
-      : enforcement.userTier === "core"
-        ? "CORE"
-        : "BASE";
+    enforcement.userTier === "prime" ? "PRIME" : enforcement.userTier === "core" ? "CORE" : "BASE";
   const tierConfig = getTierConfig(tierId);
 
   const docsToGenerate = DOCUMENT_GENERATION_ORDER.filter((k) =>
-    enforcement.sanitizedDocs.includes(k)
+    enforcement.sanitizedDocs.includes(k),
   );
 
   const contextManager = new ContextManager(tierConfig.maxContextInjectionTokens);
@@ -188,6 +178,8 @@ export async function* orchestrateGeneration(
   const generatedMeta: Array<{
     fileKey: DocumentFileKey;
     modelClass: "HEMAT" | "MENENGAH" | "FLAGSHIP" | "ULTRA";
+    promptVersion: string;
+    modelRoute: string;
     tokensUsed: number;
   }> = [];
   const failedFiles: Partial<Record<DocumentFileKey, string>> = {};
@@ -198,8 +190,7 @@ export async function* orchestrateGeneration(
 
   function resolveDocModelClass(fileKey: DocumentFileKey): ModelClassId {
     const slug =
-      input.perDocumentModelClass?.[fileKey] ??
-      getDefaultModelClass(fileKey, enforcement.userTier);
+      input.perDocumentModelClass?.[fileKey] ?? getDefaultModelClass(fileKey, enforcement.userTier);
     const classId = modelClassSlugToId(slug);
     if (!validateModelClassForTier(tierId, classId)) {
       return "HEMAT";
@@ -231,10 +222,7 @@ export async function* orchestrateGeneration(
       ...resolveModelsForClass(docModelClass).filter((m) => m !== docPrimaryModel),
       ...(FALLBACK_CHAIN[docPrimaryModel as keyof typeof FALLBACK_CHAIN] ?? []),
     ].filter(
-      (m, i, arr) =>
-        tierAllowed.includes(m) &&
-        isModelConfigured(m) &&
-        arr.indexOf(m) === i
+      (m, i, arr) => tierAllowed.includes(m) && isModelConfigured(m) && arr.indexOf(m) === i,
     );
 
     for (let modelIdx = 0; modelIdx < chain.length; modelIdx++) {
@@ -250,7 +238,8 @@ export async function* orchestrateGeneration(
             provider: modelToProvider(model as import("./tier-enforcer").ModelId),
             maxOutputTokens: Math.min(
               tierConfig.maxOutputTokensPerDoc,
-              DOCUMENT_DEFINITIONS[fileKey].tokenBudget[enforcement.userTier] || tierConfig.maxOutputTokensPerDoc
+              DOCUMENT_DEFINITIONS[fileKey].tokenBudget[enforcement.userTier] ||
+                tierConfig.maxOutputTokensPerDoc,
             ),
           };
           let fileContent = "";
@@ -289,7 +278,13 @@ export async function* orchestrateGeneration(
     contextManager.addDocument(fileKey, fullContent);
     generatedFiles[fileKey] = fullContent;
     const tokensUsed = Math.max(1, Math.ceil(fullContent.length / 4));
-    generatedMeta.push({ fileKey, modelClass: usedModelClass, tokensUsed });
+    generatedMeta.push({
+      fileKey,
+      modelClass: usedModelClass,
+      promptVersion: AI_PROMPT_VERSION,
+      modelRoute: usedModel,
+      tokensUsed,
+    });
 
     if (projectId) {
       queueFileWrite({
@@ -299,6 +294,8 @@ export async function* orchestrateGeneration(
         label,
         content: fullContent,
         modelClass: usedModelClass,
+        promptVersion: AI_PROMPT_VERSION,
+        modelRoute: usedModel,
         tokenCount: tokensUsed,
       });
     }
@@ -311,6 +308,8 @@ export async function* orchestrateGeneration(
       content: fullContent,
       usedModel,
       modelClass: usedModelClass,
+      promptVersion: AI_PROMPT_VERSION,
+      modelRoute: usedModel,
       tokensUsed,
     };
   }

@@ -10,6 +10,13 @@ import {
   sanitizeSelectedDocs,
   type DocumentFileKey,
 } from "@/lib/config/documents";
+import {
+  CREDIT_MULTIPLIER,
+  MODEL_CLASS,
+  TIER,
+  TIER_CONFIG,
+  type ModelClassId,
+} from "@/lib/config/tiers";
 
 export type FileKey = DocumentFileKey;
 export { canAccessDocument, getDefaultModelClass, sanitizeSelectedDocs };
@@ -90,7 +97,7 @@ export interface ContextData {
 export type FeaturePriority = "must-have" | "nice-to-have";
 
 export interface Feature {
-  id: string;        // Auto-generated: FEAT-001, FEAT-002, ...
+  id: string; // Auto-generated: FEAT-001, FEAT-002, ...
   title: string;
   description?: string;
   priority: FeaturePriority;
@@ -132,7 +139,12 @@ export const PROGRAMMING_LANGUAGES: {
   icon: string;
   desc: string;
 }[] = [
-  { id: "javascript-typescript", label: "JavaScript / TypeScript", icon: "🟨", desc: "Web, semua tipe" },
+  {
+    id: "javascript-typescript",
+    label: "JavaScript / TypeScript",
+    icon: "🟨",
+    desc: "Web, semua tipe",
+  },
   { id: "python", label: "Python", icon: "🐍", desc: "API, AI-App, Internal Tool" },
   { id: "php", label: "PHP", icon: "🐘", desc: "Internal Tool, tim familiar PHP" },
   { id: "ruby", label: "Ruby", icon: "💎", desc: "SaaS klasik" },
@@ -182,13 +194,7 @@ export type Design =
   | "vercel"
   | "ai-recommend";
 
-export type AgentTool =
-  | "cursor"
-  | "claude-code"
-  | "windsurf"
-  | "cline"
-  | "opencode"
-  | "custom";
+export type AgentTool = "cursor" | "claude-code" | "windsurf" | "cline" | "opencode" | "custom";
 
 export type Database =
   | "postgresql"
@@ -232,17 +238,46 @@ export const ANIMATION_OPTIONS: {
   icon: string;
   desc: string;
 }[] = [
-  { id: "framer-motion", label: "Framer Motion", icon: "✦", desc: "Ekosistem React/Next.js, animasi UI standar" },
-  { id: "gsap", label: "GSAP", icon: "🎬", desc: "Animasi kompleks, timeline, cocok semua framework" },
-  { id: "lottie", label: "Lottie", icon: "🎞️", desc: "Mobile, onboarding flow, animasi After Effects" },
-  { id: "rive", label: "Rive", icon: "◎", desc: "Animasi vektor interaktif, trending untuk mobile & web" },
+  {
+    id: "framer-motion",
+    label: "Framer Motion",
+    icon: "✦",
+    desc: "Ekosistem React/Next.js, animasi UI standar",
+  },
+  {
+    id: "gsap",
+    label: "GSAP",
+    icon: "🎬",
+    desc: "Animasi kompleks, timeline, cocok semua framework",
+  },
+  {
+    id: "lottie",
+    label: "Lottie",
+    icon: "🎞️",
+    desc: "Mobile, onboarding flow, animasi After Effects",
+  },
+  {
+    id: "rive",
+    label: "Rive",
+    icon: "◎",
+    desc: "Animasi vektor interaktif, trending untuk mobile & web",
+  },
   { id: "css-only", label: "CSS-only / Minimal", icon: "⚡", desc: "Kecepatan load diutamakan" },
-  { id: "ai-recommend", label: "Biarkan AI pilih", icon: "🤖", desc: "Default untuk yang belum yakin" },
+  {
+    id: "ai-recommend",
+    label: "Biarkan AI pilih",
+    icon: "🤖",
+    desc: "Default untuk yang belum yakin",
+  },
 ];
 
 // Product types that show animation section
 export const ANIMATION_VISIBLE_PRODUCTS: ProductType[] = [
-  "saas", "mobile", "ecommerce", "portfolio", "ai-app",
+  "saas",
+  "mobile",
+  "ecommerce",
+  "portfolio",
+  "ai-app",
 ];
 
 // ─── Tools & Ecosystem ──────────────────────────────────────────────────────
@@ -263,7 +298,11 @@ export const DESIGN_HANDOFF_OPTIONS: { id: DesignHandoffTool; label: string; ico
   { id: "none", label: "Tidak pakai", icon: "—" },
 ];
 
-export const PROJECT_MANAGEMENT_OPTIONS: { id: ProjectManagementTool; label: string; icon: string }[] = [
+export const PROJECT_MANAGEMENT_OPTIONS: {
+  id: ProjectManagementTool;
+  label: string;
+  icon: string;
+}[] = [
   { id: "notion", label: "Notion", icon: "📝" },
   { id: "linear", label: "Linear", icon: "◎" },
   { id: "trello", label: "Trello", icon: "📋" },
@@ -428,8 +467,17 @@ export const STACK_BUNDLES: StackBundle[] = [
 
 export const LANGUAGE_FRAMEWORK_MAP: Record<ProgrammingLanguage, Framework[]> = {
   "javascript-typescript": [
-    "nextjs", "nuxt", "remix", "sveltekit", "astro",
-    "react-spa", "vue-spa", "vanilla-js", "express", "nestjs", "hono",
+    "nextjs",
+    "nuxt",
+    "remix",
+    "sveltekit",
+    "astro",
+    "react-spa",
+    "vue-spa",
+    "vanilla-js",
+    "express",
+    "nestjs",
+    "hono",
   ],
   python: ["django", "fastapi"],
   php: ["laravel"],
@@ -461,16 +509,12 @@ export const DATABASE_CATEGORIES: DatabaseCategory[] = [
   {
     label: "Document / NoSQL",
     icon: "📄",
-    options: [
-      { id: "mongodb", label: "MongoDB", desc: "Dokumen fleksibel, content-heavy" },
-    ],
+    options: [{ id: "mongodb", label: "MongoDB", desc: "Dokumen fleksibel, content-heavy" }],
   },
   {
     label: "Cache / Realtime",
     icon: "⚡",
-    options: [
-      { id: "redis", label: "Redis", desc: "Session, cache, rate limiting" },
-    ],
+    options: [{ id: "redis", label: "Redis", desc: "Session, cache, rate limiting" }],
   },
   {
     label: "Backend-as-a-Service",
@@ -495,9 +539,7 @@ export const DATABASE_CATEGORIES: DatabaseCategory[] = [
   {
     label: "Tidak perlu database",
     icon: "—",
-    options: [
-      { id: "none", label: "Tidak pakai", desc: "Portfolio statis, landing page" },
-    ],
+    options: [{ id: "none", label: "Tidak pakai", desc: "Portfolio statis, landing page" }],
   },
 ];
 
@@ -557,12 +599,19 @@ export type AIProvider = "gemini" | "openai" | "anthropic" | "deepseek";
 
 export type ModelClass = "hemat" | "menengah" | "flagship" | "ultra";
 
+const MODEL_CLASS_SLUG: Record<ModelClassId, ModelClass> = {
+  [MODEL_CLASS.HEMAT]: "hemat",
+  [MODEL_CLASS.MENENGAH]: "menengah",
+  [MODEL_CLASS.FLAGSHIP]: "flagship",
+  [MODEL_CLASS.ULTRA]: "ultra",
+};
+
 export interface ModelClassInfo {
   id: ModelClass;
   label: string;
   icon: string;
   creditsPer1kTokens: number; // Kredit per 1.000 token
-  exampleModels: string;      // Human-readable model names
+  exampleModels: string; // Human-readable model names
   desc: string;
 }
 
@@ -571,7 +620,7 @@ export const MODEL_CLASSES: ModelClassInfo[] = [
     id: "hemat",
     label: "Hemat",
     icon: "⚡",
-    creditsPer1kTokens: 1,
+    creditsPer1kTokens: CREDIT_MULTIPLIER[MODEL_CLASS.HEMAT],
     exampleModels: "DeepSeek V4 Flash, Gemini 3.1 Flash Lite",
     desc: "Cepat & hemat kredit",
   },
@@ -579,7 +628,7 @@ export const MODEL_CLASSES: ModelClassInfo[] = [
     id: "menengah",
     label: "Menengah",
     icon: "✦",
-    creditsPer1kTokens: 24,
+    creditsPer1kTokens: CREDIT_MULTIPLIER[MODEL_CLASS.MENENGAH],
     exampleModels: "Gemini 3.5 Flash",
     desc: "Keseimbangan kualitas & biaya",
   },
@@ -587,7 +636,7 @@ export const MODEL_CLASSES: ModelClassInfo[] = [
     id: "flagship",
     label: "Flagship",
     icon: "◈",
-    creditsPer1kTokens: 35,
+    creditsPer1kTokens: CREDIT_MULTIPLIER[MODEL_CLASS.FLAGSHIP],
     exampleModels: "GPT-5.4, Claude Sonnet",
     desc: "Kualitas terbaik untuk dokumen kritis",
   },
@@ -595,7 +644,7 @@ export const MODEL_CLASSES: ModelClassInfo[] = [
     id: "ultra",
     label: "Ultra",
     icon: "♛",
-    creditsPer1kTokens: 65,
+    creditsPer1kTokens: CREDIT_MULTIPLIER[MODEL_CLASS.ULTRA],
     exampleModels: "Claude Opus, GPT-5.5",
     desc: "Model terkuat, untuk hasil paling detail",
   },
@@ -611,38 +660,28 @@ export const MODEL_CLASS_PIPELINE: Record<ModelClass, string> = {
 
 /** Which model classes are available per tier */
 export const TIER_MODEL_CLASSES: Record<UserTier, ModelClass[]> = {
-  base: ["hemat"],
-  core: ["hemat", "menengah", "flagship"],
-  prime: ["hemat", "menengah", "flagship", "ultra"],
+  base: TIER_CONFIG[TIER.BASE].allowedModelClasses.map((id) => MODEL_CLASS_SLUG[id]),
+  core: TIER_CONFIG[TIER.CORE].allowedModelClasses.map((id) => MODEL_CLASS_SLUG[id]),
+  prime: TIER_CONFIG[TIER.PRIME].allowedModelClasses.map((id) => MODEL_CLASS_SLUG[id]),
 };
 
 /** Token budget per document per tier (from Document-isi / pricing v2) */
-export const DOC_TOKEN_BUDGET: Record<FileKey, Record<UserTier, number>> =
-  Object.fromEntries(
-    DOCUMENT_FILE_KEYS.map((key) => [
-      key,
-      DOCUMENT_DEFINITIONS[key].tokenBudget,
-    ])
-  ) as Record<FileKey, Record<UserTier, number>>;
+export const DOC_TOKEN_BUDGET: Record<FileKey, Record<UserTier, number>> = Object.fromEntries(
+  DOCUMENT_FILE_KEYS.map((key) => [key, DOCUMENT_DEFINITIONS[key].tokenBudget]),
+) as Record<FileKey, Record<UserTier, number>>;
 
-export const DOC_DEFAULT_MODEL_CLASS: Record<FileKey, Record<UserTier, ModelClass>> =
-  Object.fromEntries(
-    DOCUMENT_FILE_KEYS.map((key) => [
-      key,
-      DOCUMENT_DEFINITIONS[key].defaultModelClass,
-    ])
-  ) as Record<FileKey, Record<UserTier, ModelClass>>;
-
+export const DOC_DEFAULT_MODEL_CLASS: Record<
+  FileKey,
+  Record<UserTier, ModelClass>
+> = Object.fromEntries(
+  DOCUMENT_FILE_KEYS.map((key) => [key, DOCUMENT_DEFINITIONS[key].defaultModelClass]),
+) as Record<FileKey, Record<UserTier, ModelClass>>;
 
 /** Per-document model class overrides */
 export type PerDocumentModelClass = Partial<Record<FileKey, ModelClass>>;
 
 /** Calculate credits for a single document */
-export function calcDocCredits(
-  fileKey: FileKey,
-  tier: UserTier,
-  modelClass: ModelClass
-): number {
+export function calcDocCredits(fileKey: FileKey, tier: UserTier, modelClass: ModelClass): number {
   return calcDocumentCredits(fileKey, tier, modelClass);
 }
 
@@ -650,7 +689,7 @@ export function calcDocCredits(
 export function calcTotalCredits(
   selectedDocs: FileKey[],
   tier: UserTier,
-  overrides: PerDocumentModelClass
+  overrides: PerDocumentModelClass,
 ): number {
   return selectedDocs.reduce((total, doc) => {
     const modelClass = overrides[doc] ?? DOC_DEFAULT_MODEL_CLASS[doc][tier];
@@ -660,9 +699,9 @@ export function calcTotalCredits(
 
 /** Tier credit pool per month (from arrobuild_pricing_monetisasi_v2.md §4) */
 export const TIER_CREDIT_POOL: Record<UserTier, number> = {
-  base: 3_000,
-  core: 7_000,
-  prime: 14_000,
+  base: TIER_CONFIG[TIER.BASE].creditsPerMonth,
+  core: TIER_CONFIG[TIER.CORE].creditsPerMonth,
+  prime: TIER_CONFIG[TIER.PRIME].creditsPerMonth,
 };
 
 /** Tier labels for display */
@@ -768,11 +807,8 @@ export const FILE_META: Record<
 > = Object.fromEntries(
   DOCUMENT_FILE_KEYS.map((key) => {
     const d = DOCUMENT_DEFINITIONS[key];
-    return [
-      key,
-      { label: d.label, description: d.description, icon: d.icon, phase: d.phase },
-    ];
-  })
+    return [key, { label: d.label, description: d.description, icon: d.icon, phase: d.phase }];
+  }),
 ) as Record<FileKey, { label: string; description: string; icon: string; phase: string }>;
 
 export const ALL_FILE_KEYS: FileKey[] = [...DOCUMENT_FILE_KEYS];
@@ -793,7 +829,7 @@ export const STAGE_PRESETS: Record<ProjectStage, FileKey[]> = {
 export function documentsForTier(tier: UserTier): FileKey[] {
   const core = DEFAULT_CORE_DOCS_BY_TIER[tier];
   const optional = ALL_FILE_KEYS.filter(
-    (k) => DOCUMENT_DEFINITIONS[k].kind === "optional" && canAccessDocument(k, tier)
+    (k) => DOCUMENT_DEFINITIONS[k].kind === "optional" && canAccessDocument(k, tier),
   );
   return [...core, ...optional];
 }
@@ -806,7 +842,12 @@ export const TIER_FILE_KEYS: Record<UserTier, FileKey[]> = {
 
 // ─── Framework Display Data ──────────────────────────────────────────────────
 
-export const ALL_FRAMEWORKS: { id: Framework; label: string; icon: string; category: "frontend" | "backend" | "mobile" }[] = [
+export const ALL_FRAMEWORKS: {
+  id: Framework;
+  label: string;
+  icon: string;
+  category: "frontend" | "backend" | "mobile";
+}[] = [
   // Frontend / Fullstack
   { id: "nextjs", label: "Next.js", icon: "▲", category: "frontend" },
   { id: "nuxt", label: "Nuxt.js", icon: "💚", category: "frontend" },
@@ -833,17 +874,95 @@ export const ALL_FRAMEWORKS: { id: Framework; label: string; icon: string; categ
   { id: "native-android", label: "Native Android (Kotlin)", icon: "🤖", category: "mobile" },
 ];
 
-export const DESIGNS_DATA: { id: Design; label: string; desc: string; swatch: string; lineage: string }[] = [
-  { id: "neo-brutalist", label: "Neo-Brutalist", desc: "Raw, bold, high contrast", swatch: "■", lineage: "Gaya tebal, kontras tinggi, populer di produk indie/community-driven" },
-  { id: "minimal", label: "Minimal", desc: "Clean, lots of whitespace", swatch: "○", lineage: "Minimalis Skandinavia, fokus pada konten dan tipografi" },
-  { id: "corporate", label: "Corporate", desc: "Professional, trust-focused", swatch: "□", lineage: "Desain enterprise, formal, warna netral + aksen biru" },
-  { id: "bold", label: "Bold & Colorful", desc: "Vibrant, expressive, fun", swatch: "◈", lineage: "Gaya kreatif, palet berani, populer di produk Gen Z" },
-  { id: "glassmorphism", label: "Glassmorphism", desc: "Frosted glass, blur layers", swatch: "∷", lineage: "Efek kaca buram, transparansi, populer sejak iOS/macOS Big Sur" },
-  { id: "dashboard", label: "Dashboard / Data", desc: "Dense, information-rich", swatch: "⊞", lineage: "Data-driven, grid padat, sidebar navigasi, warna netral + highlights" },
-  { id: "apple", label: "Apple Style", desc: "Clean, premium, rounded", swatch: "🍎", lineage: "Desain premium Apple, SF Pro, whitespace generoso, smooth" },
-  { id: "linear", label: "Linear Style", desc: "Dark, sleek, developer-focused", swatch: "◎", lineage: "Dark mode elegan, gradient halus, populer di dev tools" },
-  { id: "stripe", label: "Stripe Style", desc: "Gradient-rich, polished", swatch: "💳", lineage: "Gradient mewah, tipografi besar, fintech aesthetic" },
-  { id: "notion", label: "Notion Style", desc: "Blocky, content-first", swatch: "📝", lineage: "Block-based, serif heading, minimalis tapi fungsional" },
-  { id: "vercel", label: "Vercel Style", desc: "Monochrome, geometric", swatch: "▲", lineage: "Monokrom hitam-putih, geometris, developer-first" },
-  { id: "ai-recommend", label: "Biarkan AI", desc: "AI pilihkan sesuai konteks", swatch: "🤖", lineage: "AI akan memilih berdasarkan tipe produk dan target user" },
+export const DESIGNS_DATA: {
+  id: Design;
+  label: string;
+  desc: string;
+  swatch: string;
+  lineage: string;
+}[] = [
+  {
+    id: "neo-brutalist",
+    label: "Neo-Brutalist",
+    desc: "Raw, bold, high contrast",
+    swatch: "■",
+    lineage: "Gaya tebal, kontras tinggi, populer di produk indie/community-driven",
+  },
+  {
+    id: "minimal",
+    label: "Minimal",
+    desc: "Clean, lots of whitespace",
+    swatch: "○",
+    lineage: "Minimalis Skandinavia, fokus pada konten dan tipografi",
+  },
+  {
+    id: "corporate",
+    label: "Corporate",
+    desc: "Professional, trust-focused",
+    swatch: "□",
+    lineage: "Desain enterprise, formal, warna netral + aksen biru",
+  },
+  {
+    id: "bold",
+    label: "Bold & Colorful",
+    desc: "Vibrant, expressive, fun",
+    swatch: "◈",
+    lineage: "Gaya kreatif, palet berani, populer di produk Gen Z",
+  },
+  {
+    id: "glassmorphism",
+    label: "Glassmorphism",
+    desc: "Frosted glass, blur layers",
+    swatch: "∷",
+    lineage: "Efek kaca buram, transparansi, populer sejak iOS/macOS Big Sur",
+  },
+  {
+    id: "dashboard",
+    label: "Dashboard / Data",
+    desc: "Dense, information-rich",
+    swatch: "⊞",
+    lineage: "Data-driven, grid padat, sidebar navigasi, warna netral + highlights",
+  },
+  {
+    id: "apple",
+    label: "Apple Style",
+    desc: "Clean, premium, rounded",
+    swatch: "🍎",
+    lineage: "Desain premium Apple, SF Pro, whitespace generoso, smooth",
+  },
+  {
+    id: "linear",
+    label: "Linear Style",
+    desc: "Dark, sleek, developer-focused",
+    swatch: "◎",
+    lineage: "Dark mode elegan, gradient halus, populer di dev tools",
+  },
+  {
+    id: "stripe",
+    label: "Stripe Style",
+    desc: "Gradient-rich, polished",
+    swatch: "💳",
+    lineage: "Gradient mewah, tipografi besar, fintech aesthetic",
+  },
+  {
+    id: "notion",
+    label: "Notion Style",
+    desc: "Blocky, content-first",
+    swatch: "📝",
+    lineage: "Block-based, serif heading, minimalis tapi fungsional",
+  },
+  {
+    id: "vercel",
+    label: "Vercel Style",
+    desc: "Monochrome, geometric",
+    swatch: "▲",
+    lineage: "Monokrom hitam-putih, geometris, developer-first",
+  },
+  {
+    id: "ai-recommend",
+    label: "Biarkan AI",
+    desc: "AI pilihkan sesuai konteks",
+    swatch: "🤖",
+    lineage: "AI akan memilih berdasarkan tipe produk dan target user",
+  },
 ];

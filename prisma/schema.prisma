@@ -35,17 +35,17 @@ model User {
 }
 
 model Subscription {
-  id        String             @id @default(cuid())
-  userId    String             @unique
-  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tier      SubscriptionTier   @default(BASE)
-  status    SubscriptionStatus @default(ACTIVE)
-  startDate DateTime?
-  renewalDate DateTime?
-  expiresAt DateTime?
+  id                     String             @id @default(cuid())
+  userId                 String             @unique
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier                   SubscriptionTier   @default(BASE)
+  status                 SubscriptionStatus @default(ACTIVE)
+  startDate              DateTime?
+  renewalDate            DateTime?
+  expiresAt              DateTime?
   midtransSubscriptionId String?
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
 
   @@index([expiresAt, status])
   @@map("subscriptions")
@@ -85,9 +85,11 @@ model GeneratedFile {
   label    String
   content  String @db.Text
 
-  modelClass String?
-  tokensUsed Int?
-  version    Int     @default(1)
+  modelClass    String?
+  promptVersion String?
+  modelRoute    String?
+  tokensUsed    Int?
+  version       Int     @default(1)
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -134,18 +136,18 @@ enum ProjectStatus {
 }
 
 model Payment {
-  id        String        @id @default(cuid())
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  orderId   String        @unique
-  userId    String
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tier      SubscriptionTier
-  amount    Int
-  status    PaymentStatus @default(PENDING)
-  snapToken String?
+  id         String           @id @default(cuid())
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  orderId    String           @unique
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier       SubscriptionTier
+  amount     Int
+  status     PaymentStatus    @default(PENDING)
+  snapToken  String?
   midtransId String?
-  settledAt DateTime?
+  settledAt  DateTime?
 
   events PaymentEvent[]
 
@@ -155,14 +157,14 @@ model Payment {
 }
 
 model PaymentEvent {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   paymentId      String
-  payment        Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  orderId        String   @unique
+  payment        Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  orderId        String    @unique
   rawPayload     Json
-  signatureValid Boolean  @default(false)
+  signatureValid Boolean   @default(false)
   signature      String?
-  receivedAt     DateTime @default(now())
+  receivedAt     DateTime  @default(now())
   processedAt    DateTime?
 
   @@index([paymentId])
@@ -289,15 +291,15 @@ enum WaitlistStatus {
 }
 
 model WaitlistEntry {
-  id        String             @id @default(cuid())
+  id        String           @id @default(cuid())
   userId    String?
-  user      User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user      User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   email     String
   tier      SubscriptionTier
-  status    WaitlistStatus     @default(PENDING)
+  status    WaitlistStatus   @default(PENDING)
   note      String?
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   @@unique([email, tier])
   @@index([tier, status])

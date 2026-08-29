@@ -1,0 +1,233 @@
+[
+  {
+    "id": "saas-short-invoice",
+    "category": "saas",
+    "detailLevel": "short",
+    "input": {
+      "idea": "SaaS invoice sederhana untuk freelancer Indonesia.",
+      "productType": "saas",
+      "projectStage": "idea",
+      "clarifications": { "platform": "web", "monetization": "freemium", "scope": "mvp" },
+      "presets": {
+        "framework": "nextjs",
+        "database": "postgresql",
+        "deployment": "vercel",
+        "programmingLanguage": "javascript-typescript"
+      },
+      "features": [
+        { "id": "FEAT-001", "title": "Buat invoice", "priority": "must-have" },
+        { "id": "FEAT-002", "title": "Kirim tautan invoice", "priority": "must-have" },
+        { "id": "FEAT-003", "title": "Status pembayaran", "priority": "nice-to-have" }
+      ]
+    }
+  },
+  {
+    "id": "saas-detailed-clinic",
+    "category": "saas",
+    "detailLevel": "detailed",
+    "input": {
+      "idea": "Platform operasional klinik kecil untuk jadwal dokter, antrean pasien, stok obat, dan laporan harian. Admin klinik mengatur jadwal, resepsionis mendaftarkan pasien, dan dokter menulis ringkasan kunjungan. MVP tidak menyimpan diagnosis sensitif secara bebas dan harus memiliki audit log perubahan jadwal.",
+      "productType": "saas",
+      "projectStage": "production",
+      "clarifications": { "platform": "web", "monetization": "paid", "scope": "full-product" },
+      "presets": {
+        "framework": "nextjs",
+        "database": "postgresql",
+        "deployment": "vercel",
+        "programmingLanguage": "javascript-typescript"
+      },
+      "features": [
+        { "id": "FEAT-001", "title": "Jadwal dokter", "priority": "must-have" },
+        { "id": "FEAT-002", "title": "Antrean pasien", "priority": "must-have" },
+        { "id": "FEAT-003", "title": "Stok obat", "priority": "must-have" },
+        { "id": "FEAT-004", "title": "Laporan operasional", "priority": "nice-to-have" },
+        { "id": "FEAT-005", "title": "Audit log", "priority": "must-have" }
+      ]
+    }
+  },
+  {
+    "id": "marketplace-medium-services",
+    "category": "marketplace",
+    "detailLevel": "medium",
+    "input": {
+      "idea": "Marketplace jasa servis elektronik lokal yang mempertemukan pelanggan dengan teknisi terverifikasi, termasuk permintaan penawaran dan jadwal kunjungan.",
+      "productType": "marketplace",
+      "projectStage": "prototype",
+      "clarifications": { "platform": "web", "monetization": "freemium", "scope": "mvp" },
+      "presets": {
+        "framework": "nextjs",
+        "database": "postgresql",
+        "deployment": "vercel",
+        "programmingLanguage": "javascript-typescript"
+      },
+      "features": [
+        { "id": "FEAT-001", "title": "Permintaan servis", "priority": "must-have" },
+        { "id": "FEAT-002", "title": "Penawaran teknisi", "priority": "must-have" },
+        { "id": "FEAT-003", "title": "Jadwal kunjungan", "priority": "must-have" },
+        { "id": "FEAT-004", "title": "Verifikasi teknisi", "priority": "nice-to-have" }
+      ]
+    }
+  },
+  {
+    "id": "marketplace-detailed-food-rescue",
+    "category": "marketplace",
+    "detailLevel": "detailed",
+    "input": {
+      "idea": "Marketplace surplus makanan harian. Toko mengunggah paket sebelum jam tutup, pembeli memesan dengan slot pengambilan, stok harus berkurang atomik, pembatalan memiliki batas waktu, dan dashboard toko menampilkan barang yang terselamatkan tanpa mengarang dampak lingkungan.",
+      "productType": "marketplace",
+      "projectStage": "production",
+      "clarifications": { "platform": "web", "monetization": "paid", "scope": "full-product" },
+      "presets": {
+        "framework": "nextjs",
+        "database": "postgresql",
+        "deployment": "vercel",
+        "programmingLanguage": "javascript-typescript"
+      },
+      "features": [
+        { "id": "FEAT-001", "title": "Publikasi paket surplus", "priority": "must-have" },
+        { "id": "FEAT-002", "title": "Reservasi stok atomik", "priority": "must-have" },
+        { "id": "FEAT-003", "title": "Slot pengambilan", "priority": "must-have" },
+        { "id": "FEAT-004", "title": "Aturan pembatalan", "priority": "must-have" },
+        { "id": "FEAT-005", "title": "Dashboard toko", "priority": "nice-to-have" }
+      ]
+    }
+  },
+  {
+    "id": "mobile-short-habit",
+    "category": "mobile",
+    "detailLevel": "short",
+    "input": {
+      "idea": "Aplikasi mobile habit tracker offline-first untuk mahasiswa.",
+      "productType": "mobile",
+      "projectStage": "idea",
+      "clarifications": { "platform": "mobile", "monetization": "freemium", "scope": "mvp" },
+      "presets": {
+        "framework": "expo",
+        "database": "sqlite",
+        "deployment": "eas",
+        "programmingLanguage": "javascript-typescript"
+      },
+      "features": [
+        { "id": "FEAT-001", "title": "Catat kebiasaan offline", "priority": "must-have" },
+        { "id": "FEAT-002", "title": "Pengingat lokal", "priority": "must-have" },
+        { "id": "FEAT-003", "title": "Ringkasan mingguan", "priority": "nice-to-have" }
+      ]
+    }
+  },
+  {
+    "id": "mobile-medium-field-sales",
+    "category": "mobile",
+    "detailLevel": "medium",
+    "input": {
+      "idea": "Aplikasi sales lapangan untuk mencatat kunjungan toko saat koneksi buruk, mengambil foto bukti, lalu sinkron saat online dengan resolusi konflik yang jelas.",
+      "productType": "mobile",
+      "projectStage": "prototype",
+      "clarifications": { "platform": "mobile", "monetization": "paid", "scope": "mvp" },
+      "presets": {
+        "framework": "react-native",
+        "database": "sqlite",
+        "deployment": "eas",
+        "programmingLanguage": "javascript-typescript"
+      },
+      "features": [
+        { "id": "FEAT-001", "title": "Kunjungan offline", "priority": "must-have" },
+        { "id": "FEAT-002", "title": "Foto bukti", "priority": "must-have" },
+        { "id": "FEAT-003", "title": "Sinkronisasi antrean", "priority": "must-have" },
+        { "id": "FEAT-004", "title": "Resolusi konflik", "priority": "must-have" }
+      ]
+    }
+  },
+  {
+    "id": "ai-app-medium-support",
+    "category": "ai-app",
+    "detailLevel": "medium",
+    "input": {
+      "idea": "Asisten AI untuk menyusun draf jawaban customer support dari knowledge base internal. Agen manusia wajib menyetujui sebelum jawaban dikirim dan sistem harus menampilkan sumber yang dipakai.",
+      "productType": "ai-app",
+      "projectStage": "prototype",
+      "clarifications": { "platform": "web", "monetization": "paid", "scope": "mvp" },
+      "presets": {
+        "framework": "nextjs",
+        "database": "postgresql",
+        "deployment": "vercel",
+        "programmingLanguage": "javascript-typescript"
+      },
+      "features": [
+        { "id": "FEAT-001", "title": "Pencarian knowledge base", "priority": "must-have" },
+        { "id": "FEAT-002", "title": "Draf jawaban bersumber", "priority": "must-have" },
+        { "id": "FEAT-003", "title": "Persetujuan agen", "priority": "must-have" },
+        { "id": "FEAT-004", "title": "Feedback kualitas", "priority": "nice-to-have" }
+      ]
+    }
+  },
+  {
+    "id": "internal-detailed-procurement",
+    "category": "internal",
+    "detailLevel": "detailed",
+    "input": {
+      "idea": "Internal tool pengadaan untuk perusahaan 80 orang. Karyawan membuat permintaan, manajer menyetujui sesuai batas nominal, finance memverifikasi anggaran, purchasing mencatat vendor, dan seluruh perubahan status memiliki audit trail. Integrasi awal hanya ekspor CSV, bukan ERP langsung.",
+      "productType": "internal",
+      "projectStage": "production",
+      "clarifications": { "platform": "web", "monetization": "free", "scope": "full-product" },
+      "presets": {
+        "framework": "nextjs",
+        "database": "postgresql",
+        "deployment": "vercel",
+        "programmingLanguage": "javascript-typescript"
+      },
+      "features": [
+        { "id": "FEAT-001", "title": "Permintaan pengadaan", "priority": "must-have" },
+        { "id": "FEAT-002", "title": "Approval bertingkat", "priority": "must-have" },
+        { "id": "FEAT-003", "title": "Verifikasi anggaran", "priority": "must-have" },
+        { "id": "FEAT-004", "title": "Direktori vendor", "priority": "nice-to-have" },
+        { "id": "FEAT-005", "title": "Audit trail", "priority": "must-have" },
+        { "id": "FEAT-006", "title": "Ekspor CSV", "priority": "nice-to-have" }
+      ]
+    }
+  },
+  {
+    "id": "ecommerce-medium-preorder",
+    "category": "ecommerce",
+    "detailLevel": "medium",
+    "input": {
+      "idea": "Toko online pre-order produk kerajinan dengan batch produksi, batas kuota per batch, uang muka, dan notifikasi ketika pesanan siap dikirim.",
+      "productType": "ecommerce",
+      "projectStage": "prototype",
+      "clarifications": { "platform": "web", "monetization": "paid", "scope": "mvp" },
+      "presets": {
+        "framework": "nextjs",
+        "database": "postgresql",
+        "deployment": "vercel",
+        "programmingLanguage": "javascript-typescript"
+      },
+      "features": [
+        { "id": "FEAT-001", "title": "Katalog batch", "priority": "must-have" },
+        { "id": "FEAT-002", "title": "Kuota pre-order", "priority": "must-have" },
+        { "id": "FEAT-003", "title": "Pembayaran uang muka", "priority": "must-have" },
+        { "id": "FEAT-004", "title": "Status produksi", "priority": "nice-to-have" }
+      ]
+    }
+  },
+  {
+    "id": "portfolio-short-photographer",
+    "category": "portfolio",
+    "detailLevel": "short",
+    "input": {
+      "idea": "Portfolio fotografer dengan galeri proyek dan form inquiry.",
+      "productType": "portfolio",
+      "projectStage": "idea",
+      "clarifications": { "platform": "web", "monetization": "free", "scope": "mvp" },
+      "presets": {
+        "framework": "astro",
+        "database": "postgresql",
+        "deployment": "vercel",
+        "programmingLanguage": "javascript-typescript"
+      },
+      "features": [
+        { "id": "FEAT-001", "title": "Galeri proyek", "priority": "must-have" },
+        { "id": "FEAT-002", "title": "Detail studi kasus", "priority": "must-have" },
+        { "id": "FEAT-003", "title": "Form inquiry", "priority": "must-have" }
+      ]
+    }
+  }
+]

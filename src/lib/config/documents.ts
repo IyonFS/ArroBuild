@@ -3,7 +3,7 @@
  */
 
 import { modelClassSlugToId } from "@/lib/ai-gateway/model-router";
-import { validateModelClassForTier, type TierId } from "./tiers";
+import { TIER, TIER_CONFIG, validateModelClassForTier, type TierId } from "./tiers";
 
 export type UserTier = "base" | "core" | "prime";
 export type ModelClass = "hemat" | "menengah" | "flagship" | "ultra";
@@ -28,10 +28,7 @@ export const OPTIONAL_DOCUMENT_KEYS = [
   "compliance-legal",
 ] as const;
 
-export const DOCUMENT_FILE_KEYS = [
-  ...CORE_DOCUMENT_KEYS,
-  ...OPTIONAL_DOCUMENT_KEYS,
-] as const;
+export const DOCUMENT_FILE_KEYS = [...CORE_DOCUMENT_KEYS, ...OPTIONAL_DOCUMENT_KEYS] as const;
 
 export type CoreDocumentKey = (typeof CORE_DOCUMENT_KEYS)[number];
 export type OptionalDocumentKey = (typeof OPTIONAL_DOCUMENT_KEYS)[number];
@@ -272,37 +269,32 @@ export const DOCUMENT_GENERATION_ORDER: DocumentFileKey[] = (
   .map((d) => d.key);
 
 export const DEFAULT_CORE_DOCS_BY_TIER: Record<UserTier, DocumentFileKey[]> = {
-  base: ["prd", "architecture", "plan-task"],
-  core: ["prd", "architecture", "plan-task", "design-system", "agent-rules"],
-  prime: [
-    "prd",
-    "architecture",
-    "plan-task",
-    "design-system",
-    "agent-rules",
-    "adaptive-document",
-  ],
+  base: [...TIER_CONFIG[TIER.BASE].coreDocuments] as DocumentFileKey[],
+  core: [...TIER_CONFIG[TIER.CORE].coreDocuments] as DocumentFileKey[],
+  prime: [...TIER_CONFIG[TIER.PRIME].coreDocuments] as DocumentFileKey[],
 };
+
+const TIER_CONFIG_BY_SLUG = {
+  base: TIER_CONFIG[TIER.BASE],
+  core: TIER_CONFIG[TIER.CORE],
+  prime: TIER_CONFIG[TIER.PRIME],
+} as const;
 
 export function canAccessDocument(key: DocumentFileKey, tier: UserTier): boolean {
   const def = DOCUMENT_DEFINITIONS[key];
   if (!tierMeetsMin(tier, def.minTier)) return false;
-  if (def.kind === "optional" && tier === "base") return false;
+  if (def.kind === "optional" && !TIER_CONFIG_BY_SLUG[tier].canAccessOptionalModules) {
+    return false;
+  }
   return def.tokenBudget[tier] > 0 || def.kind === "core";
 }
 
-export function filterDocumentsForTier(
-  keys: DocumentFileKey[],
-  tier: UserTier
-): DocumentFileKey[] {
+export function filterDocumentsForTier(keys: DocumentFileKey[], tier: UserTier): DocumentFileKey[] {
   return keys.filter((k) => canAccessDocument(k, tier));
 }
 
 /** Keep only tier-accessible docs, always include PRD, respect max count. */
-export function sanitizeSelectedDocs(
-  keys: DocumentFileKey[],
-  tier: UserTier
-): DocumentFileKey[] {
+export function sanitizeSelectedDocs(keys: DocumentFileKey[], tier: UserTier): DocumentFileKey[] {
   const seen = new Set<DocumentFileKey>();
   const filtered: DocumentFileKey[] = [];
 
@@ -331,7 +323,7 @@ export function getMaxDocumentsForTier(tier: UserTier): number {
 export function calcDocumentCredits(
   key: DocumentFileKey,
   tier: UserTier,
-  modelClass: ModelClass
+  modelClass: ModelClass,
 ): number {
   const def = DOCUMENT_DEFINITIONS[key];
   const tokens = def.tokenBudget[tier];
@@ -345,10 +337,7 @@ export function calcDocumentCredits(
   return Math.ceil((tokens / 1000) * multipliers[modelClass]);
 }
 
-export function getDefaultModelClass(
-  key: DocumentFileKey,
-  tier: UserTier
-): ModelClass {
+export function getDefaultModelClass(key: DocumentFileKey, tier: UserTier): ModelClass {
   return DOCUMENT_DEFINITIONS[key].defaultModelClass[tier];
 }
 
@@ -385,7 +374,7 @@ export function userTierToTierId(tier: UserTier): TierId {
 /** Drop per-document model overrides that exceed the user's tier allowance. */
 export function sanitizePerDocumentModelClass(
   overrides: Partial<Record<DocumentFileKey, ModelClass>> | undefined,
-  tier: UserTier
+  tier: UserTier,
 ): Partial<Record<DocumentFileKey, ModelClass>> {
   if (!overrides) return {};
   const tierId = userTierToTierId(tier);

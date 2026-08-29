@@ -50,6 +50,8 @@ export function queueFileWrite(params: {
   label: string;
   content: string;
   modelClass?: string;
+  promptVersion?: string;
+  modelRoute?: string;
   tokenCount?: number;
 }): void {
   enqueue(async () => {
@@ -67,6 +69,8 @@ export function queueFileWrite(params: {
         label: params.label,
         content: params.content,
         modelClass: params.modelClass,
+        promptVersion: params.promptVersion,
+        modelRoute: params.modelRoute,
         tokensUsed: params.tokenCount,
       },
       update: {
@@ -74,6 +78,8 @@ export function queueFileWrite(params: {
         label: params.label,
         content: params.content,
         modelClass: params.modelClass,
+        promptVersion: params.promptVersion,
+        modelRoute: params.modelRoute,
         tokensUsed: params.tokenCount,
         updatedAt: new Date(),
       },
@@ -87,7 +93,7 @@ export function queueFileWrite(params: {
  */
 export function queueProjectStatusUpdate(
   projectId: string,
-  status: "GENERATING" | "DONE" | "FAILED"
+  status: "GENERATING" | "DONE" | "FAILED",
 ): void {
   enqueue(async () => {
     await prisma.project.update({

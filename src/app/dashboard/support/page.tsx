@@ -14,9 +14,8 @@ import { PLAN_STATUS_LABELS } from "@/components/generate/types";
 const TIER_LABEL = PLAN_STATUS_LABELS;
 
 function SupportContent() {
-  const { data, loading, loadError, loadProfile, setLoading } = useDashboardMe(
-    "/dashboard/support"
-  );
+  const { data, loading, loadError, loadProfile, setLoading } =
+    useDashboardMe("/dashboard/support");
   const [whatsappQuota, setWhatsappQuota] = useState<WhatsappQuotaDisplay | null>(null);
   const [prevData, setPrevData] = useState(data);
 
@@ -30,7 +29,7 @@ function SupportContent() {
     await fetch("/api/auth/signout", { method: "POST" });
     const supabase = createClient();
     await supabase.auth.signOut();
-    window.location.href = "/";
+    window.location.assign(new URL("/", window.location.origin));
   }
 
   if (loading) {
@@ -99,11 +98,7 @@ function SupportContent() {
         />
 
         <p className="text-center mt-6">
-          <Link
-            href="/dashboard"
-            className="text-sm"
-            style={{ color: "rgba(255,255,255,0.45)" }}
-          >
+          <Link href="/dashboard" className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
             ← Kembali ke overview
           </Link>
         </p>

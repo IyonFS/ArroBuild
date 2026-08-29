@@ -186,7 +186,7 @@ Lint ikut memeriksa `.agents/` dan script tooling yang bukan source aplikasi. `.
 - [x] Self-host font agar build tidak tergantung Google Fonts.
 - [ ] Pisahkan integration/E2E test yang membutuhkan Supabase, Redis, Midtrans, dan AI secrets ke job khusus.
 - [x] Pastikan job integration tidak berjalan dengan production credential.
-- [ ] Audit 17 advisory dependency yang dilaporkan npm (6 moderate, 11 high); upgrade terarah tanpa `npm audit fix --force` sebelum dampak breaking change dipahami.
+- [x] Audit 17 advisory dependency; upgrade terarah Next.js, Prisma, Google GenAI, Tailwind, Sentry, dan tooling tanpa `npm audit fix --force` menghasilkan 0 vulnerability.
 
 **Acceptance criteria**
 
@@ -357,10 +357,10 @@ Gunakan event konsisten untuk alur:
 
 **Task**
 
-- [ ] Pastikan pricing UI membaca konfigurasi bersama, bukan angka hardcoded terpisah.
-- [ ] Satukan mapping tier, document access, model access, dan copy label.
-- [ ] Identifikasi config yang hanya untuk display dan config yang menjadi business rule.
-- [ ] Tambahkan consistency test untuk harga, kredit, dokumen, dan model class.
+- [x] Pastikan pricing UI membaca konfigurasi bersama, bukan angka hardcoded terpisah.
+- [x] Satukan mapping tier, document access, model access, dan copy label.
+- [x] Identifikasi config yang hanya untuk display dan config yang menjadi business rule.
+- [x] Tambahkan consistency test untuk harga, kredit, dokumen, dan model class.
 
 ### 9.3 Bangun AI output benchmark
 
@@ -383,11 +383,11 @@ Gunakan event konsisten untuk alur:
 
 **Task**
 
-- [ ] Simpan benchmark input tanpa data pengguna nyata.
-- [ ] Buat runner yang dapat membandingkan prompt/model version.
-- [ ] Simpan hasil evaluasi sebagai artefak CI atau laporan internal.
+- [x] Simpan benchmark input tanpa data pengguna nyata.
+- [x] Buat runner yang dapat membandingkan prompt/model version.
+- [x] Simpan hasil evaluasi sebagai artefak CI atau laporan internal.
 - [ ] Terapkan quality gate sebelum mengganti prompt produksi.
-- [ ] Catat prompt version dan model route pada setiap generation.
+- [x] Catat prompt version dan model route pada setiap generation.
 
 ### 9.4 Observability
 
@@ -668,4 +668,55 @@ Jangan memulai Living Blueprint sebelum lima langkah tersebut selesai. Fondasi p
 - Menjalankan skenario E2E lintas user dan idempotensi reservation terhadap Supabase/Postgres test.
 - Mensimulasikan kegagalan generation/ArroDesign setelah reservation dibuat dan memastikan release tercatat tepat satu kali.
 - Menguji webhook valid/idempotent terhadap Midtrans sandbox dan database test.
-- Menriage 17 advisory dependency npm dan membedakan dependency runtime dari tooling-only sebelum upgrade.
+- Menjalankan integration test terhadap Supabase/Postgres dan Midtrans sandbox tetap membutuhkan environment test terisolasi beserta credential non-production.
+
+### 29 Agustus 2026 — Dependency & Configuration Consistency
+
+**Selesai**
+
+- Meng-upgrade Next.js ke 16.3.3, Prisma ke 7.10.0, Google GenAI ke 2.19.0, Tailwind ke 4.3.3, Sentry ke 10.72.0, dan dependency pendukung secara terarah.
+- Memindahkan Prisma CLI ke `devDependencies` dan mengunci `deepmerge-ts` 8.0.2 melalui override kompatibel; `prisma generate` dan `prisma validate` lulus.
+- Menurunkan audit dependency dari 17 advisory menjadi 0 tanpa forced major audit fix.
+- Menjadikan `src/lib/config/tiers.ts` sebagai business-rule source untuk harga, kredit, batas proyek, kelas model, dokumen inti, dan akses modul opsional.
+- Menghapus duplikasi data pricing dari landing dan membuat `src/lib/pricing.ts` hanya menyimpan metadata/copy display di atas business config.
+- Memperbaiki entitlement dokumen opsional yang sebelumnya masih dapat dibuka oleh Core; seluruh 8 modul opsional kini Prime-only sesuai monetization spec.
+- Menyatukan multiplier kredit dan mapping kelas model pada generator dengan konfigurasi tier.
+- Menyatukan rentang kredit ArroDesign UI dengan estimator runtime `ARRODESIGN_CREDITS`.
+- Menyesuaikan empat navigasi client terhadap lint rule Next.js 16.3.3; logout tetap full reload untuk membersihkan client state.
+
+**Hasil verifikasi**
+
+- `npm audit --audit-level=moderate`: 0 vulnerability.
+- `npm run test:tiers`: 41/41 lulus (sebelumnya 11 mapping test).
+- `npm run lint`: lulus, 0 error dan 0 warning.
+- Seluruh validation, error, security, content, dan credit test: lulus.
+- `npm run build`: lulus dengan Next.js 16.3.3; TypeScript lulus dan 58 halaman statis dibuat.
+- Browser smoke test `/generate`, landing pricing, dan `/tools/arrodesign`: copy/config benar dan tidak ada console warning/error.
+
+**Ditunda secara eksplisit**
+
+- Migrasi ESLint 9 ke ESLint 10 dipisahkan sebagai upgrade major tooling karena ESLint 9 masih kompatibel dengan config Next saat ini tetapi sudah berada di luar masa dukungan upstream.
+
+### 29 Agustus 2026 — AI Output Benchmark Foundation
+
+**Selesai**
+
+- Menambahkan 10 brief benchmark sintetis yang mencakup SaaS, marketplace, mobile, AI app, internal tool, ecommerce, dan portfolio pada tiga tingkat detail.
+- Menambahkan validator dataset yang menolak ID/FEAT-ID duplikat, cakupan kategori tidak lengkap, serta email atau nomor telepon pada fixture.
+- Menambahkan evaluator deterministik untuk kelengkapan, FEAT-ID, konsistensi lintas dokumen, stack, actionability plan, format Markdown/YAML, groundedness heuristic, serta estimated-vs-actual usage.
+- Menambahkan runner pembanding prompt/model version dengan threshold skor, batas regresi terhadap baseline, path traversal guard, dan laporan JSON untuk artefak CI/internal.
+- Menambahkan prompt version terpusat dan menyimpan prompt version serta model route aktual pada generated file dan metadata credit ledger setiap generation.
+- Menambahkan migrasi nullable `promptVersion`/`modelRoute` sehingga data lama tetap kompatibel.
+- Menambahkan test evaluator benchmark ke CI.
+
+**Hasil verifikasi**
+
+- `npm run benchmark:ai:validate`: 10 kasus dan 7 kategori valid.
+- `npm run test:ai-benchmark`: 8/8 lulus.
+- Prisma 7.10 `generate` dan `validate`: lulus.
+- `npm run test:credits`: 16/16 lulus setelah metadata provenance ditambahkan.
+- `npm run lint`: lulus, 0 error dan 0 warning.
+
+**Gate berikutnya**
+
+- Generate baseline untuk seluruh fixture menggunakan environment AI test, review false-positive evaluator, lalu aktifkan quality gate wajib sebelum perubahan prompt produksi.

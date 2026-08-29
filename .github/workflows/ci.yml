@@ -50,6 +50,9 @@ jobs:
       - name: Credit ledger invariant tests
         run: npm run test:credits
 
+      - name: AI benchmark evaluator tests
+        run: npm run test:ai-benchmark
+
       - name: Build
         run: npm run build
 

@@ -16,7 +16,8 @@ function UpgradeContent() {
   const searchParams = useSearchParams();
   const highlightPlan = searchParams.get("plan");
   const mountedRef = useRef(true);
-  const { data, loading, loadError, loadProfile, setLoading } = useDashboardMe("/dashboard/upgrade");
+  const { data, loading, loadError, loadProfile, setLoading } =
+    useDashboardMe("/dashboard/upgrade");
 
   useEffect(() => {
     mountedRef.current = true;
@@ -49,7 +50,7 @@ function UpgradeContent() {
     await fetch("/api/auth/signout", { method: "POST" });
     const supabase = createClient();
     await supabase.auth.signOut();
-    window.location.href = "/";
+    window.location.assign(new URL("/", window.location.origin));
   }
 
   if (loading) {

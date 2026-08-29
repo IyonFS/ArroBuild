@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ManualFields } from "./types";
 import ReadmeDialog from "./ReadmeDialog";
 
@@ -56,6 +57,7 @@ export default function RepoStep({
   onBack,
   onNext,
 }: Props) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [detected, setDetected] = useState(false);
   const [needsManualFill, setNeedsManualFill] = useState(false);
@@ -148,7 +150,8 @@ export default function RepoStep({
         Hanya repo publik. Kami akan tampilkan data terdeteksi untuk dikonfirmasi.
       </p>
       <p className="mb-6 font-mono text-xs" style={{ color: "var(--color-text-tertiary)" }}>
-        Contoh: github.com/gyonmd-tech/Hybloggyon — nama repo harus sama persis (huruf besar/kecil ikut).
+        Contoh: github.com/gyonmd-tech/Hybloggyon — nama repo harus sama persis (huruf besar/kecil
+        ikut).
       </p>
 
       <div className="flex gap-2">
@@ -190,9 +193,7 @@ export default function RepoStep({
             className="mb-3 font-mono text-xs font-bold uppercase tracking-wider"
             style={{ color: "var(--app-sky)" }}
           >
-            {needsManualFill
-              ? "Lengkapi info dasar"
-              : "Data terdeteksi — konfirmasi atau edit"}
+            {needsManualFill ? "Lengkapi info dasar" : "Data terdeteksi — konfirmasi atau edit"}
           </p>
 
           <label className="mb-4 block">
@@ -288,12 +289,7 @@ export default function RepoStep({
         <button type="button" className="btn btn-ghost" onClick={onBack}>
           ← Kembali
         </button>
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={!canProceed}
-          onClick={onNext}
-        >
+        <button type="button" className="btn btn-primary" disabled={!canProceed} onClick={onNext}>
           Lanjut →
         </button>
       </div>
@@ -333,7 +329,7 @@ export default function RepoStep({
           {
             label: "Masuk",
             onClick: () => {
-              window.location.href = "/login?next=/tools/readme-generator";
+              router.push("/login?next=/tools/readme-generator");
             },
             primary: true,
           },

@@ -35,10 +35,7 @@ import {
 } from "@/lib/config/options";
 import { MODEL_CLASS, type ModelClassId } from "@/lib/config/tiers";
 import { capFormInput } from "@/lib/ai-gateway/context-builder";
-import {
-  sanitizePerDocumentModelClass,
-  legacyTierSlugToUserTier,
-} from "@/lib/config/documents";
+import { sanitizePerDocumentModelClass, legacyTierSlugToUserTier } from "@/lib/config/documents";
 import { readJsonBody, RequestBodyError } from "@/lib/http/read-json-body";
 
 const MAX_GENERATE_BODY_BYTES = 256_000;
@@ -117,16 +114,16 @@ export async function POST(req: NextRequest) {
         error: "Validation failed",
         details: parsed.error.flatten().fieldErrors,
       }),
-      { status: 422, headers: { "Content-Type": "application/json" } }
+      { status: 422, headers: { "Content-Type": "application/json" } },
     );
   }
 
   const supabaseUser = await getSupabaseUser();
   if (!supabaseUser) {
-    return new Response(
-      JSON.stringify({ error: "Login wajib untuk generate dokumen." }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Login wajib untuk generate dokumen." }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   await syncDbUser(supabaseUser);
@@ -135,12 +132,7 @@ export async function POST(req: NextRequest) {
   const estimatedCredits = parsed.data.estimatedCredits ?? 8;
   const normalizedModelId = normalizeLegacyModelId(parsed.data.modelId);
 
-  const gate = await assertCanGenerate(
-    userId,
-    effectiveTier,
-    normalizedModelId,
-    estimatedCredits
-  );
+  const gate = await assertCanGenerate(userId, effectiveTier, normalizedModelId, estimatedCredits);
   if (!gate.ok) {
     return new Response(JSON.stringify({ error: gate.error }), {
       status: gate.status,
@@ -165,7 +157,7 @@ export async function POST(req: NextRequest) {
     tier: planSlug,
     perDocumentModelClass: sanitizePerDocumentModelClass(
       parsed.data.perDocumentModelClass,
-      legacyTierSlugToUserTier(planSlug)
+      legacyTierSlugToUserTier(planSlug),
     ),
   };
 
@@ -192,12 +184,9 @@ export async function POST(req: NextRequest) {
     });
     projectId = project.id;
 
-    const reservation = await CreditService.reserveCredit(
-      userId,
-      estimatedCredits,
-      projectId,
-      { selectedDocs: parsed.data.selectedDocs }
-    );
+    const reservation = await CreditService.reserveCredit(userId, estimatedCredits, projectId, {
+      selectedDocs: parsed.data.selectedDocs,
+    });
     reservationId = reservation.reservationId;
   } catch (err) {
     if (err instanceof CreditServiceError) {
@@ -225,6 +214,8 @@ export async function POST(req: NextRequest) {
       const generatedDocs: Array<{
         fileKey: string;
         modelClass: ModelClassId;
+        promptVersion?: string;
+        modelRoute?: string;
         tokensUsed: number;
       }> = [];
 
@@ -239,6 +230,8 @@ export async function POST(req: NextRequest) {
                 generatedDocs.push({
                   fileKey: doc.fileKey,
                   modelClass: doc.modelClass,
+                  promptVersion: doc.promptVersion,
+                  modelRoute: doc.modelRoute,
                   tokensUsed: doc.tokensUsed,
                 });
               }
@@ -254,6 +247,8 @@ export async function POST(req: NextRequest) {
             generatedDocs.push({
               fileKey: event.fileKey,
               modelClass: event.modelClass as ModelClassId,
+              promptVersion: event.promptVersion,
+              modelRoute: event.modelRoute ?? event.usedModel,
               tokensUsed: event.tokensUsed,
             });
           }
@@ -268,14 +263,9 @@ export async function POST(req: NextRequest) {
                     fileKey,
                     modelClass: MODEL_CLASS.HEMAT,
                     tokensUsed: Math.max(1, Math.ceil(input.idea.length / 6)),
-                  })
+                  }),
                 );
-          await CreditService.commitCredit(
-            userId,
-            reservationId,
-            projectId,
-            documentsGenerated
-          );
+          await CreditService.commitCredit(userId, reservationId, projectId, documentsGenerated);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unexpected server error";
@@ -283,7 +273,7 @@ export async function POST(req: NextRequest) {
 
         if (reservationId) {
           await CreditService.releaseReservation(userId, reservationId, "generation_failed").catch(
-            () => {}
+            () => {},
           );
         }
 

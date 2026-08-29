@@ -2,55 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-
-const TIERS = [
-  {
-    id: "base",
-    name: "Base",
-    price: "65.000",
-    tagline: "Cocok untuk mulai eksplorasi.",
-    features: [
-      "3.000 kredit / bulan",
-      "3 dokumen core",
-      "AI model: Hemat",
-      "10 proyek per bulan",
-    ],
-    ctaLabel: "Mulai Base",
-    ctaHref: "/signup?plan=base",
-    theme: "base",
-  },
-  {
-    id: "core",
-    name: "Core",
-    price: "145.000",
-    tagline: "Untuk yang serius build.",
-    features: [
-      "7.000 kredit / bulan",
-      "5 dokumen core (+Design System, +Agent Rules)",
-      "AI model: Hemat, Menengah, Flagship",
-      "30 proyek per bulan",
-    ],
-    ctaLabel: "Mulai Core",
-    ctaHref: "/signup?plan=core",
-    theme: "core",
-    popular: true,
-  },
-  {
-    id: "prime",
-    name: "Prime",
-    price: "199.000",
-    tagline: "Foundation engineering grade — siap production.",
-    features: [
-      "14.000 kredit / bulan",
-      "6 dokumen core + 8 dokumen opsional",
-      "Semua AI model (termasuk Ultra)",
-      "60 proyek per bulan + Revisi unlimited",
-    ],
-    ctaLabel: "Mulai Prime",
-    ctaHref: "/signup?plan=prime",
-    theme: "prime",
-  },
-];
+import { PRICING_TIERS } from "@/lib/pricing";
 
 export default function PricingSectionV3() {
   const getThemeStyles = (theme: string) => {
@@ -160,7 +112,8 @@ export default function PricingSectionV3() {
               margin: "0 auto",
             }}
           >
-            Pilih paket yang sesuai dengan kebutuhan pengembangan AI Anda. Mulai dari eksperimen hingga siap production.
+            Pilih paket yang sesuai dengan kebutuhan pengembangan AI Anda. Mulai dari eksperimen
+            hingga siap production.
           </p>
         </motion.div>
 
@@ -173,9 +126,9 @@ export default function PricingSectionV3() {
           }}
           className="pricing-grid-premium"
         >
-          {TIERS.map((tier, i) => {
-            const styles = getThemeStyles(tier.theme);
-            
+          {PRICING_TIERS.map((tier, i) => {
+            const styles = getThemeStyles(tier.id);
+
             return (
               <motion.div
                 key={tier.id}
@@ -199,11 +152,19 @@ export default function PricingSectionV3() {
               >
                 {/* Inner Glow for Core */}
                 {styles.glow !== "none" && (
-                  <div style={{ position: "absolute", inset: 0, boxShadow: styles.glow, borderRadius: 24, pointerEvents: "none" }} />
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      boxShadow: styles.glow,
+                      borderRadius: 24,
+                      pointerEvents: "none",
+                    }}
+                  />
                 )}
 
                 {/* Popular Badge */}
-                {tier.popular && (
+                {tier.highlighted && (
                   <div
                     style={{
                       position: "absolute",
@@ -222,7 +183,7 @@ export default function PricingSectionV3() {
                       textTransform: "uppercase",
                     }}
                   >
-                    Most Popular
+                    {tier.badge ?? "Paling Direkomendasikan"}
                   </div>
                 )}
 
@@ -249,31 +210,83 @@ export default function PricingSectionV3() {
                       minHeight: 44, // Align heights across cards
                     }}
                   >
-                    {tier.tagline}
+                    {tier.description}
                   </p>
                 </div>
-                
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 40 }}>
-                  <span style={{ fontFamily: "var(--font-jetbrains-mono)", fontSize: 18, fontWeight: 700, color: "var(--lp-text-secondary)", marginTop: 6 }}>
+
+                <div
+                  style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 40 }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-jetbrains-mono)",
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: "var(--lp-text-secondary)",
+                      marginTop: 6,
+                    }}
+                  >
                     Rp
                   </span>
-                  <span style={{ fontFamily: "var(--font-unbounded)", fontWeight: 900, fontSize: "clamp(36px, 3.5vw, 48px)", letterSpacing: "-0.03em", color: "var(--lp-text-primary)", lineHeight: 1 }}>
-                    {tier.price}
+                  <span
+                    style={{
+                      fontFamily: "var(--font-unbounded)",
+                      fontWeight: 900,
+                      fontSize: "clamp(36px, 3.5vw, 48px)",
+                      letterSpacing: "-0.03em",
+                      color: "var(--lp-text-primary)",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {tier.priceAmount.toLocaleString("id-ID")}
                   </span>
-                  <span style={{ fontFamily: "var(--font-jetbrains-mono)", fontSize: 14, color: "var(--lp-text-tertiary)", alignSelf: "flex-end", marginBottom: 4 }}>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-jetbrains-mono)",
+                      fontSize: 14,
+                      color: "var(--lp-text-tertiary)",
+                      alignSelf: "flex-end",
+                      marginBottom: 4,
+                    }}
+                  >
                     /bln
                   </span>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 48, flexGrow: 1 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 16,
+                    marginBottom: 48,
+                    flexGrow: 1,
+                  }}
+                >
                   {tier.features.map((feat) => (
                     <div key={feat} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                       <div style={{ marginTop: 2, color: styles.iconColor }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       </div>
-                      <span style={{ fontFamily: "var(--font-jetbrains-mono)", fontSize: 14, color: "var(--lp-text-primary)", lineHeight: 1.5, opacity: 0.85 }}>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-jetbrains-mono)",
+                          fontSize: 14,
+                          color: "var(--lp-text-primary)",
+                          lineHeight: 1.5,
+                          opacity: 0.85,
+                        }}
+                      >
                         {feat}
                       </span>
                     </div>
@@ -297,16 +310,16 @@ export default function PricingSectionV3() {
                     transition: "all 0.2s ease",
                   }}
                   className="pricing-btn"
-                  onMouseEnter={(e) => { 
+                  onMouseEnter={(e) => {
                     (e.currentTarget as HTMLAnchorElement).style.background = styles.btnHoverBg;
                     (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-2px)";
                   }}
-                  onMouseLeave={(e) => { 
+                  onMouseLeave={(e) => {
                     (e.currentTarget as HTMLAnchorElement).style.background = styles.btnBg;
                     (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)";
                   }}
                 >
-                  {tier.ctaLabel}
+                  {tier.cta}
                 </Link>
               </motion.div>
             );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Palette } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { MINI_TOOLS } from "@/lib/config/mini-tools";
+import { ARRODESIGN_CREDITS } from "@/lib/config/arrodesign-prompt";
 import InputStep from "@/components/arrodesign/InputStep";
 import ContextStep from "@/components/arrodesign/ContextStep";
 import ConfirmStep from "@/components/arrodesign/ConfirmStep";
@@ -17,6 +18,9 @@ import {
 } from "@/components/arrodesign/types";
 
 const TOOL = MINI_TOOLS["arrodesign"];
+const ARRODESIGN_CREDIT_RANGE = Object.values(ARRODESIGN_CREDITS);
+const ARRODESIGN_MIN_CREDITS = Math.min(...ARRODESIGN_CREDIT_RANGE);
+const ARRODESIGN_MAX_CREDITS = Math.max(...ARRODESIGN_CREDIT_RANGE);
 
 const STEPS = [
   { label: "Input", num: 1 },
@@ -26,13 +30,7 @@ const STEPS = [
 
 type WizardStep = 1 | 2 | 3 | "result";
 
-function StepDots({
-  current,
-  completed,
-}: {
-  current: WizardStep;
-  completed: Set<number>;
-}) {
+function StepDots({ current, completed }: { current: WizardStep; completed: Set<number> }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 32 }}>
       {STEPS.map((s, i) => {
@@ -62,11 +60,7 @@ function StepDots({
                     : isDone
                       ? "none"
                       : "0.5px solid rgba(240,243,250,0.12)",
-                  color: isDone
-                    ? "#fff"
-                    : isCurrent
-                      ? "#9D4EDD"
-                      : "rgba(240,243,250,0.3)",
+                  color: isDone ? "#fff" : isCurrent ? "#9D4EDD" : "rgba(240,243,250,0.3)",
                 }}
               >
                 {isDone ? "✓" : s.num}
@@ -91,9 +85,7 @@ function StepDots({
                 style={{
                   width: 48,
                   height: 1,
-                  background: isDone
-                    ? "rgba(157,78,221,0.4)"
-                    : "rgba(240,243,250,0.08)",
+                  background: isDone ? "rgba(157,78,221,0.4)" : "rgba(240,243,250,0.08)",
                   margin: "0 6px",
                   marginBottom: 14,
                 }}
@@ -350,7 +342,7 @@ export default function ArroDesignPage() {
                   color: "rgba(240,243,250,0.4)",
                 }}
               >
-                ~{TOOL?.credits ?? 180}–220 kredit / analisis
+                {ARRODESIGN_MIN_CREDITS}–{ARRODESIGN_MAX_CREDITS} kredit / analisis
               </span>
             </div>
           </div>
@@ -368,11 +360,7 @@ export default function ArroDesignPage() {
             )}
 
             {currentStep === 1 && (
-              <InputStep
-                state={state}
-                onChange={patch}
-                onNext={() => goTo(2, 1)}
-              />
+              <InputStep state={state} onChange={patch} onNext={() => goTo(2, 1)} />
             )}
 
             {currentStep === 2 && (
@@ -399,11 +387,7 @@ export default function ArroDesignPage() {
             )}
 
             {currentStep === "result" && (
-              <ResultStep
-                state={state}
-                onChange={patch}
-                onReset={handleReset}
-              />
+              <ResultStep state={state} onChange={patch} onReset={handleReset} />
             )}
           </div>
         </section>
