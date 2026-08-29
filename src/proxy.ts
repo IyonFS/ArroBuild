@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import { checkIpRateLimit } from "@/lib/rate-limit";
+import { checkIpRateLimit, isRedisConfigured } from "@/lib/rate-limit";
 import { isLocalDevelopmentIp, isProtectedPath } from "@/lib/security/request-policy";
 
 function hasAuthCookie(request: NextRequest): boolean {
@@ -26,7 +26,7 @@ export async function proxy(request: NextRequest) {
 
   if (
     process.env.RATE_LIMIT_REQUIRED === "true" &&
-    !process.env.UPSTASH_REDIS_REST_URL
+    !isRedisConfigured()
   ) {
     return NextResponse.json(
       { error: "Rate limiting tidak tersedia" },

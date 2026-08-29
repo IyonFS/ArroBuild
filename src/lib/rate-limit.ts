@@ -3,10 +3,28 @@ import { Redis } from "@upstash/redis";
 import { getTierConfig, type TierId } from "@/lib/config/tiers";
 import { logger } from "@/lib/logger";
 
+type RedisEnvironment = Record<string, string | undefined>;
+
+export function getRedisCredentials(environment: RedisEnvironment = process.env) {
+  const url =
+    environment.UPSTASH_REDIS_REST_KV_REST_API_URL ??
+    environment.UPSTASH_REDIS_REST_URL;
+  const token =
+    environment.UPSTASH_REDIS_REST_KV_REST_API_TOKEN ??
+    environment.UPSTASH_REDIS_REST_TOKEN;
+
+  return url && token ? { url, token } : null;
+}
+
+export function isRedisConfigured(environment: RedisEnvironment = process.env): boolean {
+  return getRedisCredentials(environment) !== null;
+}
+
 function createRedis() {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
+  const credentials = getRedisCredentials();
+  if (!credentials) return null;
+
+  const { url, token } = credentials;
   return new Redis({ url, token });
 }
 
